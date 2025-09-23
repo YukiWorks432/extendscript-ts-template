@@ -84,47 +84,64 @@ alert("examle");
 型定義はtsconfig.jsonで、Types-for-Adobeから読み込むように設定されています。
 対応するソフトウェアを変更する場合は`types`の内容を変更してください。
 
-```json
-// tsconfig.json
+**AfterEffects の場合**
 
-// AfterEffects の場合
+```json
 "types": [
   "./node_modules/types-for-adobe/AfterEffects/22.0",
   "./node_modules/types-for-adobe/shared/PlugPlugExternalObject",
   "./node_modules/types-for-adobe/shared/XMPScript"
 ]
+```
 
-// Animate の場合
+**Animate の場合**
+
+```json
 "types": [
   "./node_modules/types-for-adobe/Animate/22.0",
   "./node_modules/types-for-adobe/shared/PlugPlugExternalObject",
 ]
+```
 
-// Audition の場合
+**Audition の場合**
+
+```json
 "types": [
   "./node_modules/types-for-adobe/Audition/2018",
   "./node_modules/types-for-adobe/shared/PlugPlugExternalObject",
 ]
+```
 
-// Illustrator の場合
+**Illustrator の場合**
+
+```json
 "types": [
   "./node_modules/types-for-adobe/Illustrator/2022",
   "./node_modules/types-for-adobe/shared/PlugPlugExternalObject"
 ]
+```
 
-// InDesign の場合
+**InDesign の場合**
+
+```json
 "types": [
   "./node_modules/types-for-adobe/InDesign/2023",
   "./node_modules/types-for-adobe/shared/PlugPlugExternalObject"
 ]
+```
 
-// Photoshop の場合
+**Photoshop の場合**
+
+```json
 "types": [
   "./node_modules/types-for-adobe/Photoshop/2015.5",
   "./node_modules/types-for-adobe/shared/PlugPlugExternalObject"
 ]
+```
 
-// Premiere の場合
+**Premiere の場合**
+
+```json
 "types": [
   "./node_modules/types-for-adobe/Premiere/24.0",
   "./node_modules/types-for-adobe-extras/Premiere/24.0/qeDom"
@@ -134,7 +151,7 @@ alert("examle");
 
 ## ビルド / Build
 
-pnpmスクリプトでビルドします。
+pnpmからスクリプトでビルドします。
 
 ```bash
 pnpm build
