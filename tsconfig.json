@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES3",
+    "module": "ESNext",
+    "lib": [
+      "ES5",
+      "ES2015.Core",
+      "ES2015.Collection",
+      "ES2015.Iterable",
+      "ES2015.Generator",
+      "ES2015.Proxy",
+      "ES2015.Reflect"
+    ],
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "ignoreDeprecations": "5.0",
+
+    "types": [
+      "./node_modules/types-for-adobe/AfterEffects/22.0",
+      "./node_modules/types-for-adobe/shared/PlugPlugExternalObject",
+      "./node_modules/types-for-adobe/shared/XMPScript"
+    ]
+  },
+  "include": ["src/**/*"]
+}
