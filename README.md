@@ -2,7 +2,7 @@
 
 ExtendScriptをTypeScriptからトランスパイルして作成するためのリポジトリです。
 
-[es5-shim](https://github.com/es-shims/es5-shim)と独自に調節された[es6-shim](https://github.com/paulmillr/es6-shim)を注入することで、
+独自に調節した[es5-shim](https://github.com/es-shims/es5-shim)と[es6-shim](https://github.com/paulmillr/es6-shim)を注入することで、
 ES6相当のライブラリを使用できます。  
 TypeScriptからトランスパイルするため、文法は最新のものを使用できます。　　
 
