@@ -2567,46 +2567,53 @@
     hasNegativeSubstrBug
   );
 
-  // String.trimのバグ修正を含むpolyfillですが、issues#1の問題のためコメントアウトされています。
-  /*
-    // ES5 15.5.4.20
-    // whitespace from: https://es5.github.io/#x15.5.4.20
-    var mvs = "\u180E";
-    var mvsIsWS = /\s/.test(mvs);
-    var ws =
-      "\x09\x0A\x0B\x0C\x0D\x20\xA0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF".replace(
-        /\S/g,
-        ""
-      ); // remove the mongolian vowel separator (\u180E) in modern engines
-    var zeroWidth = "\u200b";
-    var wsRegexChars = "[" + ws + "]";
-    var trimBeginRegexp = new RegExp("^" + wsRegexChars + wsRegexChars + "*");
-    var trimEndRegexp = new RegExp(wsRegexChars + wsRegexChars + "*$");
-    var hasTrimWhitespaceBug =
-      StringPrototype.trim &&
-      (ws.trim() !== "" || // if ws is not considered whitespace
-        zeroWidth.trim() === "" || // if zero-width IS considered whitespace
-        mvs.trim() !== (mvsIsWS ? "" : mvs)); // if MVS is either wrongly considered whitespace, or, wrongly considered NOT whitespace
-    defineProperties(
-      StringPrototype,
-      {
-        // https://blog.stevenlevithan.com/archives/faster-trim-javascript
-        // http://perfectionkills.com/whitespace-deviations/
-        trim: function trim() {
-          "use strict";
+  // String.prototype.trimのバグ修正を含むpolyfillですが、issue#1の問題のため一部改変されています。
+  // 副作用として、parseIntの挙動が変化している可能性があります。
+  // See: https://github.com/YukiWorks432/extendscript-ts-template/issues/1
 
-          if (typeof this === "undefined" || this === null) {
-            throw new TypeError("can't convert " + this + " to object");
-          }
-          return $String(this)
-            .replace(trimBeginRegexp, "")
-            .replace(trimEndRegexp, "");
-        },
-      },
-      hasTrimWhitespaceBug
-    );
+  // ES5 15.5.4.20
+  // whitespace from: https://es5.github.io/#x15.5.4.20
+  /*
+  var mvs = "\u180E";
+  var mvsIsWS = /\s/.test(mvs);
+  var ws =
+    "\x09\x0A\x0B\x0C\x0D\x20\xA0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF".replace(
+      /\S/g,
+      ""
+    ); // remove the mongolian vowel separator (\u180E) in modern engines
+  var zeroWidth = "\u200b";
   */
-  var trim = call.bind(String.prototype.trim);
+  var ws =
+    "\x09\x0A\x0B\x0C\x0D\x20\u1680\u2000\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF".replace(
+      /\S/g,
+      ""
+    );
+  var wsRegexChars = "[" + ws + "]";
+  var trimBeginRegexp = new RegExp("^" + wsRegexChars + wsRegexChars + "*");
+  var trimEndRegexp = new RegExp(wsRegexChars + wsRegexChars + "*$");
+  var hasTrimWhitespaceBug =
+    StringPrototype.trim &&
+    (ws.trim() !== "" || // if ws is not considered whitespace
+      zeroWidth.trim() === "" || // if zero-width IS considered whitespace
+      mvs.trim() !== (mvsIsWS ? "" : mvs)); // if MVS is either wrongly considered whitespace, or, wrongly considered NOT whitespace
+  defineProperties(
+    StringPrototype,
+    {
+      // https://blog.stevenlevithan.com/archives/faster-trim-javascript
+      // http://perfectionkills.com/whitespace-deviations/
+      trim: function trim() {
+        "use strict";
+
+        if (typeof this === "undefined" || this === null) {
+          throw new TypeError("can't convert " + this + " to object");
+        }
+        return $String(this)
+          .replace(trimBeginRegexp, "")
+          .replace(trimEndRegexp, "");
+      },
+    },
+    hasTrimWhitespaceBug
+  );
 
   var hasLastIndexBug =
     StringPrototype.lastIndexOf && "abcあい".lastIndexOf("あい", 2) !== -1;
@@ -2669,6 +2676,7 @@
       };
     })(parseInt);
   }
+
   // Edge 15-18
   var parseIntFailsToThrowOnBoxedSymbols = (function () {
     if (typeof Symbol !== "function") {
