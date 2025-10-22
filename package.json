@@ -5,7 +5,8 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/**/*.ts",
+    "new": "node ./scripts/newScript.mjs && prettier --write ./es.config.mjs"
   },
   "keywords": [
     "Adobe",
