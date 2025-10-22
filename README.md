@@ -44,6 +44,20 @@ pnpm build
 srcフォルダ内に各スクリプトのフォルダと`index.ts`を作成し、  
 `es.config.mjs`からスクリプトを登録します。書き方は以下の通りです。
 
+以下のコマンドを使用することで、この操作を簡略化することができます。
+スクリプト名と、ライセンスの埋め込みの有無を入力すれば、ディレクトリ/index.tsの作成、`es.config.mjs`への追記を行います（一番目に追記されます）。
+
+```shell
+pnpm new
+
+> Please enter the script name: 
+example
+> Include a license field? (y/N): 
+n
+> Addition complete: Appended "example" to es.config.mjs.
+> Created script directory and index.ts template: src/example/index.ts
+```
+
 ```mjs
 // es.config.mjs
 export default {
