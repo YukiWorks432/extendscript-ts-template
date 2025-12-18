@@ -103,8 +103,8 @@ alert("examle");
 ```json
 "types": [
   "./node_modules/types-for-adobe/AfterEffects/22.0",
-  "./node_modules/types-for-adobe/shared/PlugPlugExternalObject",
-  "./node_modules/types-for-adobe/shared/XMPScript"
+  "./node_modules/types-for-adobe/shared/XMPScript",
+  "./node_modules/types-for-adobe/shared/PlugPlugExternalObject"
 ]
 ```
 
