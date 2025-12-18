@@ -40,17 +40,15 @@ const onwarn = (warning, defaultHandler) => {
   }
   defaultHandler(warning);
 };
-
-const terserConfig = (banner) =>
+const terserConfig = () =>
   terser({
     compress: {
       ie8: true,
       conditionals: false,
-      passes: 4,
+      passes: 1,
     },
     format: {
       comments: false,
-      preamble: `/**\n${banner} */\n`,
     },
   });
 const licenser = (srcDir) => {
@@ -69,6 +67,7 @@ const babelConfig = babel({
   extensions,
   babelrc: false,
   babelHelpers: "bundled",
+  comments: false,
   presets: [
     [
       "@babel/preset-env",
@@ -98,13 +97,14 @@ const entries = config.scripts
     const inputFile = `${srcDir}/index.ts`;
     const fileHash = calculateFileHash(inputFile);
 
-    const banner = ` * ${script.name} v${script.version} hash: ${fileHash}\n`;
+    const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */\n`;
 
     return {
       input: inputFile,
       output: {
         file: `${outDir}/${script.name}.jsx`,
         format: "cjs",
+        banner,
       },
       context: "this",
       onwarn,
@@ -115,7 +115,7 @@ const entries = config.scripts
         }),
         commonjs(),
         babelConfig,
-        terserConfig(banner),
+        terserConfig(),
         script.license ? licenser(srcDir) : null,
       ],
     };
