@@ -88,15 +88,18 @@ export default {
 ```ts
 // src/example/index.ts
 
-// shimを実行するために、initのimportが必須です。
-import "init";
+import "../init";
+import { entry } from "../lib/libs";
 
-// write your core...
-alert("examle");
+// jp: スクリプトはこの中に書いてください
+// en: Write your script inside this function
+entry("example", () => {
+  // TODO: Implement example
+});
 ```
 
 型定義はtsconfig.jsonで、Types-for-Adobeから読み込むように設定されています。
-対応するソフトウェアを変更する場合は`types`の内容を変更してください。
+対応するソフトウェアを変更する場合は`types`のコメントアウトを変更してください。
 
 **AfterEffects の場合**
 

@@ -148,10 +148,13 @@ async function updateScriptConfig(newScript) {
 
 const createIndexTsTemplate = (name) =>
   `import "../init";
+import { entry } from "../lib/libs";
 
-(() => {
+// jp: スクリプトはこの中に書いてください
+// en: Write your script inside this function
+entry("${name}", () => {
   // TODO: Implement ${name}
-})();
+});
 `;
 
 async function createScriptTemplate(name) {

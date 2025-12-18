@@ -1,8 +1,12 @@
 // shimを実行するために、initのimportが必須です。
 import "../init";
 
+// libから必要な関数をimportします。
+import { entry } from "../lib/libs";
+
+// スクリプトはすべてentryの中に書いてください
 // アロー関数が使えるようになった
-(() => {
+entry("example", () => {
   // let, constが使えるようになった
   // 型アノテーションが使えるようになった
   const comp = app.project.activeItem;
@@ -41,4 +45,4 @@ import "../init";
   alert(
     `選択中のレイヤーの不透明度の合計: ${totalOpacity}\n平均: ${averageOpacity}`
   );
-})();
+});
