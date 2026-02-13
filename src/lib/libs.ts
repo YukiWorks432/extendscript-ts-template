@@ -1,5 +1,3 @@
-export const example = () => {};
-
 /***
  * Helper Functions
  */
@@ -27,9 +25,9 @@ export const alertError = (error: Error) => {
   try {
     const line = getLineFromString(error.source, error.line)?.trim() || "";
     alert(
-      [`Error: ${error.message}`, `Line: ${error.line}`, `">": ${line}`].join(
-        "\n"
-      )
+      `Error: ${error.message}\n` +
+        `Line: ${error.line}\n` +
+        (line.length < 200 ? `">": ${line}` : "")
     );
   } catch (e) {
     alert(`Error: ${error.message}`);
