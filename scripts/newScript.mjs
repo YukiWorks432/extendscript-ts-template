@@ -1,11 +1,14 @@
 // スクリプトを新規追加する用のスクリプト
-// Usage: pnpm new (impl: node ./scripts/newScript.mjs&&prettier --write ./es.config.mjs)
+// Usage:
+//   対話モード: pnpm new
+//   CLI モード:  pnpm new -- --name=MyScript --license
 // es.config.mjsに新しいスクリプトを追加し、src配下にテンプレートを作成します。
 // 新しいスクリプトはes.config.mjsのscripts配列の先頭に追加されます。
 // es.config.mjsはprettierで整形されます。
 
 import { createInterface } from "node:readline";
 import { stdin as input, stdout as output } from "node:process";
+import { parseArgs } from "node:util";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -148,10 +151,8 @@ async function updateScriptConfig(newScript) {
 
 const createIndexTsTemplate = (name) =>
   `import "../init";
-import { entry } from "../lib/libs";
+import { entry, isAVLayer } from "../lib/lib";
 
-// jp: スクリプトはこの中に書いてください
-// en: Write your script inside this function
 entry("${name}", () => {
   // TODO: Implement ${name}
 });
@@ -172,7 +173,65 @@ async function createScriptTemplate(name) {
   }
 }
 
+function parseCliArgs() {
+  try {
+    const { values } = parseArgs({
+      options: {
+        name: { type: "string" },
+        license: { type: "boolean", default: false },
+      },
+      strict: true,
+    });
+    if (values.name) {
+      return {
+        name: values.name.trim(),
+        version: "0.0.1",
+        build: true,
+        license: !!values.license,
+      };
+    }
+  } catch {
+    // 不正な引数の場合は対話モードにフォールバック
+  }
+  return null;
+}
+
 async function main() {
+  const cliDescriptor = parseCliArgs();
+
+  if (cliDescriptor) {
+    // CLI モード
+    if (!cliDescriptor.name) {
+      console.error(L.error.emptyName);
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      const config = await loadConfig();
+      const exists = config.scripts.some(
+        (script) => script && script.name === cliDescriptor.name
+      );
+      if (exists) {
+        throw new CliError(L.error.nameExists(cliDescriptor.name));
+      }
+
+      await updateScriptConfig(cliDescriptor);
+      console.log(L.doneAdd(cliDescriptor.name, cliDescriptor.license));
+
+      await createScriptTemplate(cliDescriptor.name);
+      console.log(L.doneMake(cliDescriptor.name));
+    } catch (err) {
+      process.exitCode = 1;
+      if (err instanceof CliError) {
+        console.error(err.message);
+      } else {
+        console.error(L.error.unexpected, err);
+      }
+    }
+    return;
+  }
+
+  // 対話モード
   const rl = createInterface({ input, output });
   try {
     const config = await loadConfig();
