@@ -1,12 +1,6 @@
 export default {
   scripts: [
     {
-      name: "a",
-      version: "0.0.1",
-      build: true,
-      license: false,
-    },
-    {
       // src/tests/index.ts がビルドされます.
       name: "tests",
       // 出力ファイルのバナーに記載されます.
