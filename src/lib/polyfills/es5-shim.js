@@ -2601,7 +2601,7 @@
     {
       // https://blog.stevenlevithan.com/archives/faster-trim-javascript
       // http://perfectionkills.com/whitespace-deviations/
-      trim: function trim() {
+      trim: function trimShim() {
         "use strict";
 
         if (typeof this === "undefined" || this === null) {
@@ -2669,7 +2669,7 @@
         if (this instanceof parseInt) {
           new origParseInt();
         } // eslint-disable-line new-cap, no-new, max-statements-per-line
-        var string = trim(String(str));
+        var string = (String(str)).trim();
         var defaultedRadix =
           $Number(radix) || (hexRegex.test(string) ? 16 : 10);
         return origParseInt(string, defaultedRadix);
@@ -2722,7 +2722,7 @@
           // eslint-disable-next-line no-implicit-coercion, no-unused-expressions
           "" + str; // jscs:ignore disallowImplicitTypeConversion
         }
-        var string = trim(String(str));
+        var string = (String(str)).trim();
         var defaultedRadix =
           $Number(radix) || (hexRegex.test(string) ? 16 : 10);
         return origParseInt(string, defaultedRadix);
@@ -2735,7 +2735,7 @@
     // eslint-disable-next-line no-global-assign, no-implicit-globals, no-native-reassign
     parseFloat = (function (origParseFloat) {
       return function parseFloat(string) {
-        var inputString = trim(String(string));
+        var inputString = (String(string)).trim();
         var result = origParseFloat(inputString);
         return result === 0 && strSlice(inputString, 0, 1) === "-"
           ? -0

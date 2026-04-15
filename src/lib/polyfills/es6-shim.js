@@ -1063,7 +1063,7 @@
     "\u2029\uFEFF",
   ].join("");
   var trimRegexp = new RegExp("(^[" + ws + "]+)|([" + ws + "]+$)", "g");
-  var trimShim = function trim() {
+  var trimShim6 = function () {
     return ES.ToString(ES.RequireObjectCoercible(this)).replace(trimRegexp, "");
   };
   // var nonWS = ["\u0085", "\u200b", "\ufffe"].join("");
@@ -1071,7 +1071,7 @@
   var nonWSregex = new RegExp("[" + nonWS + "]", "g");
   var isBadHexRegex = /^[-+]0x[0-9a-f]+$/i;
   var hasStringTrimBug = nonWS.trim().length !== nonWS.length;
-  defineProperty(String.prototype, "trim", trimShim, hasStringTrimBug);
+  defineProperty(String.prototype, "trim", trimShim6, hasStringTrimBug);
 
   // Given an argument x, it will return an IteratorResult object,
   // with value set to x and done to false.
@@ -1613,7 +1613,7 @@
           primValue = 0;
         }
         if (typeof primValue === "string") {
-          primValue = ES.Call(trimShim, primValue);
+          primValue = ES.Call(trimShim6, primValue);
           if (isBinary(primValue)) {
             primValue = parseInt(_strSlice(primValue, 2), 2);
           } else if (isOctal(primValue)) {
