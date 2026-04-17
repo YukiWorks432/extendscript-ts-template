@@ -287,7 +287,7 @@ export default (commandLineArgs) => {
       const fileHash =
         currentBuildHashes[hashKey] || calculateFileHash(inputFile);
 
-      const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */`;
+      const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
 
       return {
         input: inputFile,

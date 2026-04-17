@@ -49,3 +49,36 @@ export const entry = (name: string, func: () => any) => {
 
   if (app.endUndoGroup) app.endUndoGroup();
 };
+
+/***
+ * jp: Scripts UI 対応の entry 関数。\
+ *     Panel として起動された場合はそのまま使用し、そうでない場合は palette Window を生成して表示する.\
+ * en: Entry function for ScriptUI.\
+ *     Uses the provided Panel when launched as a dockable panel, otherwise creates and shows a palette Window.
+ * @example
+ * entryUI("My Script", __ES_THIS__, (win) => {
+ *   win.add("statictext", undefined, "Hello, ScriptUI!");
+ * });
+ */
+export const entryUI = (
+  name: string,
+  thisObj: object,
+  func: (win: Window | Panel) => void
+): void => {
+  var win: Window | Panel;
+  if (thisObj instanceof Panel) {
+    win = thisObj;
+  } else {
+    win = new Window("palette", name);
+  }
+
+  try {
+    func(win);
+  } catch (e) {
+    alertError(e as Error);
+  }
+
+  if (win instanceof Window) {
+    win.show();
+  }
+};
