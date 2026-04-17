@@ -94,7 +94,38 @@ src/aeft/
 
 ### 共通ユーティリティを使う
 
-`src/lib/lib.ts` に `entry()` や `alertError()` など全アプリ共通のユーティリティがある。
+`src/lib/lib.ts` に `entry()`、`entryUI()`、`alertError()` など全アプリ共通のユーティリティがある。
+
+```ts
+import { entry, entryUI, alertError } from "../../lib/lib";
+```
+
+#### `entry` — 通常スクリプト用
+
+```ts
+entry("MyScript", () => {
+  // 処理を書く
+});
+```
+
+#### `entryUI` — ScriptUI パネル対応スクリプト用
+
+ドッキングパネルとして使う場合は `entryUI` と `__ES_THIS__` を使う。
+`__ES_THIS__` はビルド時にバンドル先頭へ自動注入されるグローバルな `this`。
+
+```ts
+import { entryUI } from "../../lib/lib";
+
+entryUI("MyScript", __ES_THIS__, (win) => {
+  win.add("statictext", undefined, "Hello, ScriptUI!");
+  // win は Panel（パネル起動時）または Window（スクリプト直接実行時）
+});
+```
+
+| 起動方法 | `__ES_THIS__` の値 | `entryUI` の動作 |
+|---------|-------------------|------------------|
+| スクリプトとして実行 | グローバルオブジェクト | `new Window("palette")` を生成して表示 |
+| ドッキングパネルとして起動 | `Panel` | 渡された `Panel` をそのまま使用 |
 
 ```ts
 import { entry, alertError } from "../../lib/lib";

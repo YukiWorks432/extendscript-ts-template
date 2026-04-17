@@ -8,7 +8,7 @@
     "watch": "rollup -c -w",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
-    "new": "node ./scripts/newScript.mjs",
+    "new": "node ./scripts/newScript.mjs&&prettier --write ./es.config.mjs",
     "add-app": "node ./scripts/addApp.mjs"
   },
   "keywords": [
