@@ -11,7 +11,7 @@
       "ES2015.Proxy",
       "ES2015.Reflect"
     ],
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -19,16 +19,11 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "ignoreDeprecations": "5.0",
-
     "types": [
-      "./node_modules/types-for-adobe/AfterEffects/22.0",
-      "./node_modules/types-for-adobe/shared/XMPScript",
-      // "./node_modules/types-for-adobe/Illustrator/2022",
-      // "./node_modules/types-for-adobe/Photoshop/2015.5",
-      // "./node_modules/types-for-adobe/Premiere/24.0",
-      // "./node_modules/types-for-adobe-extras/Premiere/24.0/qeDom",
-      "./node_modules/types-for-adobe/shared/PlugPlugExternalObject"
+      "./node_modules/types-for-adobe/shared/global",
+      "./node_modules/types-for-adobe/shared/PlugPlugExternalObject",
+      "./node_modules/types-for-adobe/shared/ScriptUI"
     ]
   },
-  "include": ["src/**/*"]
+  "include": ["src/lib/**/*", "src/types/**/*", "src/init.ts", "src/tests/**/*"]
 }

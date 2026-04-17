@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "../../node_modules/types-for-adobe/AfterEffects/22.0",
+      "../../node_modules/types-for-adobe/shared/XMPScript"
+    ]
+  },
+  "include": ["./**/*", "../lib/**/*", "../types/**/*", "../init.ts"]
+}
