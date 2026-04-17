@@ -11,7 +11,7 @@
 - コマンドは `package.json` の scripts に登録されているものを優先する
 - コード生成後は `pnpm lint` と `pnpm format` を必ず実行する
 - コードや設定を変更したら、必要に応じて `pnpm build` で確認する。変更範囲が広い場合は `pnpm build --all` を使う
-- 新規スクリプト作成時は `pnpm new -- --name=ScriptName --license` を使用する
+- 新規スクリプト作成時は `pnpm new -- --app=<appId> --name=ScriptName --license` を使用する
 - 実装に当たって、足りない情報があれば着手前に質問する。仕様を固めてから進める
 - README.md は参照するが、実際のファイル配置や挙動と異なる場合は workspace の実態を優先する
 - 文頭が `!` で始まる指示は即時着手する。重大なインシデントにつながる場合のみユーザーに確認する
@@ -22,6 +22,7 @@
 - `docs/` を適切に確認し、必要に応じて更新する
 - プロジェクト構成・ビルド設定は `docs/project-overview.md` を参照
 - ポリフィルの詳細は `docs/polyfills.md` を参照
+- 初期セットアップ手順は `docs/guides/getting-started.md` を参照
 
 ## Git / PR 運用
 

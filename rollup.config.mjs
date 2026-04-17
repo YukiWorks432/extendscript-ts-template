@@ -64,8 +64,7 @@ const collectTypeScriptFiles = (targetDir) => {
   return files.sort((left, right) => left.localeCompare(right));
 };
 
-const calculateScriptHash = (scriptName) => {
-  const scriptDir = `src/${scriptName}`;
+const calculateScriptHash = (scriptDir) => {
   const files = collectTypeScriptFiles(scriptDir);
 
   if (files.length === 0) {
@@ -124,6 +123,12 @@ const hasForceBuildFlag = (commandLineArgs = {}) => {
   return isTruthyFlag(process.env.BUILD_ALL);
 };
 
+const getAppFilter = (commandLineArgs = {}) => {
+  const appFilter = commandLineArgs.app || null;
+  delete commandLineArgs.app;
+  return appFilter;
+};
+
 const extensions = [".ts"];
 
 const isEvalWarning = (w) =>
@@ -180,31 +185,32 @@ const licenser = (srcDir) => {
   });
 };
 
-const babelConfig = babel({
-  extensions,
-  babelrc: false,
-  babelHelpers: "bundled",
-  comments: false,
-  presets: [
-    [
-      "@babel/preset-env",
-      {
-        loose: true,
-        modules: false,
-        targets: {
-          ie: "8",
+const createBabelConfig = () =>
+  babel({
+    extensions,
+    babelrc: false,
+    babelHelpers: "bundled",
+    comments: false,
+    presets: [
+      [
+        "@babel/preset-env",
+        {
+          loose: true,
+          modules: false,
+          targets: {
+            ie: "8",
+          },
         },
-      },
+      ],
     ],
-  ],
-  plugins: [
-    ["@babel/plugin-transform-class-properties", { loose: true }],
-    ["@babel/plugin-transform-classes", { loose: true }],
-    ["@babel/plugin-transform-property-mutators", { loose: true }],
-    ["@babel/plugin-transform-shorthand-properties", { loose: true }],
-    ["@babel/plugin-transform-reserved-words", { loose: true }],
-  ],
-});
+    plugins: [
+      ["@babel/plugin-transform-class-properties", { loose: true }],
+      ["@babel/plugin-transform-classes", { loose: true }],
+      ["@babel/plugin-transform-property-mutators", { loose: true }],
+      ["@babel/plugin-transform-shorthand-properties", { loose: true }],
+      ["@babel/plugin-transform-reserved-words", { loose: true }],
+    ],
+  });
 
 let hasSavedBuildHashes = false;
 
@@ -221,58 +227,92 @@ const persistBuildHashes = (hashes) => ({
 });
 
 export default (commandLineArgs) => {
-  const buildableScripts = config.scripts;
-  if (buildableScripts.length === 0) {
+  const forceBuildAll = hasForceBuildFlag(commandLineArgs);
+  const appFilter = getAppFilter(commandLineArgs);
+
+  // アプリ別スクリプトを展開: { appId, script, srcDir, outDir }
+  const allScripts = [];
+
+  if (config.scripts) {
+    for (const [appId, scripts] of Object.entries(config.scripts)) {
+      if (appFilter && appId !== appFilter) continue;
+      for (const script of scripts) {
+        allScripts.push({
+          appId,
+          script,
+          srcDir: `src/${appId}/${script.name}`,
+          outDir: `dist/${appId}/${script.name}`,
+          hashKey: `${appId}/${script.name}`,
+          tsconfig: `src/${appId}/tsconfig.json`,
+        });
+      }
+    }
+  }
+
+  // common スクリプト（アプリ非依存）
+  if (config.common && !appFilter) {
+    for (const script of config.common) {
+      allScripts.push({
+        appId: null,
+        script,
+        srcDir: `src/${script.name}`,
+        outDir: `dist/${script.name}`,
+        hashKey: script.name,
+        tsconfig: "tsconfig.json",
+      });
+    }
+  }
+
+  if (allScripts.length === 0) {
     console.error("ビルドするスクリプトがありません。");
     process.exit(1);
   }
 
   const previousBuildHashes = loadBuildHashes();
   const currentBuildHashes = {};
-  const forceBuildAll = hasForceBuildFlag(commandLineArgs);
 
-  const targetScripts = buildableScripts.filter((script) => {
-    const scriptHash = calculateScriptHash(script.name);
-    currentBuildHashes[script.name] = scriptHash;
+  const targetScripts = allScripts.filter(({ script, srcDir, hashKey }) => {
+    const scriptHash = calculateScriptHash(srcDir);
+    currentBuildHashes[hashKey] = scriptHash;
 
     if (forceBuildAll) {
       return true;
     }
 
-    return previousBuildHashes[script.name] !== scriptHash;
+    return previousBuildHashes[hashKey] !== scriptHash;
   });
 
-  const entries = targetScripts.map((script) => {
-    const srcDir = `src/${script.name}`;
-    const outDir = `dist/${script.name}`;
-    const inputFile = `${srcDir}/index.ts`;
-    const fileHash =
-      currentBuildHashes[script.name] || calculateFileHash(inputFile);
+  const entries = targetScripts.map(
+    ({ script, srcDir, outDir, hashKey, tsconfig }) => {
+      const inputFile = `${srcDir}/index.ts`;
+      const fileHash =
+        currentBuildHashes[hashKey] || calculateFileHash(inputFile);
 
-    const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */`;
+      const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */`;
 
-    return {
-      input: inputFile,
-      output: {
-        file: `${outDir}/${script.name}.jsx`,
-        format: "cjs",
-      },
-      context: "this",
-      onwarn,
-      plugins: [
-        typescript(),
-        resolve({
-          extensions,
-        }),
-        commonjs(),
-        babelConfig,
-        extractCommentsToTop(),
-        terserConfig(banner),
-        script.license ? licenser(srcDir) : null,
-        persistBuildHashes(currentBuildHashes),
-      ],
-    };
-  });
+      return {
+        input: inputFile,
+        output: {
+          file: `${outDir}/${script.name}.jsx`,
+          format: "cjs",
+        },
+        context: "this",
+        onwarn,
+        plugins: [
+          typescript({ tsconfig }),
+          resolve({
+            extensions,
+          }),
+          commonjs(),
+          createBabelConfig(),
+          extractCommentsToTop(),
+          terserConfig(banner),
+          script.license ? licenser(srcDir) : null,
+          persistBuildHashes(currentBuildHashes),
+        ],
+      };
+    }
+  );
 
   if (entries.length === 0) {
     saveBuildHashes(currentBuildHashes);
@@ -280,10 +320,11 @@ export default (commandLineArgs) => {
     process.exit(0);
   }
 
+  const filterMsg = appFilter ? ` (app: ${appFilter})` : "";
   console.log(
     forceBuildAll
-      ? `--all/-a 指定により ${entries.length} 件を強制ビルドします。`
-      : `${entries.length} 件の変更スクリプトをビルドします。`
+      ? `--all/-a 指定により ${entries.length} 件を強制ビルドします。${filterMsg}`
+      : `${entries.length} 件の変更スクリプトをビルドします。${filterMsg}`
   );
 
   return entries;
