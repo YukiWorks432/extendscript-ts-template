@@ -1,4 +1,5 @@
 src/lib/polyfills/
-package.json
 pnpm-lock.yaml
-dist/
+dist
+node_modules
+coverage/
