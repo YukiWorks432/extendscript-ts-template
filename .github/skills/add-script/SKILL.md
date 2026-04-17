@@ -99,7 +99,9 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license
 1. `c:\projects\extendscript-ts-template\.github\instructions\extendscript.instructions.md` を `read_file` で読み込み、コーディングルールを確認する
 2. `purpose` と `@workflow` コメントを元に実装を進める
 3. 実装完了後に `pnpm lint && pnpm format` を実行する
-4. 実装した内容を簡潔に報告する
+4. エラーがなければ `pnpm build -- <appId>/<ScriptName>` を実行してビルドする
+5. エラーがあれば3に戻って修正
+6. エラーがなければ、実装した内容を簡潔に報告する
 
 ## Notes
 
