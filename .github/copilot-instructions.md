@@ -5,6 +5,8 @@
 - ベストプラクティスは必要に応じて具体例つきで提示する
 - パフォーマンスを重点的にチェックする
 - ユーザーの提案に対して、専門家としてより良い実装案がないか検討する
+- **質問、提案には必ず `vscode_askQuestions` ツールを使用する。** テキストで質問を列挙しない。
+  選択肢を提示する場合は `options` を設定し、`allowFreeformInput: true`（デフォルト）のままにする。
 
 ## 開発ワークフロー
 
@@ -34,3 +36,15 @@
 ## コードレビュー
 
 - PRレビューを行う際は、**`review-pull-request` スキル**を使用する
+
+## ローカルスキル
+
+プロジェクト固有のスキルファイルを以下に定義する。該当するリクエストには必ず `read_file` でスキルファイルを読み込んでから対応すること。
+
+<skills>
+<skill>
+<name>add-script</name>
+<description>ExtendScript プロジェクトに新しいスクリプトを追加する。Use when: 新しいスクリプトを作成する、特定の Adobe アプリ（aeft/ilst/phxs）向けのスクリプトを追加する、スクリプトの実装を開始する。</description>
+<file>c:\projects\extendscript-ts-template\.github\skills\add-script\SKILL.md</file>
+</skill>
+</skills>

@@ -196,7 +196,9 @@ async function updateScriptConfig(appId, newScript) {
 }
 
 const createIndexTsTemplate = (name) =>
-  `import "../../init";
+  `/** @preserve Explain script */
+
+import "../../init";
 import { entry } from "../../lib/lib";
 
 entry("${name}", () => {
