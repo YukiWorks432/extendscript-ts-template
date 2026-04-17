@@ -154,7 +154,7 @@ const terserConfig = (preamble) =>
       passes: 1,
     },
     format: {
-      comments: /(@preserve)/,
+      comments: /(@preserve|@description)/,
       preamble,
     },
   });
@@ -190,7 +190,6 @@ const createBabelConfig = () =>
     extensions,
     babelrc: false,
     babelHelpers: "bundled",
-    comments: false,
     presets: [
       [
         "@babel/preset-env",
