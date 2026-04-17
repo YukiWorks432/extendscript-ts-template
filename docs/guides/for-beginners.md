@@ -133,12 +133,12 @@ pnpm --version
 
 2025 年現在、GitHub は**無料アカウントでも GitHub Copilot が使えます**。
 
-| 機能 | 無料プラン | Pro プラン（月 $10） |
-|------|----------|---------------------|
-| コード補完（AI インライン提案） | ✅ 月 2,000 回まで | ✅ 無制限 |
-| Copilot Chat（チャット） | ✅ 月 50 回まで | ✅ 無制限 |
-| エージェントモード（自律的なコード生成） | ✅（回数制限内） | ✅ 無制限 |
-| 複数モデル選択（GPT-4o など） | ✅ 一部モデル | ✅ 全モデル |
+| 機能                                     | 無料プラン         | Pro プラン（月 $10） |
+| ---------------------------------------- | ------------------ | -------------------- |
+| コード補完（AI インライン提案）          | ✅ 月 2,000 回まで | ✅ 無制限            |
+| Copilot Chat（チャット）                 | ✅ 月 50 回まで    | ✅ 無制限            |
+| エージェントモード（自律的なコード生成） | ✅（回数制限内）   | ✅ 無制限            |
+| 複数モデル選択（GPT-4o など）            | ✅ 一部モデル      | ✅ 全モデル          |
 
 > **初心者にとって**: 無料プランで十分スタートできます。慣れてきて毎日使うようになったら有料プランを検討しましょう。
 
@@ -294,6 +294,42 @@ Copilot が自律的に以下をすべてやってくれます：
 
 > **Agent モードとは**: Copilot がファイル操作やターミナルコマンドを自律的に実行するモードです。チャットモードのドロップダウンから「Agent」を選んでください。
 
+<details>
+<summary>AI を使わずに手動でスクリプトを作る場合</summary>
+
+#### 手順 1: ファイルを生成する
+
+ターミナルで以下のコマンドを実行します（スクリプト名は任意）：
+
+```bash
+pnpm new -- --app=aeft --name=WiggleApplier --license
+```
+
+もしくは対話式に進めることもできます。
+
+```bash
+pnpm new
+
+> 対象アプリを選択してください（aeft, ilst, phxs）
+aeft
+> スクリプト名を入力してください:
+WiggleApplier
+> ライセンス表記を含めますか？ (y/N)
+n
+```
+
+`src/aeft/WiggleApplier/index.ts` が自動生成されます。
+
+#### 手順 2: コードを書く
+
+生成された `src/aeft/WiggleApplier/index.ts` を VSCode で開き、下の「生成されるコードの例」を参考にして実装を書きます。
+
+- `import "../../init"` は必ず先頭に残してください（ポリフィルの読み込みに必要）
+- `entry("スクリプト名", () => { ... })` の中に処理を書きます
+- After Effects のオブジェクト・メソッドは [AE スクリプティングガイド](https://ae-scripting.docsforadobe.dev/) で確認できます
+
+</details>
+
 ---
 
 ### 5-2. 生成されるコードの例
@@ -323,9 +359,9 @@ entry("WiggleApplier", () => {
 
   // 選択中のすべてのレイヤーにウィグルエクスプレッションを適用
   for (const layer of selected) {
-    const position = layer.property("ADBE Transform Group")?.property(
-      "ADBE Position"
-    ) as Property | null;
+    const position = layer
+      .property("ADBE Transform Group")
+      ?.property("ADBE Position") as Property | null;
 
     if (!position) continue;
 
@@ -341,13 +377,13 @@ entry("WiggleApplier", () => {
 
 ### 5-3. コードの意味を理解する
 
-| コード | 意味 |
-|--------|------|
-| `import "../../init"` | ES5/ES6 のポリフィルを読み込む（必須） |
+| コード                                  | 意味                                                       |
+| --------------------------------------- | ---------------------------------------------------------- |
+| `import "../../init"`                   | ES5/ES6 のポリフィルを読み込む（必須）                     |
 | `entry("WiggleApplier", () => { ... })` | エラーハンドリングと Undo グループをまとめてくれる便利関数 |
-| `app.project.activeItem` | 現在 After Effects で開いているアイテム |
-| `comp.selectedLayers` | コンポジション内で選択中のレイヤー一覧 |
-| `position.expression = "wiggle(3, 30)"` | エクスプレッションを設定（周波数 3Hz、振幅 30px） |
+| `app.project.activeItem`                | 現在 After Effects で開いているアイテム                    |
+| `comp.selectedLayers`                   | コンポジション内で選択中のレイヤー一覧                     |
+| `position.expression = "wiggle(3, 30)"` | エクスプレッションを設定（周波数 3Hz、振幅 30px）          |
 
 ---
 
@@ -360,6 +396,23 @@ pnpm build
 成功すると `dist/aeft/WiggleApplier/WiggleApplier.jsx` が生成されます。
 
 エラーが出た場合は Copilot Chat に「このエラーを修正して」と貼り付けると直してくれます。
+
+<details>
+<summary>AI を使わずにエラーを修正する場合</summary>
+
+ビルドエラーが出たときは、エラーメッセージに含まれるファイル名・行番号を確認して該当箇所を修正します。
+
+**よくあるエラーと対処法**:
+
+| エラー                                  | 対処                                                                                                                                         |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TS2339: Property 'xxx' does not exist` | 型定義が見つからない。`as any` でキャストするか、[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe) でプロパティ名を確認する |
+| `TS2304: Cannot find name 'xxx'`        | AE のグローバルオブジェクト名が間違っている。スクリプティングガイドで正式名称を確認する                                                      |
+| `TS1005: ',' expected` など構文エラー   | 該当行の括弧・カンマ・クォートの対応を確認する                                                                                               |
+
+修正後は再度 `pnpm build` を実行してエラーが消えることを確認してください。
+
+</details>
 
 ---
 
@@ -420,16 +473,16 @@ gh auth status
 
 ## まとめ
 
-| やったこと | コマンド |
-|-----------|---------|
-| 環境構築 | VSCode / Git / GitHub CLI / Node.js / pnpm をインストール |
-| リポジトリ作成 | GitHub の Use this template → Code > GitHub CLI → `gh repo clone` |
-| 依存関係インストール | `pnpm i` |
-| スクリプト作成（AI） | Copilot Chat（Agent モード）で `/add-script ...` と入力 |
-| ビルド | `pnpm build` |
-| AE で実行 | ファイル → スクリプト → スクリプトファイルを実行... |
+| やったこと           | コマンド                                                          |
+| -------------------- | ----------------------------------------------------------------- |
+| 環境構築             | VSCode / Git / GitHub CLI / Node.js / pnpm をインストール         |
+| リポジトリ作成       | GitHub の Use this template → Code > GitHub CLI → `gh repo clone` |
+| 依存関係インストール | `pnpm i`                                                          |
+| スクリプト作成（AI） | Copilot Chat（Agent モード）で `/add-script ...` と入力           |
+| ビルド               | `pnpm build`                                                      |
+| AE で実行            | ファイル → スクリプト → スクリプトファイルを実行...               |
 
-このテンプレートを使えば「コードは書けないけど After Effects の自動化はしたい」という方でも、AI の力を借りて実用的なスクリプトを作れます。  
+このテンプレートを使えば「コードは書けないけど After Effects の自動化はしたい」という方でも、AI の力を借りて実用的なスクリプトを作れます。
 
 ぜひ自分の作業フローを自動化してみてください！
 
