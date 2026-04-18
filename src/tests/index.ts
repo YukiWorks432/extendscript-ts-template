@@ -3,7 +3,9 @@ import "../init";
 (() => {
   const result: string[] = [];
   const assert = (condition: any, message: string) => {
-    result.push(`${condition ? "OK" : "NG"}: ${message}`);
+    let status = "NG";
+    if (condition) status = "OK";
+    result.push(`${status}: ${message}`);
   };
 
   // Simple pretty printer for arrays/objects
@@ -46,10 +48,11 @@ import "../init";
     try {
       fn();
     } catch (e) {
-      assert(
-        false,
-        `${name} threw: ${e && e.toString ? e.toString() : e}; line: ${e && (e as any).line ? (e as any).line : "?"}`
-      ); // in case of ScriptError
+      let eStr = String(e);
+      if (e && e.toString) eStr = e.toString();
+      let lineStr = "?";
+      if (e && (e as any).line) lineStr = (e as any).line;
+      assert(false, `${name} threw: ${eStr}; line: ${lineStr}`); // in case of ScriptError
     }
   };
 

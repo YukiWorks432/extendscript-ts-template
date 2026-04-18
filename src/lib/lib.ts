@@ -24,12 +24,10 @@ export const getLineFromString = (
 export const alertError = (error: Error) => {
   try {
     const line = getLineFromString(error.source, error.line)?.trim() || "";
-    alert(
-      `Error: ${error.message}\n` +
-        `Line: ${error.line}\n` +
-        (line.length < 200 ? `">": ${line}` : "")
-    );
-  } catch (e) {
+    let lineSuffix = "";
+    if (line.length < 200) lineSuffix = `">":\ ${line}`;
+    alert(`Error: ${error.message}\nLine: ${error.line}\n${lineSuffix}`);
+  } catch {
     alert(`Error: ${error.message}`);
   }
 };
