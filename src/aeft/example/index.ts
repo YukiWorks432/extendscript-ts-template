@@ -2,7 +2,7 @@
 import "../../init";
 
 // libから必要な関数をimportします。
-import { entry } from "../../lib/lib";
+import { entry } from "../lib/lib";
 
 // スクリプトはすべてentryの中に書いてください
 // アロー関数が使えるようになった
