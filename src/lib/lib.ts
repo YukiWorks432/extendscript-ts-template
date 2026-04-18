@@ -29,7 +29,7 @@ export const alertError = (error: Error) => {
         `Line: ${error.line}\n` +
         (line.length < 200 ? `">": ${line}` : "")
     );
-  } catch (e) {
+  } catch {
     alert(`Error: ${error.message}`);
   }
 };

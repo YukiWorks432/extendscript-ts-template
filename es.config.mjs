@@ -5,12 +5,6 @@ export default {
   scripts: {
     aeft: [
       {
-        name: "AddWiggle",
-        version: "0.0.1",
-        build: true,
-        license: true,
-      },
-      {
         name: "example",
         version: "0.0.1",
         build: true,

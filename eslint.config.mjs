@@ -3,7 +3,12 @@ import tsEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 export default defineConfig([
-  globalIgnores(["dist/*", "node_modules/*", "src/lib/*", "es.config.mjs"]),
+  globalIgnores([
+    "dist/*",
+    "node_modules/*",
+    "src/lib/polyfills/*",
+    "es.config.mjs",
+  ]),
   {
     files: ["**/*.ts"],
 

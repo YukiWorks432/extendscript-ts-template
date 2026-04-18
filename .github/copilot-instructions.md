@@ -44,7 +44,12 @@
 <skills>
 <skill>
 <name>add-script</name>
-<description>ExtendScript プロジェクトに新しいスクリプトを追加する。Use when: 新しいスクリプトを作成する、特定の Adobe アプリ（aeft/ilst/phxs）向けのスクリプトを追加する、スクリプトの実装を開始する。</description>
-<file>c:\projects\extendscript-ts-template\.github\skills\add-script\SKILL.md</file>
+<description>ExtendScript プロジェクトに新しいスクリプトを追加する。Use when: 新しいスクリプトを作成する、After Effects / Illustrator / Photoshop 向けのスクリプトを追加する、スクリプトの実装を開始する。</description>
+<file>.github/skills/add-script/SKILL.md</file>
+</skill>
+<skill>
+<name>update-from-upstream</name>
+<description>テンプレートリポジトリ（YukiWorks432/extendscript-ts-template）の更新をユーザーのスクリプトを消さずに取り込む。Use when: テンプレートのアップデートを反映したい、ポリフィルやビルドツールを最新化したい、upstream の変更を確認・取り込みたい。</description>
+<file>.github/skills/update-from-upstream/SKILL.md</file>
 </skill>
 </skills>
