@@ -1,3 +1,5 @@
+export * from "../../lib/lib";
+
 /***
  * After Effects ユーティリティ関数
  */

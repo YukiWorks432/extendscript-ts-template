@@ -1,3 +1,5 @@
+export * from "../../lib/lib";
+
 /***
  * Illustrator ユーティリティ関数
  */

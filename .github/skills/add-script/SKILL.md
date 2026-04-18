@@ -139,7 +139,7 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license
 
 ```typescript
 import "../../init";
-import { entryUI } from "../../lib/lib";
+import { entryUI } from "../lib/lib";
 
 entryUI("<ScriptName>", __ES_THIS__, (win) => {
   // TODO: UI を構築する
