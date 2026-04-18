@@ -61,25 +61,28 @@ dialog.add("button", undefined, "Cancel");
 if (dialog.show() !== 1) return;
 ```
 
-## 三項演算子の使用禁止
+## 入れ子の三項演算子の使用禁止
 
 ExtendScript には三項演算子の評価順序に既知のバグがある。
-ネストした三項演算子が JavaScript の仕様通りに評価されず、予期しない値になる。
-**三項演算子（`? :`）は一切使用しないこと。**
+**入れ子（ネスト）になった三項演算子は使用しないこと。**
+1層のみで副作用を伴わない三項演算子は許容される。
 
 ```ts
-// ❌ NG: 三項演算子
+// ✅ OK: 1層の三項演算子
 const value = condition ? "a" : "b";
 
-// ✅ OK（const が必要な場合）: 即時呼び出し無名関数 + if
+// ❌ NG: 入れ子の三項演算子
+const value = a ? (b ? "x" : "y") : "z";
+
+// ✅ OK（入れ子を避ける場合）: 即時呼び出し無名関数 + if
 const value = (() => {
-  if (condition) return "a";
-  return "b";
+  if (a) return b ? "x" : "y";
+  return "z";
 })();
 
 // ✅ OK（let でよい場合）: let + if で代入
-let value = "b";
-if (condition) value = "a";
+let value = "z";
+if (a) value = b ? "x" : "y";
 ```
 
 参考: https://uske-s.hatenablog.com/entry/2021/10/26/184709
