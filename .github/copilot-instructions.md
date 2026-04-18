@@ -52,4 +52,14 @@
 <description>テンプレートリポジトリ（YukiWorks432/extendscript-ts-template）の更新をユーザーのスクリプトを消さずに取り込む。Use when: テンプレートのアップデートを反映したい、ポリフィルやビルドツールを最新化したい、upstream の変更を確認・取り込みたい。</description>
 <file>.github/skills/update-from-upstream/SKILL.md</file>
 </skill>
+<skill>
+<name>debug-script</name>
+<description>TypeScript / Rollup のビルドエラーを修正する。Use when: pnpm build でエラーが出た、pnpm lint でエラーが出た、TypeScript の型エラーが出た、ビルドが失敗した。</description>
+<file>.github/skills/debug-script/SKILL.md</file>
+</skill>
+<skill>
+<name>es-to-ts</name>
+<description>既存の ExtendScript (.jsx) を TypeScript に書き直す。Use when: 既存のスクリプトを TypeScript 化したい、.jsx ファイルをプロジェクトに追加したい、古い ExtendScript コードをモダンな TypeScript に移植したい。</description>
+<file>.github/skills/es-to-ts/SKILL.md</file>
+</skill>
 </skills>
