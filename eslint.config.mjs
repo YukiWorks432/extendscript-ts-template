@@ -119,9 +119,9 @@ export default defineConfig([
       "no-restricted-syntax": [
         "error",
         {
-          selector: "ConditionalExpression",
+          selector: "ConditionalExpression ConditionalExpression",
           message:
-            "三項演算子は ExtendScript の既知バグにより使用禁止です。const が必要なら即時呼び出し無名関数 + if、let でよければ let + if に書き換えてください。",
+            "入れ子になった三項演算子は ExtendScript の既知バグにより使用禁止です。if 文または即時呼び出し無名関数 + if に書き換えてください。",
         },
         {
           selector:
