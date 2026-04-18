@@ -1,8 +1,6 @@
-import typescript from "@rollup/plugin-typescript";
+import { defineConfig } from "rolldown";
 import terser from "@rollup/plugin-terser";
-import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import babel from "@rollup/plugin-babel";
+import babel, { getBabelOutputPlugin } from "@rollup/plugin-babel";
 import license from "rollup-plugin-license";
 
 import fs from "fs";
@@ -109,42 +107,15 @@ const saveBuildHashes = (hashes) => {
 const isTruthyFlag = (value) =>
   value !== undefined && value !== "" && value !== "false" && value !== "0";
 
-const hasForceBuildFlag = (commandLineArgs = {}) => {
-  const forceBuildFromArgs =
-    Boolean(commandLineArgs.all) || Boolean(commandLineArgs.a);
-
-  delete commandLineArgs.all;
-  delete commandLineArgs.a;
-
-  if (forceBuildFromArgs) {
-    return true;
-  }
-
+const hasForceBuildFlag = () => {
   return isTruthyFlag(process.env.BUILD_ALL);
 };
 
-const getAppFilter = (commandLineArgs = {}) => {
-  const appFilter = commandLineArgs.app || null;
-  delete commandLineArgs.app;
-  return appFilter;
+const getAppFilter = () => {
+  return process.env.APP || null;
 };
 
 const extensions = [".ts"];
-
-const isEvalWarning = (w) =>
-  w &&
-  (w.code === "EVAL" ||
-    (w.code === "PLUGIN_WARNING" && w.pluginCode === "EVAL"));
-const isFromJson2 = (w) => {
-  const id = (w && (w.id || (w.loc && w.loc.file))) || "";
-  return /[\\/]json2\.js$/i.test(id);
-};
-const onwarn = (warning, defaultHandler) => {
-  if (isEvalWarning(warning) && isFromJson2(warning)) {
-    return;
-  }
-  defaultHandler(warning);
-};
 
 const terserConfig = (preamble) =>
   terser({
@@ -191,6 +162,7 @@ const createBabelConfig = () =>
     babelrc: false,
     babelHelpers: "bundled",
     presets: [
+      "@babel/preset-typescript",
       [
         "@babel/preset-env",
         {
@@ -211,6 +183,22 @@ const createBabelConfig = () =>
     ],
   });
 
+const createOutputBabelConfig = () =>
+  getBabelOutputPlugin({
+    presets: [
+      [
+        "@babel/preset-env",
+        {
+          loose: true,
+          modules: false,
+          targets: {
+            ie: "8",
+          },
+        },
+      ],
+    ],
+  });
+
 let hasSavedBuildHashes = false;
 
 const persistBuildHashes = (hashes) => ({
@@ -225,9 +213,9 @@ const persistBuildHashes = (hashes) => ({
   },
 });
 
-export default (commandLineArgs) => {
-  const forceBuildAll = hasForceBuildFlag(commandLineArgs);
-  const appFilter = getAppFilter(commandLineArgs);
+export default defineConfig((commandLineArgs) => {
+  const forceBuildAll = hasForceBuildFlag();
+  const appFilter = getAppFilter();
 
   // アプリ別スクリプトを展開: { appId, script, srcDir, outDir }
   const allScripts = [];
@@ -293,17 +281,18 @@ export default (commandLineArgs) => {
         input: inputFile,
         output: {
           file: `${outDir}/${script.name}.jsx`,
-          format: "cjs",
+          format: "esm",
+          banner,
         },
         context: "this",
-        onwarn,
+        tsconfig,
+        onLog(level, log) {
+          if (log.code === "EVAL") return;
+          console.warn(log.message);
+        },
         plugins: [
-          typescript({ tsconfig }),
-          resolve({
-            extensions,
-          }),
-          commonjs(),
           createBabelConfig(),
+          createOutputBabelConfig(),
           extractCommentsToTop(),
           terserConfig(banner),
           script.license ? licenser(srcDir) : null,
@@ -327,4 +316,4 @@ export default (commandLineArgs) => {
   );
 
   return entries;
-};
+});

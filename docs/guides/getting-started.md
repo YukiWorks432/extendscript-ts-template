@@ -71,7 +71,7 @@ pnpm build
 ### 特定アプリのみビルド
 
 ```bash
-pnpm build --app=aeft
+pnpm exec rolldown -c --environment APP:aeft
 ```
 
 ### 新しいアプリを追加
@@ -206,7 +206,7 @@ git diff --name-status HEAD..upstream/main
 インフラ部分だけを指定して取り込みます：
 
 ```bash
-git checkout upstream/main -- scripts/ src/lib/ src/init.ts rollup.config.mjs tsconfig.json package.json
+git checkout upstream/main -- scripts/ src/lib/ src/init.ts rolldown.config.mjs tsconfig.json package.json
 ```
 
 > **注意**: `es.config.mjs` には自分のスクリプト設定が含まれているため、上記コマンドには含めていません。
@@ -216,5 +216,5 @@ git checkout upstream/main -- scripts/ src/lib/ src/init.ts rollup.config.mjs ts
 
 ```bash
 pnpm install
-pnpm build --all
+pnpm build:all
 ```

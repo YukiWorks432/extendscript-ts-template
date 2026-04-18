@@ -54,7 +54,7 @@
 </skill>
 <skill>
 <name>debug-script</name>
-<description>TypeScript / Rollup のビルドエラーを修正する。Use when: pnpm build でエラーが出た、pnpm lint でエラーが出た、TypeScript の型エラーが出た、ビルドが失敗した。</description>
+<description>TypeScript / Rolldown のビルドエラーを修正する。Use when: pnpm build でエラーが出た、pnpm lint でエラーが出た、TypeScript の型エラーが出た、ビルドが失敗した。</description>
 <file>.github/skills/debug-script/SKILL.md</file>
 </skill>
 <skill>

@@ -29,7 +29,7 @@ argument-hint: "確認のみ / 自動更新 / 特定ファイルのみ など、
 | `src/aeft/lib/`, `src/aeft/types/` | After Effects 共通ライブラリ・型   |
 | `src/ilst/lib/`, `src/ilst/types/` | Illustrator 共通ライブラリ・型     |
 | `src/phxs/lib/`, `src/phxs/types/` | Photoshop 共通ライブラリ・型       |
-| `rollup.config.mjs`                | バンドル設定                       |
+| `rolldown.config.mjs`              | バンドル設定                       |
 | `tsconfig.json`                    | TypeScript 設定                    |
 | `eslint.config.mjs`                | Lint 設定                          |
 | `package.json`                     | パッケージ情報・依存関係           |
@@ -127,7 +127,7 @@ git checkout upstream/main -- src/types/
 git checkout upstream/main -- src/aeft/lib/ src/aeft/types/
 git checkout upstream/main -- src/ilst/lib/ src/ilst/types/
 git checkout upstream/main -- src/phxs/lib/ src/phxs/types/
-git checkout upstream/main -- rollup.config.mjs tsconfig.json eslint.config.mjs
+git checkout upstream/main -- rolldown.config.mjs tsconfig.json eslint.config.mjs
 git checkout upstream/main -- package.json .prettierrc .prettierignore pnpm-workspace.yaml
 git checkout upstream/main -- .github/instructions/ .github/skills/add-script/ .github/copilot-instructions.md
 git checkout upstream/main -- docs/
