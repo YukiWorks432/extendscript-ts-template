@@ -40,7 +40,7 @@
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "12.3.0",
     "@typescript-eslint/eslint-plugin": "8.58.2",
-    "@typescript-eslint/parser": "8.58.2",
+    "@typescript-eslint/parser": "8.59.0",
     "es5-shim": "^4.6.7",
     "es6-shim": "^0.35.8",
     "eslint": "^10.2.1",
