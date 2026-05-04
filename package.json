@@ -31,7 +31,7 @@
     "@babel/plugin-transform-property-mutators": "^7.28.6",
     "@babel/plugin-transform-reserved-words": "^7.27.1",
     "@babel/plugin-transform-shorthand-properties": "^7.27.1",
-    "@babel/preset-env": "^7.29.2",
+    "@babel/preset-env": "^7.29.3",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@rollup/plugin-babel": "^7.0.0",
