@@ -44,7 +44,7 @@
     "es5-shim": "^4.6.7",
     "es6-shim": "^0.35.8",
     "eslint": "^10.2.1",
-    "globals": "^17.5.0",
+    "globals": "^17.6.0",
     "prettier": "^3.8.3",
     "rollup": "^4.60.2",
     "rollup-plugin-license": "^3.7.1",
