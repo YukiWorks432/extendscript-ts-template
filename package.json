@@ -43,7 +43,7 @@
     "@typescript-eslint/parser": "8.58.2",
     "es5-shim": "^4.6.7",
     "es6-shim": "^0.35.8",
-    "eslint": "^10.2.1",
+    "eslint": "^10.3.0",
     "globals": "^17.5.0",
     "prettier": "^3.8.3",
     "rollup": "^4.60.2",
