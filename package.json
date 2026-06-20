@@ -1,6 +1,6 @@
 {
   "name": "extendscript-ts-template",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Multi-app ExtendScript TypeScript template for Adobe After Effects, Illustrator, Photoshop, and more",
   "scripts": {
     "build": "rollup -c",
