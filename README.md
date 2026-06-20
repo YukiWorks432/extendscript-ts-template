@@ -144,3 +144,4 @@ pnpm watch
 - [プロジェクト概要](docs/project-overview.md)
 - [ポリフィル](docs/polyfills.md)
 - [はじめに](docs/guides/getting-started.md)
+- [リリース手順](docs/release-process.md)
