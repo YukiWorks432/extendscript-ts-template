@@ -1,5 +1,5 @@
 import "../../init";
-import { entry } from "../../lib/lib";
+import { entry } from "../lib/lib";
 
 entry("example", () => {
   const doc = app.activeDocument;

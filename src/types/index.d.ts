@@ -7,6 +7,14 @@ interface Error {
 
 // jp: ExtendScript環境のApplicationオブジェクトに存在する可能性のあるメソッドを型定義に追加します。
 // en: Add methods that may exist on the Application object in the ExtendScript environment to the type definition.
+/**
+ * jp: バンドル時にスクリプト先頭へ注入されるグローバルな this。\
+ *     ScriptUI パネルとして起動された場合は Panel、そうでない場合はグローバルオブジェクト。\
+ * en: Global `this` injected at the top of the bundle.\
+ *     Holds the Panel when launched as a ScriptUI panel, otherwise the global object.
+ */
+declare var __ES_THIS__: object;
+
 interface Application {
   /**
    * jp: Undoグループ化を開始するメソッド。Aeの場合のみ存在します。\

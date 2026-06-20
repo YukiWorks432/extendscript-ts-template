@@ -154,7 +154,7 @@ const terserConfig = (preamble) =>
       passes: 1,
     },
     format: {
-      comments: /(@preserve)/,
+      comments: /(@preserve|@description)/,
       preamble,
     },
   });
@@ -190,7 +190,6 @@ const createBabelConfig = () =>
     extensions,
     babelrc: false,
     babelHelpers: "bundled",
-    comments: false,
     presets: [
       [
         "@babel/preset-env",
@@ -288,7 +287,7 @@ export default (commandLineArgs) => {
       const fileHash =
         currentBuildHashes[hashKey] || calculateFileHash(inputFile);
 
-      const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */`;
+      const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
 
       return {
         input: inputFile,

@@ -17,9 +17,9 @@ src/                       # ソースコード
   init.ts                  # ポリフィル読み込みエントリ（全スクリプトで import 必須）
   lib/                     # 全アプリ共通ライブラリ
     polyfills/             # ES5/ES6/ESNext ポリフィル
-    lib.ts                 # 汎用ユーティリティ（entry, alertError）
+    lib.ts                 # 汎用ユーティリティ（entry, entryUI, alertError）
   types/                   # 全アプリ共通の型定義
-    index.d.ts             # Error, Application 拡張
+    index.d.ts             # Error, Application 拡張、__ES_THIS__ グローバル変数
   tests/                   # ポリフィルテスト（アプリ非依存）
   aeft/                    # After Effects 向けスクリプト
     tsconfig.json          # AE 用 TypeScript 設定（types-for-adobe/AfterEffects）
@@ -81,11 +81,11 @@ export default {
 - **ルート `tsconfig.json`**: 共通ベース設定（ES3 ターゲット、lib 設定、types なし）
 - **`src/{appId}/tsconfig.json`**: ルートを `extends` し、アプリ固有の `types` のみ差し替え
 
-| アプリ | tsconfig パス | types-for-adobe |
-|-------|---------------|-----------------|
+| アプリ        | tsconfig パス            | types-for-adobe     |
+| ------------- | ------------------------ | ------------------- |
 | After Effects | `src/aeft/tsconfig.json` | `AfterEffects/22.0` |
-| Illustrator | `src/ilst/tsconfig.json` | `Illustrator/2022` |
-| Photoshop | `src/phxs/tsconfig.json` | `Photoshop/2015.5` |
+| Illustrator   | `src/ilst/tsconfig.json` | `Illustrator/2022`  |
+| Photoshop     | `src/phxs/tsconfig.json` | `Photoshop/2015.5`  |
 
 ## 新規スクリプト追加
 
@@ -102,6 +102,7 @@ pnpm new
 ```
 
 実行すると以下が自動で行われる：
+
 1. `es.config.mjs` の `scripts.{app}` 配列先頭にエントリ追加
 2. `src/{app}/MyScript/index.ts` をテンプレートから生成
 3. Prettier で `es.config.mjs` を整形
@@ -119,12 +120,67 @@ entry("MyScript", () => {
 });
 ```
 
+**ScriptUI スクリプト（パネル対応）を作る場合は `entryUI` を使う：**
+
+```ts
+import "../../init";
+import { entryUI } from "../../lib/lib";
+
+entryUI("MyScript", __ES_THIS__, (win) => {
+  win.add("statictext", undefined, "Hello!");
+  // ここで UI を構築する
+});
+```
+
+`__ES_THIS__` はビルド時にバンドル先頭へ自動注入されるグローバルな `this` で、
+Extension Manager / Dockable パネルとして起動された場合は `Panel`、
+スクリプトとして実行された場合はグローバルオブジェクトを返す。
+
 ### 予約名
 
 以下の名前はスクリプト名として使用不可：
+
 - `lib` — アプリ固有ユーティリティディレクトリと衝突
 - `types` — 型定義ディレクトリと衝突
 - `tests` — テストディレクトリと衝突
+
+## エントリ関数の使い分け
+
+`src/lib/lib.ts` に 2 種類のエントリ関数がある。
+
+### `entry` — 通常スクリプト用
+
+```ts
+import { entry } from "../../lib/lib";
+
+entry("MyScript", () => {
+  // ここに処理を書く
+});
+```
+
+- 実行時に Undo グループを作成し、完了後に閉じる
+- 例外が発生した場合は `alertError()` でエラーダイアログを表示する
+
+### `entryUI` — ScriptUI ウィンドウ用
+
+```ts
+import { entryUI } from "../../lib/lib";
+
+entryUI("MyScript", __ES_THIS__, (win) => {
+  const btn = win.add("button", undefined, "実行");
+
+  // ボタンの処理は entry で囲む
+  btn.onClick = () => {
+    entry("MyScript", () => {
+      // ここに Undo 対象の処理を書く
+    });
+  };
+});
+```
+
+- `entryUI` はウィンドウ・パネルの UI を組み立てるための関数で、Undo グループは作らない
+- **`onClick` などのイベントハンドラ内で処理を行う場合は、必ず `entry` で囲むこと**
+  - こうすることで処理ごとに Undo グループが作られ、エラーハンドリングも機能する
 
 ## 新規アプリ追加
 
@@ -133,6 +189,7 @@ pnpm add-app -- --app=idsn
 ```
 
 実行すると以下を自動生成：
+
 - `src/{app}/tsconfig.json`（types-for-adobe のマッピング付き）
 - `src/{app}/types/index.d.ts`
 - `src/{app}/lib/.gitkeep`
@@ -141,22 +198,23 @@ pnpm add-app -- --app=idsn
 
 ## 開発コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `pnpm build` | 変更のあるスクリプトをビルド |
-| `pnpm build --all` | 全スクリプトを強制ビルド |
-| `pnpm build --app=aeft` | 特定アプリのスクリプトのみビルド |
-| `pnpm watch` | ファイル変更を監視して自動ビルド |
-| `pnpm lint` | ESLint でコード検査 |
-| `pnpm format` | Prettier でコード整形 |
-| `pnpm new` | 新規スクリプト追加（対話式 / CLI） |
-| `pnpm add-app` | 新規アプリスキャフォールディング |
-| `pnpm clean` | ビルドハッシュをクリーンアップ |
+| コマンド                | 説明                               |
+| ----------------------- | ---------------------------------- |
+| `pnpm build`            | 変更のあるスクリプトをビルド       |
+| `pnpm build --all`      | 全スクリプトを強制ビルド           |
+| `pnpm build --app=aeft` | 特定アプリのスクリプトのみビルド   |
+| `pnpm watch`            | ファイル変更を監視して自動ビルド   |
+| `pnpm lint`             | ESLint でコード検査                |
+| `pnpm format`           | Prettier でコード整形              |
+| `pnpm new`              | 新規スクリプト追加（対話式 / CLI） |
+| `pnpm add-app`          | 新規アプリスキャフォールディング   |
+| `pnpm clean`            | ビルドハッシュをクリーンアップ     |
 
 ## 型情報について
 
 [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe) を使用。
 有志作成の非公式定義であり、未定義の API が存在する場合がある。
 不足している型は以下に追加する：
+
 - 全アプリ共通: `src/types/index.d.ts`
 - アプリ固有: `src/{appId}/types/index.d.ts`

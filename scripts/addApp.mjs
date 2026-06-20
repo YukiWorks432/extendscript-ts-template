@@ -1,8 +1,11 @@
 // アプリのスキャフォールディングを行うスクリプト
 // Usage:
-//   pnpm add-app -- --app=idsn
+//   対話モード: pnpm add-app
+//   CLI モード:  pnpm add-app -- --app=idsn
 // es.config.mjsにアプリキーを追加し、src/{app}/配下にテンプレートを作成します。
 
+import { createInterface } from "node:readline";
+import { stdin as input, stdout as output } from "node:process";
 import { parseArgs } from "node:util";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { execSync } from "node:child_process";
@@ -20,31 +23,31 @@ const SRC_DIR = path.resolve(projectRoot, "src");
 const APP_TYPES_MAP = {
   aeft: {
     dir: "AfterEffects/22.0",
-    shared: ["shared/PlugPlugExternalObject", "shared/XMPScript"],
+    shared: ["shared/XMPScript"],
   },
   ilst: {
     dir: "Illustrator/2022",
-    shared: ["shared/PlugPlugExternalObject"],
+    shared: [],
   },
   phxs: {
     dir: "Photoshop/2015.5",
-    shared: ["shared/PlugPlugExternalObject"],
+    shared: [],
   },
   idsn: {
     dir: "InDesign/2022",
-    shared: ["shared/PlugPlugExternalObject"],
+    shared: [],
   },
   ppro: {
     dir: "Premiere/24.0",
-    shared: ["shared/PlugPlugExternalObject"],
+    shared: [],
   },
   anmt: {
     dir: "Animate/22.0",
-    shared: ["shared/PlugPlugExternalObject"],
+    shared: [],
   },
   audt: {
     dir: "Audition/2018",
-    shared: ["shared/PlugPlugExternalObject"],
+    shared: [],
   },
 };
 
@@ -63,36 +66,65 @@ function detectLocale() {
 
 const LOCALE = detectLocale();
 
-const msg =
-  LOCALE === "ja"
-    ? {
-        noApp: "エラー: --app を指定してください。",
-        exists: (app) => `エラー: ${app} は既に存在します。`,
-        unknownType: (app) =>
-          `警告: ${app} の types-for-adobe マッピングが不明です。tsconfig.json を手動で設定してください。`,
-        done: (app) =>
-          `完了: src/${app}/ のスキャフォールディングが完了しました。`,
-        configUpdated: (app) =>
-          `es.config.mjs に scripts.${app} を追加しました。`,
-      }
-    : {
-        noApp: "Error: --app is required.",
-        exists: (app) => `Error: ${app} already exists.`,
-        unknownType: (app) =>
-          `Warning: Unknown types-for-adobe mapping for ${app}. Please configure tsconfig.json manually.`,
-        done: (app) => `Done: Scaffolding for src/${app}/ complete.`,
-        configUpdated: (app) => `Added scripts.${app} to es.config.mjs.`,
-      };
+const I18N = {
+  ja: {
+    prompt: {
+      enterApp: (known) =>
+        `追加するアプリのIDを入力してください (例: ${known.join(", ")}): `,
+    },
+    error: {
+      emptyApp: "エラー: アプリIDを入力してください。",
+      exists: (app) => `エラー: ${app} は既に存在します。`,
+      unknownType: (app) =>
+        `警告: ${app} の types-for-adobe マッピングが不明です。tsconfig.json を手動で設定してください。`,
+      unexpected: "予期せぬエラーが発生しました:",
+    },
+    done: (app) => `完了: src/${app}/ のスキャフォールディングが完了しました。`,
+    configUpdated: (app) => `es.config.mjs に scripts.${app} を追加しました。`,
+  },
+  en: {
+    prompt: {
+      enterApp: (known) =>
+        `Enter the app ID to add (e.g. ${known.join(", ")}): `,
+    },
+    error: {
+      emptyApp: "Error: Please enter an app ID.",
+      exists: (app) => `Error: ${app} already exists.`,
+      unknownType: (app) =>
+        `Warning: Unknown types-for-adobe mapping for ${app}. Please configure tsconfig.json manually.`,
+      unexpected: "An unexpected error occurred:",
+    },
+    done: (app) => `Done: Scaffolding for src/${app}/ complete.`,
+    configUpdated: (app) => `Added scripts.${app} to es.config.mjs.`,
+  },
+};
+
+const L = I18N[LOCALE] || I18N.en;
+
+class CliError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "CliError";
+  }
+}
+
+function ask(rl, question) {
+  return new Promise((resolve) => rl.question(question, resolve));
+}
 
 function parseCliArgs() {
-  const { values } = parseArgs({
-    args: process.argv.slice(2).filter((a) => a !== "--"),
-    options: {
-      app: { type: "string" },
-    },
-    strict: true,
-  });
-  return values.app?.trim() || null;
+  try {
+    const { values } = parseArgs({
+      args: process.argv.slice(2).filter((a) => a !== "--"),
+      options: {
+        app: { type: "string" },
+      },
+      strict: true,
+    });
+    return values.app?.trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 async function loadConfig() {
@@ -105,7 +137,7 @@ async function loadConfig() {
 function generateTsconfig(appId) {
   const mapping = APP_TYPES_MAP[appId];
   if (!mapping) {
-    console.warn(msg.unknownType(appId));
+    console.warn(L.error.unknownType(appId));
     return JSON.stringify(
       {
         extends: "../../tsconfig.json",
@@ -172,68 +204,91 @@ async function updateEsConfig(appId) {
   await writeFile(ES_CONFIG_PATH, newContent, { encoding: "utf8" });
 }
 
+async function scaffold(appId) {
+  const config = await loadConfig();
+  if (config.scripts && config.scripts[appId]) {
+    throw new CliError(L.error.exists(appId));
+  }
+
+  const appDir = path.resolve(SRC_DIR, appId);
+
+  // tsconfig.json
+  const tsconfigContent = generateTsconfig(appId);
+  await mkdir(appDir, { recursive: true });
+  await writeFile(
+    path.resolve(appDir, "tsconfig.json"),
+    tsconfigContent + "\n",
+    { encoding: "utf8" }
+  );
+
+  // types/index.d.ts
+  const typesDir = path.resolve(appDir, "types");
+  await mkdir(typesDir, { recursive: true });
+  await writeFile(
+    path.resolve(typesDir, "index.d.ts"),
+    `// Type definitions specific to ${appId}.\n`,
+    { encoding: "utf8" }
+  );
+
+  // lib/.gitkeep
+  const libDir = path.resolve(appDir, "lib");
+  await mkdir(libDir, { recursive: true });
+  await writeFile(path.resolve(libDir, ".gitkeep"), "", { encoding: "utf8" });
+
+  // example/index.ts
+  const exampleDir = path.resolve(appDir, "example");
+  await mkdir(exampleDir, { recursive: true });
+  await writeFile(
+    path.resolve(exampleDir, "index.ts"),
+    `import "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
+    { encoding: "utf8" }
+  );
+
+  // es.config.mjs 更新
+  await updateEsConfig(appId);
+  execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+  console.log(L.configUpdated(appId));
+  console.log(L.done(appId));
+}
+
 async function main() {
-  const appId = parseCliArgs();
-  if (!appId) {
-    console.error(msg.noApp);
-    process.exitCode = 1;
+  const cliAppId = parseCliArgs();
+
+  if (cliAppId) {
+    // CLI モード
+    try {
+      await scaffold(cliAppId);
+    } catch (err) {
+      process.exitCode = 1;
+      if (err instanceof CliError) {
+        console.error(err.message);
+      } else {
+        console.error(L.error.unexpected, err);
+      }
+    }
     return;
   }
 
+  // 対話モード
+  const rl = createInterface({ input, output });
   try {
-    const config = await loadConfig();
-    if (config.scripts && config.scripts[appId]) {
-      console.error(msg.exists(appId));
+    const knownApps = Object.keys(APP_TYPES_MAP);
+    const appId = String(await ask(rl, L.prompt.enterApp(knownApps))).trim();
+    if (!appId) {
+      console.error(L.error.emptyApp);
       process.exitCode = 1;
       return;
     }
-
-    const appDir = path.resolve(SRC_DIR, appId);
-
-    // tsconfig.json
-    const tsconfigContent = generateTsconfig(appId);
-    await mkdir(appDir, { recursive: true });
-    await writeFile(
-      path.resolve(appDir, "tsconfig.json"),
-      tsconfigContent + "\n",
-      {
-        encoding: "utf8",
-      }
-    );
-
-    // types/index.d.ts
-    const typesDir = path.resolve(appDir, "types");
-    await mkdir(typesDir, { recursive: true });
-    await writeFile(
-      path.resolve(typesDir, "index.d.ts"),
-      `// Type definitions specific to ${appId}.\n`,
-      { encoding: "utf8" }
-    );
-
-    // lib/.gitkeep
-    const libDir = path.resolve(appDir, "lib");
-    await mkdir(libDir, { recursive: true });
-    await writeFile(path.resolve(libDir, ".gitkeep"), "", {
-      encoding: "utf8",
-    });
-
-    // example/index.ts
-    const exampleDir = path.resolve(appDir, "example");
-    await mkdir(exampleDir, { recursive: true });
-    await writeFile(
-      path.resolve(exampleDir, "index.ts"),
-      `import "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
-      { encoding: "utf8" }
-    );
-
-    // es.config.mjs 更新
-    await updateEsConfig(appId);
-    execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
-    console.log(msg.configUpdated(appId));
-    console.log(msg.done(appId));
+    await scaffold(appId);
   } catch (err) {
-    console.error(err);
     process.exitCode = 1;
+    if (err instanceof CliError) {
+      console.error(err.message);
+    } else {
+      console.error(L.error.unexpected, err);
+    }
+  } finally {
+    rl.close();
   }
 }
 

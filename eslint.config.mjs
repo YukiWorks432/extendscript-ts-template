@@ -3,7 +3,12 @@ import tsEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 export default defineConfig([
-  globalIgnores(["dist/*", "node_modules/*", "src/lib/*", "es.config.mjs"]),
+  globalIgnores([
+    "dist/*",
+    "node_modules/*",
+    "src/lib/polyfills/*",
+    "es.config.mjs",
+  ]),
   {
     files: ["**/*.ts"],
 
@@ -113,6 +118,11 @@ export default defineConfig([
 
       "no-restricted-syntax": [
         "error",
+        {
+          selector: "ConditionalExpression ConditionalExpression",
+          message:
+            "入れ子になった三項演算子は ExtendScript の既知バグにより使用禁止です。if 文または即時呼び出し無名関数 + if に書き換えてください。",
+        },
         {
           selector:
             "CallExpression[callee.type='MemberExpression'][callee.property.name='anchor']",
