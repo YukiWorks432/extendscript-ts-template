@@ -48,6 +48,9 @@
 - 初期セットアップ: `docs/guides/getting-started.md`
 - 初学者向け説明: `docs/guides/for-beginners.md`
 - ポリフィル詳細: `docs/polyfills.md`
+- テンプレート利用後の初期整理: `docs/template-customization.md`
+- 配布用リポジトリの運営方針: `docs/repository-operations.md`
+- リリース手順: `docs/release-process.md`
 - スクリプト追加: `scripts/newScript.mjs` と `docs/project-overview.md`
 - アプリ追加: `scripts/addApp.mjs` と `docs/project-overview.md`
 - ExtendScript 追加指示: `.agents/instructions/extendscript.md`
