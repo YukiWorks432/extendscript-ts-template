@@ -32,7 +32,7 @@ concurrency:
 jobs:
   release:
     name: Create release
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: vars.RELEASE_AUTOMATION_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
 
     steps:
