@@ -72,13 +72,20 @@ pnpm build
 
 ```bash
 pnpm build --app=aeft
+pnpm build:aeft
 ```
+
+`pnpm build:aeft` は `pnpm build --app=aeft` と同じく、After Effects 向けスクリプトだけをビルドする短い別名です。
+Illustrator は `pnpm build:ilst`、Photoshop は `pnpm build:phxs` を使えます。
 
 ### 新しいアプリを追加
 
 ```bash
 pnpm add-app -- --app=idsn
 ```
+
+追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみです。
+追加したアプリには `pnpm build:<appId>` も自動で追加されます。
 
 ## ディレクトリ構造
 
@@ -112,7 +119,8 @@ entry("MyScript", () => {
 #### `entryUI` — ScriptUI パネル対応スクリプト用
 
 ドッキングパネルとして使う場合は `entryUI` と `__ES_THIS__` を使います。
-`__ES_THIS__` はビルド時にバンドル先頭へ自動注入されるグローバルな `this` です。
+`__ES_THIS__` はビルド時にバンドル先頭へ `var __ES_THIS__=this;` として自動注入されるグローバルな `this` です。
+Rollup 出力は `"use strict";` を出さない設定にしているため、ScriptUI パネル起動時の `this` を保持できます。
 
 ```ts
 import { entryUI } from "../../lib/lib";
@@ -127,6 +135,9 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 | -------------------------- | ---------------------- | -------------------------------------- |
 | スクリプトとして実行       | グローバルオブジェクト | `new Window("palette")` を生成して表示 |
 | ドッキングパネルとして起動 | `Panel`                | 渡された `Panel` をそのまま使用        |
+
+`entryUI` は UI 構築中や palette 表示時の例外をエラーダイアログで表示し、同じ例外を再送出します。
+`onClick` などのイベントハンドラ内で処理を行う場合は、処理本体を `entry()` で囲んでください。
 
 ```ts
 import { entry, alertError } from "../../lib/lib";

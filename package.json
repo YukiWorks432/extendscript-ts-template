@@ -4,11 +4,14 @@
   "description": "Multi-app ExtendScript TypeScript template for Adobe After Effects, Illustrator, Photoshop, and more",
   "scripts": {
     "build": "rollup -c",
+    "build:aeft": "rollup -c --app=aeft",
+    "build:ilst": "rollup -c --app=ilst",
+    "build:phxs": "rollup -c --app=phxs",
     "clean": "node ./scripts/cleanBuildHashes.mjs",
     "watch": "rollup -c -w",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "new": "node ./scripts/newScript.mjs&&prettier --write ./es.config.mjs",
+    "new": "node ./scripts/newScript.mjs",
     "add-app": "node ./scripts/addApp.mjs"
   },
   "keywords": [
