@@ -203,22 +203,26 @@ pnpm add-app -- --app=idsn
 - `src/{app}/lib/.gitkeep`
 - `src/{app}/example/index.ts`
 - `es.config.mjs` に `scripts.{app}` キーを追加し、`example` を `build: true`, `license: true` で登録
+- `package.json` に `build:<appId>` コマンドを追加
 
 既存の `src/{appId}` または `es.config.mjs` の `scripts.{appId}` と衝突する場合は、ファイルを生成せずに停止する。
 
 ## 開発コマンド
 
-| コマンド                | 説明                               |
-| ----------------------- | ---------------------------------- |
-| `pnpm build`            | 変更のあるスクリプトをビルド       |
-| `pnpm build --all`      | 全スクリプトを強制ビルド           |
-| `pnpm build --app=aeft` | 特定アプリのスクリプトのみビルド   |
-| `pnpm watch`            | ファイル変更を監視して自動ビルド   |
-| `pnpm lint`             | ESLint でコード検査                |
-| `pnpm format`           | Prettier でコード整形              |
-| `pnpm new`              | 新規スクリプト追加（対話式 / CLI） |
-| `pnpm add-app`          | 新規アプリスキャフォールディング   |
-| `pnpm clean`            | ビルドハッシュをクリーンアップ     |
+| コマンド                | 説明                                 |
+| ----------------------- | ------------------------------------ |
+| `pnpm build`            | 変更のあるスクリプトをビルド         |
+| `pnpm build --all`      | 全スクリプトを強制ビルド             |
+| `pnpm build --app=aeft` | 特定アプリのスクリプトのみビルド     |
+| `pnpm build:aeft`       | After Effects のスクリプトのみビルド |
+| `pnpm build:ilst`       | Illustrator のスクリプトのみビルド   |
+| `pnpm build:phxs`       | Photoshop のスクリプトのみビルド     |
+| `pnpm watch`            | ファイル変更を監視して自動ビルド     |
+| `pnpm lint`             | ESLint でコード検査                  |
+| `pnpm format`           | Prettier でコード整形                |
+| `pnpm new`              | 新規スクリプト追加（対話式 / CLI）   |
+| `pnpm add-app`          | 新規アプリスキャフォールディング     |
+| `pnpm clean`            | ビルドハッシュをクリーンアップ       |
 
 ## 型情報について
 

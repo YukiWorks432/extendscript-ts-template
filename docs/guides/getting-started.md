@@ -72,7 +72,11 @@ pnpm build
 
 ```bash
 pnpm build --app=aeft
+pnpm build:aeft
 ```
+
+`pnpm build:aeft` は `pnpm build --app=aeft` と同じく、After Effects 向けスクリプトだけをビルドする短い別名です。
+Illustrator は `pnpm build:ilst`、Photoshop は `pnpm build:phxs` を使えます。
 
 ### 新しいアプリを追加
 
@@ -81,6 +85,7 @@ pnpm add-app -- --app=idsn
 ```
 
 追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみです。
+追加したアプリには `pnpm build:<appId>` も自動で追加されます。
 
 ## ディレクトリ構造
 
