@@ -40,32 +40,57 @@ const hashText = (text) => {
   return hashSum.digest("hex");
 };
 
-const collectTypeScriptFiles = (targetDir) => {
-  if (!fs.existsSync(targetDir)) {
+const normalizePath = (filePath) => filePath.replace(/\\/g, "/");
+
+const collectFiles = (targetPath) => {
+  if (!fs.existsSync(targetPath)) {
     return [];
   }
 
-  const entries = fs.readdirSync(targetDir, { withFileTypes: true });
+  const stats = fs.statSync(targetPath);
+  if (stats.isFile()) {
+    return [path.resolve(targetPath)];
+  }
+
+  if (!stats.isDirectory()) {
+    return [];
+  }
+
+  const entries = fs.readdirSync(targetPath, { withFileTypes: true });
   const files = [];
 
   entries.forEach((entry) => {
-    const fullPath = path.join(targetDir, entry.name);
+    const fullPath = path.join(targetPath, entry.name);
 
     if (entry.isDirectory()) {
-      files.push(...collectTypeScriptFiles(fullPath));
+      files.push(...collectFiles(fullPath));
       return;
     }
 
-    if (/\.ts$/i.test(entry.name)) {
-      files.push(fullPath);
+    if (entry.isFile()) {
+      files.push(path.resolve(fullPath));
     }
   });
 
-  return files.sort((left, right) => left.localeCompare(right));
+  return files;
 };
 
-const calculateScriptHash = (scriptDir) => {
-  const files = collectTypeScriptFiles(scriptDir);
+const getUniqueSortedFiles = (inputPaths) => {
+  const fileMap = new Map();
+
+  inputPaths.forEach((inputPath) => {
+    collectFiles(inputPath).forEach((filePath) => {
+      fileMap.set(filePath, filePath);
+    });
+  });
+
+  return Array.from(fileMap.values()).sort((left, right) =>
+    normalizePath(left).localeCompare(normalizePath(right))
+  );
+};
+
+const calculateInputHash = (inputPaths) => {
+  const files = getUniqueSortedFiles(inputPaths);
 
   if (files.length === 0) {
     return hashText("empty");
@@ -73,15 +98,44 @@ const calculateScriptHash = (scriptDir) => {
 
   const merged = files
     .map((filePath) => {
-      const relativePath = path
-        .relative(scriptDir, filePath)
-        .replace(/\\/g, "/");
+      const relativePath = normalizePath(path.relative(".", filePath));
       return `${relativePath}:${calculateFileHash(filePath)}`;
     })
     .join("|");
 
   return hashText(merged);
 };
+
+const SHARED_BUILD_INPUTS = [
+  "rollup.config.mjs",
+  "es.config.mjs",
+  "package.json",
+  "pnpm-lock.yaml",
+  "tsconfig.json",
+  "src/init.ts",
+  "src/lib",
+  "src/types",
+];
+
+const getLicenseFile = (srcDir) =>
+  fs.existsSync(`${srcDir}/LICENSE`) ? `${srcDir}/LICENSE` : "LICENSE";
+
+const getScriptHashInputs = ({ appId, script, srcDir, tsconfig }) => {
+  const inputs = [...SHARED_BUILD_INPUTS, srcDir, tsconfig];
+
+  if (appId) {
+    inputs.push(`src/${appId}`);
+  }
+
+  if (script.license) {
+    inputs.push(getLicenseFile(srcDir));
+  }
+
+  return inputs;
+};
+
+const calculateScriptHash = (scriptContext) =>
+  calculateInputHash(getScriptHashInputs(scriptContext));
 
 const loadBuildHashes = () => {
   try {
@@ -173,9 +227,7 @@ const extractCommentsToTop = () => ({
 });
 
 const licenser = (srcDir) => {
-  const licenseDir = fs.existsSync(`${srcDir}/LICENSE`)
-    ? `${srcDir}/LICENSE`
-    : "LICENSE";
+  const licenseDir = getLicenseFile(srcDir);
   return license({
     banner: {
       content: {
@@ -268,10 +320,11 @@ export default (commandLineArgs) => {
   }
 
   const previousBuildHashes = loadBuildHashes();
-  const currentBuildHashes = {};
+  const currentBuildHashes = appFilter ? { ...previousBuildHashes } : {};
 
-  const targetScripts = allScripts.filter(({ script, srcDir, hashKey }) => {
-    const scriptHash = calculateScriptHash(srcDir);
+  const targetScripts = allScripts.filter((scriptContext) => {
+    const { hashKey } = scriptContext;
+    const scriptHash = calculateScriptHash(scriptContext);
     currentBuildHashes[hashKey] = scriptHash;
 
     if (forceBuildAll) {
