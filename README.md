@@ -113,6 +113,7 @@ entry("example", () => {
 pnpm build          # 変更のあるスクリプトをビルド
 pnpm build --all    # 全スクリプトを強制ビルド
 pnpm build --app=aeft  # 特定アプリのみビルド
+pnpm build:aeft     # After Effects のスクリプトのみビルド
 ```
 
 出力先は `dist/{appId}/{ScriptName}/` です。
@@ -130,12 +131,17 @@ pnpm watch
 | `pnpm build`            | 変更のあるスクリプトをビルド     |
 | `pnpm build --all`      | 全スクリプトを強制ビルド         |
 | `pnpm build --app=aeft` | 特定アプリのみビルド             |
+| `pnpm build:aeft`       | After Effects のみビルド         |
+| `pnpm build:ilst`       | Illustrator のみビルド           |
+| `pnpm build:phxs`       | Photoshop のみビルド             |
 | `pnpm watch`            | ファイル変更を監視して自動ビルド |
 | `pnpm lint`             | ESLint でコード検査              |
 | `pnpm format`           | Prettier でコード整形            |
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
+
+`pnpm add-app -- --app=<appId>` で正式対応アプリを追加すると、`pnpm build:<appId>` も自動で追加されます。
 
 ## テスト / Test
 

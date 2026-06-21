@@ -18,6 +18,7 @@ const __dirname = path.dirname(__filename);
 
 const projectRoot = path.resolve(__dirname, "..");
 const ES_CONFIG_PATH = path.resolve(projectRoot, "es.config.mjs");
+const PACKAGE_JSON_PATH = path.resolve(projectRoot, "package.json");
 const SRC_DIR = path.resolve(projectRoot, "src");
 const EXAMPLE_SCRIPT = {
   name: "example",
@@ -98,6 +99,8 @@ const I18N = {
     },
     done: (app) => `完了: src/${app}/ のスキャフォールディングが完了しました。`,
     configUpdated: (app) => `es.config.mjs に scripts.${app} を追加しました。`,
+    packageScriptUpdated: (app) =>
+      `package.json に build:${app} を追加しました。`,
   },
   en: {
     prompt: {
@@ -122,6 +125,7 @@ const I18N = {
     },
     done: (app) => `Done: Scaffolding for src/${app}/ complete.`,
     configUpdated: (app) => `Added scripts.${app} to es.config.mjs.`,
+    packageScriptUpdated: (app) => `Added build:${app} to package.json.`,
   },
 };
 
@@ -278,6 +282,64 @@ async function updateEsConfig(appId, content) {
   await writeFile(ES_CONFIG_PATH, newContent, { encoding: "utf8" });
 }
 
+function shouldInsertAfterBuildScript(currentKey, nextKey) {
+  const isBuildKey = currentKey === "build" || currentKey.startsWith("build:");
+  const nextIsBuildKey = nextKey && nextKey.startsWith("build:");
+  return isBuildKey && !nextIsBuildKey;
+}
+
+function addBuildScriptAlias(scripts, appId) {
+  const scriptName = `build:${appId}`;
+  if (Object.prototype.hasOwnProperty.call(scripts, scriptName)) {
+    return { scripts, added: false };
+  }
+
+  const entries = Object.entries(scripts);
+  const nextScripts = {};
+  let inserted = false;
+
+  for (let i = 0; i < entries.length; i++) {
+    const [key, value] = entries[i];
+    nextScripts[key] = value;
+
+    const nextKey = entries[i + 1]?.[0] || null;
+    if (!inserted && shouldInsertAfterBuildScript(key, nextKey)) {
+      nextScripts[scriptName] = `rollup -c --app=${appId}`;
+      inserted = true;
+    }
+  }
+
+  if (!inserted) {
+    nextScripts[scriptName] = `rollup -c --app=${appId}`;
+  }
+
+  return { scripts: nextScripts, added: true };
+}
+
+async function updatePackageScripts(appId) {
+  const content = await readFile(PACKAGE_JSON_PATH, { encoding: "utf8" });
+  const packageJson = JSON.parse(content);
+  const scripts =
+    packageJson.scripts && typeof packageJson.scripts === "object"
+      ? packageJson.scripts
+      : {};
+  const result = addBuildScriptAlias(scripts, appId);
+
+  if (!result.added) {
+    return false;
+  }
+
+  packageJson.scripts = result.scripts;
+  await writeFile(
+    PACKAGE_JSON_PATH,
+    JSON.stringify(packageJson, null, 2) + "\n",
+    {
+      encoding: "utf8",
+    }
+  );
+  return true;
+}
+
 async function scaffold(appId) {
   const { appDir, esConfigContent } = await validateScaffold(appId);
 
@@ -318,7 +380,11 @@ async function scaffold(appId) {
 
   // es.config.mjs 更新
   await updateEsConfig(appId, esConfigContent);
+  const packageScriptAdded = await updatePackageScripts(appId);
   execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+  if (packageScriptAdded) {
+    console.log(L.packageScriptUpdated(appId));
+  }
   console.log(L.configUpdated(appId));
   console.log(L.done(appId));
 }
