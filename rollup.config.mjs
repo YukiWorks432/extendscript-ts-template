@@ -294,6 +294,7 @@ export default (commandLineArgs) => {
         output: {
           file: `${outDir}/${script.name}.jsx`,
           format: "cjs",
+          strict: false,
         },
         context: "this",
         onwarn,

@@ -132,9 +132,12 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 });
 ```
 
-`__ES_THIS__` はビルド時にバンドル先頭へ自動注入されるグローバルな `this` で、
-Extension Manager / Dockable パネルとして起動された場合は `Panel`、
-スクリプトとして実行された場合はグローバルオブジェクトを返す。
+`__ES_THIS__` はビルド時にバンドル先頭へ `var __ES_THIS__=this;` として自動注入される。
+Rollup 出力は `"use strict";` を出さない設定にしているため、After Effects の ScriptUI パネルとして起動された場合は `Panel`、
+スクリプトとして直接実行された場合はグローバルオブジェクトを保持する。
+
+通常の手書き JSX であれば `createUI(this)` のように直接 `this` を渡せる。
+このテンプレートでは TypeScript / Rollup / Terser の変換後も同じ値を保つため、出力先頭で退避した `__ES_THIS__` を `entryUI` に渡す。
 
 ### 予約名
 
@@ -159,7 +162,8 @@ entry("MyScript", () => {
 ```
 
 - 実行時に Undo グループを作成し、完了後に閉じる
-- 例外が発生した場合は `alertError()` でエラーダイアログを表示する
+- 例外が発生した場合は `alertError()` でエラーダイアログを表示し、同じ例外を再送出する
+- 例外が発生しても Undo グループは必ず閉じる
 
 ### `entryUI` — ScriptUI ウィンドウ用
 
@@ -179,6 +183,7 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 ```
 
 - `entryUI` はウィンドウ・パネルの UI を組み立てるための関数で、Undo グループは作らない
+- UI 構築中や palette 表示時の例外はエラーダイアログを表示し、同じ例外を再送出する
 - **`onClick` などのイベントハンドラ内で処理を行う場合は、必ず `entry` で囲むこと**
   - こうすることで処理ごとに Undo グループが作られ、エラーハンドリングも機能する
 
@@ -188,13 +193,18 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 pnpm add-app -- --app=idsn
 ```
 
+追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみ。
+任意のアプリID追加は未対応。
+
 実行すると以下を自動生成：
 
-- `src/{app}/tsconfig.json`（types-for-adobe のマッピング付き）
+- `src/{app}/tsconfig.json`（types-for-adobe と ScriptUI 共通型のマッピング付き）
 - `src/{app}/types/index.d.ts`
 - `src/{app}/lib/.gitkeep`
 - `src/{app}/example/index.ts`
-- `es.config.mjs` に `scripts.{app}` キーを追加
+- `es.config.mjs` に `scripts.{app}` キーを追加し、`example` を `build: true`, `license: true` で登録
+
+既存の `src/{appId}` または `es.config.mjs` の `scripts.{appId}` と衝突する場合は、ファイルを生成せずに停止する。
 
 ## 開発コマンド
 

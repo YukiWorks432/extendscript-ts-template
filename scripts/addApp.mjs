@@ -7,7 +7,8 @@
 import { createInterface } from "node:readline";
 import { stdin as input, stdout as output } from "node:process";
 import { parseArgs } from "node:util";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, readFile, writeFile, mkdir } from "node:fs/promises";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -18,36 +19,42 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const ES_CONFIG_PATH = path.resolve(projectRoot, "es.config.mjs");
 const SRC_DIR = path.resolve(projectRoot, "src");
+const EXAMPLE_SCRIPT = {
+  name: "example",
+  version: "0.0.1",
+  build: true,
+  license: true,
+};
 
 // types-for-adobe のアプリID → ディレクトリ名マッピング
 const APP_TYPES_MAP = {
   aeft: {
     dir: "AfterEffects/22.0",
-    shared: ["shared/XMPScript"],
+    shared: ["shared/ScriptUI", "shared/XMPScript"],
   },
   ilst: {
     dir: "Illustrator/2022",
-    shared: [],
+    shared: ["shared/ScriptUI"],
   },
   phxs: {
     dir: "Photoshop/2015.5",
-    shared: [],
+    shared: ["shared/ScriptUI"],
   },
   idsn: {
     dir: "InDesign/2022",
-    shared: [],
+    shared: ["shared/ScriptUI"],
   },
   ppro: {
     dir: "Premiere/24.0",
-    shared: [],
+    shared: ["shared/ScriptUI"],
   },
   anmt: {
     dir: "Animate/22.0",
-    shared: [],
+    shared: ["shared/ScriptUI"],
   },
   audt: {
     dir: "Audition/2018",
-    shared: [],
+    shared: ["shared/ScriptUI"],
   },
 };
 
@@ -69,14 +76,24 @@ const LOCALE = detectLocale();
 const I18N = {
   ja: {
     prompt: {
-      enterApp: (known) =>
-        `追加するアプリのIDを入力してください (例: ${known.join(", ")}): `,
+      selectApp: (known) =>
+        `追加するアプリを番号で選択してください (${known.join(", ")}): `,
     },
     error: {
       emptyApp: "エラー: アプリIDを入力してください。",
-      exists: (app) => `エラー: ${app} は既に存在します。`,
-      unknownType: (app) =>
-        `警告: ${app} の types-for-adobe マッピングが不明です。tsconfig.json を手動で設定してください。`,
+      invalidArgs:
+        "エラー: 引数が不正です。pnpm add-app -- --app=<appId> を使用してください。",
+      invalidSelection: (value, count) =>
+        `エラー: ${value} は無効な選択です。1 から ${count} の番号を入力してください。`,
+      unsupportedApp: (app, known) =>
+        `エラー: 未対応のアプリIDです: ${app} (対応: ${known.join(", ")})`,
+      srcExists: (app) => `エラー: src/${app} は既に存在します。`,
+      configExists: (app) =>
+        `エラー: es.config.mjs に scripts.${app} が既に存在します。`,
+      scriptsNotFound:
+        "エラー: es.config.mjs の scripts を特定できませんでした。",
+      configReadFailed:
+        "エラー: es.config.mjs の読み込みに失敗しました。ファイルの構文を確認してください。",
       unexpected: "予期せぬエラーが発生しました:",
     },
     done: (app) => `完了: src/${app}/ のスキャフォールディングが完了しました。`,
@@ -84,14 +101,23 @@ const I18N = {
   },
   en: {
     prompt: {
-      enterApp: (known) =>
-        `Enter the app ID to add (e.g. ${known.join(", ")}): `,
+      selectApp: (known) =>
+        `Select the app to add by number (${known.join(", ")}): `,
     },
     error: {
       emptyApp: "Error: Please enter an app ID.",
-      exists: (app) => `Error: ${app} already exists.`,
-      unknownType: (app) =>
-        `Warning: Unknown types-for-adobe mapping for ${app}. Please configure tsconfig.json manually.`,
+      invalidArgs:
+        "Error: Invalid arguments. Use pnpm add-app -- --app=<appId>.",
+      invalidSelection: (value, count) =>
+        `Error: ${value} is not a valid selection. Enter a number from 1 to ${count}.`,
+      unsupportedApp: (app, known) =>
+        `Error: Unsupported app ID: ${app} (supported: ${known.join(", ")})`,
+      srcExists: (app) => `Error: src/${app} already exists.`,
+      configExists: (app) =>
+        `Error: scripts.${app} already exists in es.config.mjs.`,
+      scriptsNotFound: "Error: Could not locate scripts in es.config.mjs.",
+      configReadFailed:
+        "Error: Failed to load es.config.mjs. Please verify the file syntax.",
       unexpected: "An unexpected error occurred:",
     },
     done: (app) => `Done: Scaffolding for src/${app}/ complete.`,
@@ -113,44 +139,46 @@ function ask(rl, question) {
 }
 
 function parseCliArgs() {
+  const args = process.argv.slice(2).filter((a) => a !== "--");
+  if (args.length === 0) return null;
+
   try {
     const { values } = parseArgs({
-      args: process.argv.slice(2).filter((a) => a !== "--"),
+      args,
       options: {
         app: { type: "string" },
       },
       strict: true,
     });
-    return values.app?.trim() || null;
-  } catch {
-    return null;
+    const appId = values.app?.trim() || "";
+    if (!appId) throw new CliError(L.error.emptyApp);
+    return appId;
+  } catch (error) {
+    if (error instanceof CliError) throw error;
+    throw new CliError(L.error.invalidArgs);
   }
 }
 
 async function loadConfig() {
-  const fileUrl = pathToFileURL(ES_CONFIG_PATH).href;
-  const cacheBuster = `?update=${Date.now()}`;
-  const module = await import(fileUrl + cacheBuster);
-  return module.default;
+  try {
+    const fileUrl = pathToFileURL(ES_CONFIG_PATH).href;
+    const cacheBuster = `?update=${Date.now()}`;
+    const module = await import(fileUrl + cacheBuster);
+    const config = module.default;
+    if (!config || !config.scripts || typeof config.scripts !== "object") {
+      throw new CliError(L.error.scriptsNotFound);
+    }
+    return config;
+  } catch (error) {
+    if (error instanceof CliError) throw error;
+    throw new CliError(
+      L.error.configReadFailed + (error?.message ? `\n${error.message}` : "")
+    );
+  }
 }
 
 function generateTsconfig(appId) {
   const mapping = APP_TYPES_MAP[appId];
-  if (!mapping) {
-    console.warn(L.error.unknownType(appId));
-    return JSON.stringify(
-      {
-        extends: "../../tsconfig.json",
-        compilerOptions: {
-          types: [],
-        },
-        include: ["./**/*", "../lib/**/*", "../types/**/*", "../init.ts"],
-      },
-      null,
-      2
-    );
-  }
-
   const types = [
     `../../node_modules/types-for-adobe/${mapping.dir}`,
     ...mapping.shared.map((s) => `../../node_modules/types-for-adobe/${s}`),
@@ -167,15 +195,11 @@ function generateTsconfig(appId) {
   );
 }
 
-const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-async function updateEsConfig(appId) {
-  const content = await readFile(ES_CONFIG_PATH, { encoding: "utf8" });
-
+function findScriptsBlockEnd(content) {
   // scripts: { ... } ブロックの閉じ } を正確に特定するため、ブレースの深度を追跡
   const scriptsStart = content.search(/scripts\s*:\s*\{/);
   if (scriptsStart === -1) {
-    throw new Error("Could not locate scripts block in es.config.mjs.");
+    throw new CliError(L.error.scriptsNotFound);
   }
 
   // scripts の開き { の位置を特定
@@ -194,23 +218,68 @@ async function updateEsConfig(appId) {
   }
 
   if (braceEnd === -1) {
-    throw new Error("Could not find closing brace of scripts block.");
+    throw new CliError(L.error.scriptsNotFound);
   }
+
+  return braceEnd;
+}
+
+async function pathExists(targetPath) {
+  try {
+    await access(targetPath, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function assertKnownApp(appId) {
+  const knownApps = Object.keys(APP_TYPES_MAP);
+  if (!appId) throw new CliError(L.error.emptyApp);
+  if (!Object.prototype.hasOwnProperty.call(APP_TYPES_MAP, appId)) {
+    throw new CliError(L.error.unsupportedApp(appId, knownApps));
+  }
+}
+
+async function validateScaffold(appId) {
+  assertKnownApp(appId);
+
+  const appDir = path.resolve(SRC_DIR, appId);
+  if (await pathExists(appDir)) {
+    throw new CliError(L.error.srcExists(appId));
+  }
+
+  const config = await loadConfig();
+  if (Object.prototype.hasOwnProperty.call(config.scripts, appId)) {
+    throw new CliError(L.error.configExists(appId));
+  }
+
+  const esConfigContent = await readFile(ES_CONFIG_PATH, { encoding: "utf8" });
+  findScriptsBlockEnd(esConfigContent);
+
+  return { appDir, esConfigContent };
+}
+
+async function updateEsConfig(appId, content) {
+  const braceEnd = findScriptsBlockEnd(content);
 
   // 閉じ } の直前に新しいアプリキーを挿入
   const beforeClose = content.slice(0, braceEnd);
   const afterClose = content.slice(braceEnd);
-  const newContent = `${beforeClose}  ${appId}: [],\n  ${afterClose}`;
+  const newContent = `${beforeClose}  ${appId}: [
+    {
+      name: "${EXAMPLE_SCRIPT.name}",
+      version: "${EXAMPLE_SCRIPT.version}",
+      build: ${EXAMPLE_SCRIPT.build},
+      license: ${EXAMPLE_SCRIPT.license},
+    },
+  ],
+  ${afterClose}`;
   await writeFile(ES_CONFIG_PATH, newContent, { encoding: "utf8" });
 }
 
 async function scaffold(appId) {
-  const config = await loadConfig();
-  if (config.scripts && config.scripts[appId]) {
-    throw new CliError(L.error.exists(appId));
-  }
-
-  const appDir = path.resolve(SRC_DIR, appId);
+  const { appDir, esConfigContent } = await validateScaffold(appId);
 
   // tsconfig.json
   const tsconfigContent = generateTsconfig(appId);
@@ -218,7 +287,7 @@ async function scaffold(appId) {
   await writeFile(
     path.resolve(appDir, "tsconfig.json"),
     tsconfigContent + "\n",
-    { encoding: "utf8" }
+    { encoding: "utf8", flag: "wx" }
   );
 
   // types/index.d.ts
@@ -227,13 +296,16 @@ async function scaffold(appId) {
   await writeFile(
     path.resolve(typesDir, "index.d.ts"),
     `// Type definitions specific to ${appId}.\n`,
-    { encoding: "utf8" }
+    { encoding: "utf8", flag: "wx" }
   );
 
   // lib/.gitkeep
   const libDir = path.resolve(appDir, "lib");
   await mkdir(libDir, { recursive: true });
-  await writeFile(path.resolve(libDir, ".gitkeep"), "", { encoding: "utf8" });
+  await writeFile(path.resolve(libDir, ".gitkeep"), "", {
+    encoding: "utf8",
+    flag: "wx",
+  });
 
   // example/index.ts
   const exampleDir = path.resolve(appDir, "example");
@@ -241,18 +313,25 @@ async function scaffold(appId) {
   await writeFile(
     path.resolve(exampleDir, "index.ts"),
     `import "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
-    { encoding: "utf8" }
+    { encoding: "utf8", flag: "wx" }
   );
 
   // es.config.mjs 更新
-  await updateEsConfig(appId);
+  await updateEsConfig(appId, esConfigContent);
   execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
   console.log(L.configUpdated(appId));
   console.log(L.done(appId));
 }
 
 async function main() {
-  const cliAppId = parseCliArgs();
+  let cliAppId;
+  try {
+    cliAppId = parseCliArgs();
+  } catch (err) {
+    process.exitCode = 1;
+    console.error(err instanceof CliError ? err.message : L.error.unexpected);
+    return;
+  }
 
   if (cliAppId) {
     // CLI モード
@@ -273,12 +352,21 @@ async function main() {
   const rl = createInterface({ input, output });
   try {
     const knownApps = Object.keys(APP_TYPES_MAP);
-    const appId = String(await ask(rl, L.prompt.enterApp(knownApps))).trim();
-    if (!appId) {
-      console.error(L.error.emptyApp);
-      process.exitCode = 1;
-      return;
+    knownApps.forEach((app, index) => {
+      console.log(`${index + 1}. ${app}`);
+    });
+    const selected = String(
+      await ask(rl, L.prompt.selectApp(knownApps))
+    ).trim();
+    const selectedIndex = Number(selected);
+    if (
+      !Number.isInteger(selectedIndex) ||
+      selectedIndex < 1 ||
+      selectedIndex > knownApps.length
+    ) {
+      throw new CliError(L.error.invalidSelection(selected, knownApps.length));
     }
+    const appId = knownApps[selectedIndex - 1];
     await scaffold(appId);
   } catch (err) {
     process.exitCode = 1;

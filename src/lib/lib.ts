@@ -18,18 +18,50 @@ export const getLineFromString = (
 };
 
 /***
- * jp: エラー内容をアラート表示する.\
- * en: Display an alert with the error details.
+ * jp: エラー内容をダイアログ表示する.\
+ * en: Display a dialog with the error details.
  */
-export const alertError = (error: Error) => {
+const getErrorMessage = (error: Error): string => {
   try {
     const line = getLineFromString(error.source, error.line)?.trim() || "";
     let lineSuffix = "";
-    if (line.length < 200) lineSuffix = `">":\ ${line}`;
-    alert(`Error: ${error.message}\nLine: ${error.line}\n${lineSuffix}`);
+    if (line.length < 200) lineSuffix = `">": ${line}`;
+    return `Error: ${error.message}\nLine: ${error.line}\n${lineSuffix}`;
   } catch {
-    alert(`Error: ${error.message}`);
+    return `Error: ${error.message}`;
   }
+};
+
+type ScriptUIWindowLike = {
+  alignChildren: string | string[];
+  margins: number;
+  add: (...args: unknown[]) => unknown;
+  show: () => number;
+};
+
+type ScriptUIWindowConstructor = new (
+  kind: string,
+  title?: string
+) => ScriptUIWindowLike;
+
+const createScriptUIWindow = (
+  kind: string,
+  title: string
+): ScriptUIWindowLike =>
+  new (Window as unknown as ScriptUIWindowConstructor)(kind, title);
+
+const showErrorDialog = (message: string): void => {
+  const dialog = createScriptUIWindow("dialog", "Error");
+  dialog.alignChildren = ["fill", "top"];
+  dialog.margins = 12;
+  dialog.add("statictext", undefined, message, { multiline: true });
+  dialog.add("button", undefined, "OK", { name: "ok" });
+  dialog.show();
+};
+
+export const alertError = (error: Error): never => {
+  showErrorDialog(getErrorMessage(error));
+  throw error;
 };
 
 /***
@@ -43,9 +75,9 @@ export const entry = (name: string, func: () => any) => {
     func();
   } catch (e) {
     alertError(e as Error);
+  } finally {
+    if (app.endUndoGroup) app.endUndoGroup();
   }
-
-  if (app.endUndoGroup) app.endUndoGroup();
 };
 
 /***
@@ -64,19 +96,20 @@ export const entryUI = (
   func: (win: Window | Panel) => void
 ): void => {
   var win: Window | Panel;
+  var paletteWindow: ScriptUIWindowLike | null = null;
   if (thisObj instanceof Panel) {
     win = thisObj;
   } else {
-    win = new Window("palette", name);
+    paletteWindow = createScriptUIWindow("palette", name);
+    win = paletteWindow as unknown as Window;
   }
 
   try {
     func(win);
+    if (paletteWindow) {
+      paletteWindow.show();
+    }
   } catch (e) {
     alertError(e as Error);
-  }
-
-  if (win instanceof Window) {
-    win.show();
   }
 };
