@@ -95,6 +95,12 @@ export default {
 pnpm new -- --app=aeft --name=MyScript --license
 ```
 
+ScriptUI パネル対応スクリプトを生成する場合:
+
+```bash
+pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
+```
+
 ### 対話モード
 
 ```bash
@@ -120,15 +126,19 @@ entry("MyScript", () => {
 });
 ```
 
-**ScriptUI スクリプト（パネル対応）を作る場合は `entryUI` を使う：**
+`--ui=scriptui` を指定した場合は、以下のように `entryUI` と `__ES_THIS__` を使う：
 
 ```ts
 import "../../init";
-import { entryUI } from "../../lib/lib";
+import { entry, entryUI } from "../../lib/lib";
 
 entryUI("MyScript", __ES_THIS__, (win) => {
-  win.add("statictext", undefined, "Hello!");
-  // ここで UI を構築する
+  const runButton = win.add("button", undefined, "実行");
+  runButton.onClick = () => {
+    entry("MyScript", () => {
+      // TODO: Implement MyScript
+    });
+  };
 });
 ```
 
@@ -168,7 +178,7 @@ entry("MyScript", () => {
 ### `entryUI` — ScriptUI ウィンドウ用
 
 ```ts
-import { entryUI } from "../../lib/lib";
+import { entry, entryUI } from "../../lib/lib";
 
 entryUI("MyScript", __ES_THIS__, (win) => {
   const btn = win.add("button", undefined, "実行");
@@ -223,6 +233,20 @@ pnpm add-app -- --app=idsn
 | `pnpm new`              | 新規スクリプト追加（対話式 / CLI）   |
 | `pnpm add-app`          | 新規アプリスキャフォールディング     |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
+
+## 差分ビルドの判定
+
+`pnpm build` は、各スクリプトの `index.ts` から相対 `import` / `export ... from`
+で到達するファイルと、ビルド設定ファイルのハッシュを使って再ビルド対象を判定する。
+同じ `src/{appId}` 配下にある別スクリプトを変更しても、そのスクリプトを import していない
+他のスクリプトは再ビルド対象にならない。
+
+`rollup.config.mjs`、`es.config.mjs`、`package.json`、`pnpm-lock.yaml`、`tsconfig.json`、
+対象アプリの `tsconfig.json` を変更した場合は、該当するビルド対象のハッシュが変わる。
+`src/init.ts`、`src/lib/`、`src/{appId}/lib/` は、スクリプトから import で到達している場合だけ、
+そのスクリプトのハッシュに含まれる。
+`src/types/` は全スクリプト、`src/{appId}/types/` は該当アプリのスクリプトで使える ambient 型定義
+として扱うため、該当するビルド対象のハッシュに含まれる。
 
 ## 型情報について
 

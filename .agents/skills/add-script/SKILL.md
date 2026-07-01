@@ -108,13 +108,16 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license
 ```
 
 `--license` はユーザーが不要と明示した場合のみ省略する。
+ScriptUI を選んだ場合は `--ui=scriptui` を追加する:
+
+```bash
+pnpm new -- --app=<appId> --name=<ScriptName> --license --ui=scriptui
+```
 
 実行後に生成されるファイル:
 
 - `es.config.mjs` に `<ScriptName>` エントリが追加される
 - `src/<appId>/<ScriptName>/index.ts` にテンプレートが作成される
-
-**ScriptUI を選んだ場合**: 生成後、`index.ts` の `entry` を `entryUI` に書き換える（後述）。
 
 ### 5. 用途（purpose）をファイルに記録する
 
@@ -135,14 +138,19 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license
 
 `@workflow` はユーザーの `purpose` から推測して記述する。不明な場合は `TODO` として残す。
 
-**ScriptUI の場合**: `entry` を `entryUI` に変更し、以下のテンプレートに書き換える:
+**ScriptUI の場合**: 生成済みテンプレートが `entryUI` と `__ES_THIS__` を使っていることを確認する:
 
 ```typescript
 import "../../init";
-import { entryUI } from "../lib/lib";
+import { entry, entryUI } from "../../lib/lib";
 
 entryUI("<ScriptName>", __ES_THIS__, (win) => {
-  // TODO: UI を構築する
+  const runButton = win.add("button", undefined, "実行");
+  runButton.onClick = () => {
+    entry("<ScriptName>", () => {
+      // TODO: 実行処理を書く
+    });
+  };
 });
 ```
 
