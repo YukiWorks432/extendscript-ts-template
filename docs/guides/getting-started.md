@@ -26,6 +26,12 @@ pnpm i
 pnpm new -- --app=aeft --name=MyFirstScript --license
 ```
 
+ScriptUI パネル対応スクリプトを作る場合は、`--ui=scriptui` を追加します。
+
+```bash
+pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
+```
+
 これにより以下が生成されます：
 
 - `src/aeft/MyFirstScript/index.ts`（テンプレートコード）
@@ -140,7 +146,7 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 `onClick` などのイベントハンドラ内で処理を行う場合は、処理本体を `entry()` で囲んでください。
 
 ```ts
-import { entry, alertError } from "../../lib/lib";
+import { entry, entryUI } from "../../lib/lib";
 ```
 
 ### アプリ固有のユーティリティを作る

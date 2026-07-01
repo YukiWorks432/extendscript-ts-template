@@ -2,6 +2,7 @@
 // Usage:
 //   対話モード: pnpm new
 //   CLI モード:  pnpm new -- --app=aeft --name=MyScript --license
+//   ScriptUI:   pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
 // es.config.mjsに新しいスクリプトを追加し、src/{app}/{name}配下にテンプレートを作成します。
 // 新しいスクリプトはes.config.mjsのscripts.{app}配列の先頭に追加されます。
 // es.config.mjsはprettierで整形されます。
@@ -22,6 +23,7 @@ const ES_CONFIG_PATH = path.resolve(projectRoot, "es.config.mjs");
 const SRC_DIR = path.resolve(projectRoot, "src");
 
 const RESERVED_NAMES = ["lib", "types", "tests"];
+const UI_TYPES = ["script", "scriptui"];
 
 class CliError extends Error {
   constructor(message) {
@@ -50,6 +52,8 @@ const I18N = {
       selectApp: (apps) =>
         `対象アプリを選択してください (${apps.join(", ")}): `,
       enterName: "スクリプト名を入力してください: ",
+      selectUi:
+        "スクリプトの種類を選択してください (script/scriptui, default: script): ",
       includeLicense: "ライセンス表記を含めますか？ (y/N): ",
     },
     error: {
@@ -57,6 +61,8 @@ const I18N = {
       emptyApp: "エラー: アプリが指定されていません。",
       invalidApp: (app, apps) =>
         `エラー: 無効なアプリ名です: ${app} (有効: ${apps.join(", ")})`,
+      invalidUiType: (uiType) =>
+        `エラー: 無効な UI 種別です: ${uiType} (有効: ${UI_TYPES.join(", ")})`,
       reservedName: (name) =>
         `エラー: "${name}" は予約名のため使用できません。`,
       scriptsNotFound:
@@ -76,6 +82,7 @@ const I18N = {
     prompt: {
       selectApp: (apps) => `Select target app (${apps.join(", ")}): `,
       enterName: "Please enter the script name: ",
+      selectUi: "Select script type (script/scriptui, default: script): ",
       includeLicense: "Include a license field? (y/N): ",
     },
     error: {
@@ -83,6 +90,8 @@ const I18N = {
       emptyApp: "Error: No app specified.",
       invalidApp: (app, apps) =>
         `Error: Invalid app name: ${app} (valid: ${apps.join(", ")})`,
+      invalidUiType: (uiType) =>
+        `Error: Invalid UI type: ${uiType} (valid: ${UI_TYPES.join(", ")})`,
       reservedName: (name) =>
         `Error: "${name}" is a reserved name and cannot be used.`,
       scriptsNotFound: "Error: Could not locate scripts in es.config.mjs.",
@@ -111,6 +120,18 @@ function ask(rl, question) {
 function toBoolean(input) {
   const v = String(input).trim().toLowerCase();
   return v === "y" || v === "yes" || v === "true" || v === "1";
+}
+
+function normalizeUiType(input) {
+  const v = String(input || "")
+    .trim()
+    .toLowerCase();
+  if (!v) return "script";
+  if (v === "script" || v === "normal" || v === "entry") return "script";
+  if (v === "scriptui" || v === "ui" || v === "panel" || v === "palette") {
+    return "scriptui";
+  }
+  throw new CliError(L.error.invalidUiType(input));
 }
 
 async function loadConfig() {
@@ -164,10 +185,12 @@ async function getScriptDescriptor(rl, config) {
   const name = String(await ask(rl, L.prompt.enterName)).trim();
   validateName(name, appId, config);
 
+  const uiType = normalizeUiType(await ask(rl, L.prompt.selectUi));
   const withLicense = toBoolean(await ask(rl, L.prompt.includeLicense));
 
   return {
     appId,
+    uiType,
     script: {
       name,
       version: "0.0.1",
@@ -206,11 +229,39 @@ entry("${name}", () => {
 });
 `;
 
-async function createScriptTemplate(appId, name) {
+const createScriptUiIndexTsTemplate = (name) =>
+  `/** @description Build ScriptUI panel */
+
+import "../../init";
+import { entry, entryUI } from "../../lib/lib";
+
+entryUI("${name}", __ES_THIS__, (win) => {
+  win.orientation = "column";
+  win.alignChildren = ["fill", "top"];
+  win.spacing = 8;
+  win.margins = 12;
+
+  win.add("statictext", undefined, "${name}");
+
+  const runButton = win.add("button", undefined, "実行");
+  runButton.onClick = () => {
+    entry("${name}", () => {
+      // TODO: Implement ${name}
+    });
+  };
+
+  win.layout.layout(true);
+});
+`;
+
+async function createScriptTemplate(appId, name, uiType) {
   const scriptDir = path.resolve(SRC_DIR, appId, name);
   const indexPath = path.resolve(scriptDir, "index.ts");
   await mkdir(scriptDir, { recursive: true });
-  const indexContent = createIndexTsTemplate(name);
+  const indexContent =
+    uiType === "scriptui"
+      ? createScriptUiIndexTsTemplate(name)
+      : createIndexTsTemplate(name);
   try {
     await writeFile(indexPath, indexContent, {
       encoding: "utf8",
@@ -228,6 +279,7 @@ function parseCliArgs() {
       options: {
         app: { type: "string" },
         name: { type: "string" },
+        ui: { type: "string", default: "script" },
         license: { type: "boolean", default: false },
       },
       strict: true,
@@ -235,6 +287,7 @@ function parseCliArgs() {
     if (values.name && values.app) {
       return {
         appId: values.app.trim(),
+        uiType: normalizeUiType(values.ui),
         script: {
           name: values.name.trim(),
           version: "0.0.1",
@@ -243,18 +296,30 @@ function parseCliArgs() {
         },
       };
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof CliError) throw error;
     // 不正な引数の場合は対話モードにフォールバック
   }
   return null;
 }
 
 async function main() {
-  const cliDescriptor = parseCliArgs();
+  let cliDescriptor = null;
+  try {
+    cliDescriptor = parseCliArgs();
+  } catch (err) {
+    process.exitCode = 1;
+    if (err instanceof CliError) {
+      console.error(err.message);
+    } else {
+      console.error(L.error.unexpected, err);
+    }
+    return;
+  }
 
   if (cliDescriptor) {
     // CLI モード
-    const { appId, script } = cliDescriptor;
+    const { appId, script, uiType } = cliDescriptor;
     try {
       const config = await loadConfig();
       validateApp(appId, config);
@@ -263,7 +328,7 @@ async function main() {
       await updateScriptConfig(appId, script);
       console.log(L.doneAdd(script.name, appId, script.license));
 
-      await createScriptTemplate(appId, script.name);
+      await createScriptTemplate(appId, script.name, uiType);
       console.log(L.doneMake(script.name, appId));
       execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
     } catch (err) {
@@ -281,12 +346,12 @@ async function main() {
   const rl = createInterface({ input, output });
   try {
     const config = await loadConfig();
-    const { appId, script } = await getScriptDescriptor(rl, config);
+    const { appId, script, uiType } = await getScriptDescriptor(rl, config);
 
     await updateScriptConfig(appId, script);
     console.log(L.doneAdd(script.name, appId, script.license));
 
-    await createScriptTemplate(appId, script.name);
+    await createScriptTemplate(appId, script.name, uiType);
     console.log(L.doneMake(script.name, appId));
     execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
   } catch (err) {

@@ -95,6 +95,12 @@ export default {
 pnpm new -- --app=aeft --name=MyScript --license
 ```
 
+ScriptUI パネル対応スクリプトを生成する場合:
+
+```bash
+pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
+```
+
 ### 対話モード
 
 ```bash
@@ -120,15 +126,19 @@ entry("MyScript", () => {
 });
 ```
 
-**ScriptUI スクリプト（パネル対応）を作る場合は `entryUI` を使う：**
+`--ui=scriptui` を指定した場合は、以下のように `entryUI` と `__ES_THIS__` を使う：
 
 ```ts
 import "../../init";
-import { entryUI } from "../../lib/lib";
+import { entry, entryUI } from "../../lib/lib";
 
 entryUI("MyScript", __ES_THIS__, (win) => {
-  win.add("statictext", undefined, "Hello!");
-  // ここで UI を構築する
+  const runButton = win.add("button", undefined, "実行");
+  runButton.onClick = () => {
+    entry("MyScript", () => {
+      // TODO: Implement MyScript
+    });
+  };
 });
 ```
 
@@ -168,7 +178,7 @@ entry("MyScript", () => {
 ### `entryUI` — ScriptUI ウィンドウ用
 
 ```ts
-import { entryUI } from "../../lib/lib";
+import { entry, entryUI } from "../../lib/lib";
 
 entryUI("MyScript", __ES_THIS__, (win) => {
   const btn = win.add("button", undefined, "実行");
