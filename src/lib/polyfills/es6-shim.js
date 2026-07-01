@@ -2512,17 +2512,25 @@
   ].every(function (num) {
     return Math.round(num) === num;
   });
-  defineProperty(
-    Math,
-    "round",
-    function round(x) {
-      var floor = _floor(x);
-      var ceil = floor === -1 ? -0 : floor + 1;
-      return x - floor < 0.5 ? floor : ceil;
-    },
-    !roundHandlesBoundaryConditions || !roundDoesNotIncreaseIntegers
-  );
-  Value.preserveToString(Math.round, origMathRound);
+  // extendscript-ts-template local modification:
+  // keep ExtendScript's native Math.round instead of applying es6-shim's polyfill.
+  var enableMathRoundPolyfill = false;
+  if (
+    enableMathRoundPolyfill &&
+    (!roundHandlesBoundaryConditions || !roundDoesNotIncreaseIntegers)
+  ) {
+    defineProperty(
+      Math,
+      "round",
+      function round(x) {
+        var floor = _floor(x);
+        var ceil = floor === -1 ? -0 : floor + 1;
+        return x - floor < 0.5 ? floor : ceil;
+      },
+      !roundHandlesBoundaryConditions || !roundDoesNotIncreaseIntegers
+    );
+    Value.preserveToString(Math.round, origMathRound);
+  }
 
   var origImul = Math.imul;
   if (Math.imul(0xffffffff, 5) !== -5) {
