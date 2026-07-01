@@ -224,6 +224,20 @@ pnpm add-app -- --app=idsn
 | `pnpm add-app`          | 新規アプリスキャフォールディング     |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
 
+## 差分ビルドの判定
+
+`pnpm build` は、各スクリプトの `index.ts` から相対 `import` / `export ... from`
+で到達するファイルと、ビルド設定ファイルのハッシュを使って再ビルド対象を判定する。
+同じ `src/{appId}` 配下にある別スクリプトを変更しても、そのスクリプトを import していない
+他のスクリプトは再ビルド対象にならない。
+
+`rollup.config.mjs`、`es.config.mjs`、`package.json`、`pnpm-lock.yaml`、`tsconfig.json`、
+対象アプリの `tsconfig.json` を変更した場合は、該当するビルド対象のハッシュが変わる。
+`src/init.ts`、`src/lib/`、`src/{appId}/lib/` は、スクリプトから import で到達している場合だけ、
+そのスクリプトのハッシュに含まれる。
+`src/types/` は全スクリプト、`src/{appId}/types/` は該当アプリのスクリプトで使える ambient 型定義
+として扱うため、該当するビルド対象のハッシュに含まれる。
+
 ## 型情報について
 
 [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe) を使用。
