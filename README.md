@@ -62,6 +62,12 @@ pnpm build
 pnpm new -- --app=aeft --name=MyScript --license
 ```
 
+ScriptUI パネル対応スクリプトを作る場合は `--ui=scriptui` を指定します：
+
+```shell
+pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
+```
+
 対話式でも作成できます：
 
 ```shell
