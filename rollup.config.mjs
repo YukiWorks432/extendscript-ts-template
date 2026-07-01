@@ -42,6 +42,10 @@ const hashText = (text) => {
 
 const normalizePath = (filePath) => filePath.replace(/\\/g, "/");
 
+const IMPORT_RESOLVE_EXTENSIONS = [".ts", ".js", ".d.ts"];
+const IMPORT_SPECIFIER_PATTERN =
+  /\b(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g;
+
 const collectFiles = (targetPath) => {
   if (!fs.existsSync(targetPath)) {
     return [];
@@ -112,20 +116,118 @@ const SHARED_BUILD_INPUTS = [
   "package.json",
   "pnpm-lock.yaml",
   "tsconfig.json",
-  "src/init.ts",
-  "src/lib",
-  "src/types",
 ];
 
 const getLicenseFile = (srcDir) =>
   fs.existsSync(`${srcDir}/LICENSE`) ? `${srcDir}/LICENSE` : "LICENSE";
 
-const getScriptHashInputs = ({ appId, script, srcDir, tsconfig }) => {
-  const inputs = [...SHARED_BUILD_INPUTS, srcDir, tsconfig];
+const getAmbientTypeInputs = (appId) => {
+  const inputs = ["src/types"];
 
   if (appId) {
-    inputs.push(`src/${appId}`);
+    inputs.push(`src/${appId}/types`);
   }
+
+  return inputs;
+};
+
+const stripComments = (source) =>
+  source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+
+const getRelativeImportSpecifiers = (filePath) => {
+  const source = stripComments(fs.readFileSync(filePath, "utf8"));
+  const specifiers = [];
+
+  IMPORT_SPECIFIER_PATTERN.lastIndex = 0;
+
+  let match = IMPORT_SPECIFIER_PATTERN.exec(source);
+  while (match) {
+    const specifier = match[1] || match[2];
+
+    if (specifier && specifier.startsWith(".")) {
+      specifiers.push(specifier);
+    }
+
+    match = IMPORT_SPECIFIER_PATTERN.exec(source);
+  }
+
+  return specifiers;
+};
+
+const getImportCandidates = (importBasePath) => {
+  const candidates = [];
+
+  if (path.extname(importBasePath)) {
+    candidates.push(importBasePath);
+  } else {
+    IMPORT_RESOLVE_EXTENSIONS.forEach((extension) => {
+      candidates.push(`${importBasePath}${extension}`);
+    });
+  }
+
+  IMPORT_RESOLVE_EXTENSIONS.forEach((extension) => {
+    candidates.push(path.join(importBasePath, `index${extension}`));
+  });
+
+  return candidates;
+};
+
+const resolveRelativeImport = (fromFilePath, specifier) => {
+  const importBasePath = path.resolve(path.dirname(fromFilePath), specifier);
+
+  return (
+    getImportCandidates(importBasePath).find((candidate) => {
+      if (!fs.existsSync(candidate)) {
+        return false;
+      }
+
+      return fs.statSync(candidate).isFile();
+    }) || null
+  );
+};
+
+const canReadImports = (filePath) =>
+  IMPORT_RESOLVE_EXTENSIONS.includes(path.extname(filePath));
+
+const collectImportDependencyFiles = (entryFile) => {
+  const files = new Map();
+
+  const visit = (filePath) => {
+    const resolvedFile = path.resolve(filePath);
+
+    if (files.has(resolvedFile) || !fs.existsSync(resolvedFile)) {
+      return;
+    }
+
+    files.set(resolvedFile, resolvedFile);
+
+    if (!canReadImports(resolvedFile)) {
+      return;
+    }
+
+    getRelativeImportSpecifiers(resolvedFile).forEach((specifier) => {
+      const importedFile = resolveRelativeImport(resolvedFile, specifier);
+
+      if (importedFile) {
+        visit(importedFile);
+      }
+    });
+  };
+
+  visit(entryFile);
+
+  return Array.from(files.values()).sort((left, right) =>
+    normalizePath(left).localeCompare(normalizePath(right))
+  );
+};
+
+const getScriptHashInputs = ({ appId, script, srcDir, tsconfig }) => {
+  const inputs = [
+    ...SHARED_BUILD_INPUTS,
+    tsconfig,
+    ...getAmbientTypeInputs(appId),
+    ...collectImportDependencyFiles(`${srcDir}/index.ts`),
+  ];
 
   if (script.license) {
     inputs.push(getLicenseFile(srcDir));
@@ -288,6 +390,8 @@ export default (commandLineArgs) => {
     for (const [appId, scripts] of Object.entries(config.scripts)) {
       if (appFilter && appId !== appFilter) continue;
       for (const script of scripts) {
+        if (script.build === false) continue;
+
         allScripts.push({
           appId,
           script,
@@ -303,6 +407,8 @@ export default (commandLineArgs) => {
   // common スクリプト（アプリ非依存）
   if (config.common && !appFilter) {
     for (const script of config.common) {
+      if (script.build === false) continue;
+
       allScripts.push({
         appId: null,
         script,
