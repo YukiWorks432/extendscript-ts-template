@@ -248,6 +248,13 @@ import "../init";
     );
   });
 
+  run("Math.round", () => {
+    assertEq(Math.round(0), 0, "Math.round(0) is 0");
+    assertEq(Math.round(0.5), 1, "Math.round(0.5) is 1");
+    assert(Object.is(Math.round(-0.5), -0), "Math.round(-0.5) is -0");
+    assert(Object.is(Math.round(-0), -0), "Math.round(-0) is -0");
+  });
+
   run("Object.assign", () => {
     const target: any = { a: 1 };
     const assigned = Object.assign(target, { b: 2 }, { c: 3 });
