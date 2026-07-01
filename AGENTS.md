@@ -6,7 +6,8 @@
 ## 優先順位
 
 - 上位の system / developer / user 指示を最優先し、次にこの `AGENTS.md`、次に参照先 docs / skills に従ってください。
-- GitHub Copilot 向けの `.github/copilot-instructions.md`、`.github/instructions/`、`.github/skills/` は正本にしません。Codex 向けの入口はこの `AGENTS.md` です。
+- Codex 向けの入口はこの `AGENTS.md` です。詳細手順は `.agents/`、ローカル Codex 設定は `.codex/` に置きます。
+- GitHub Copilot 専用の `.github/copilot-instructions.md`、`.github/instructions/`、`.github/skills/` は正本にせず、この配布用リポジトリには置きません。
 - 作業前にこの `AGENTS.md` を確認してください。対象ファイルに対応する追加指示がある場合は、その指示も確認してください。
 - `src/**/*.ts` を編集する場合は、`.agents/instructions/extendscript.md` を確認してください。
 - 参照先 docs / skills とこのファイルが矛盾する場合は、このファイルを優先し、必要なら矛盾を報告してください。
@@ -51,6 +52,7 @@
 - テンプレート利用後の初期整理: `docs/template-customization.md`
 - 配布用リポジトリの運営方針: `docs/repository-operations.md`
 - リリース手順: `docs/release-process.md`
+- Codex ローカル設定: `.codex/README.md`
 - スクリプト追加: `scripts/newScript.mjs` と `docs/project-overview.md`
 - アプリ追加: `scripts/addApp.mjs` と `docs/project-overview.md`
 - ExtendScript 追加指示: `.agents/instructions/extendscript.md`

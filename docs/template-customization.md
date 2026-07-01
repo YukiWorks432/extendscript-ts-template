@@ -23,10 +23,11 @@
 
 ### AI エージェント設定
 
-`AGENTS.md` と `.agents/` は Codex 向けの作業ルールです。
-`.github/copilot-instructions.md`、`.github/instructions/`、`.github/skills/` は GitHub Copilot 向けの設定です。
+`AGENTS.md`、`.agents/`、`.codex/` は Codex 向けの作業ルールとローカル設定です。
+このテンプレートでは `AGENTS.md` をエージェント指示の入口にし、具体的な手順は `.agents/` に置きます。
+`.codex/config.toml` はローカルサブエージェントの並列度だけを定義し、承認・sandbox・network 権限は広げません。
 
-どちらも、このテンプレートの開発方針に合わせた初期値です。
+この設定は、このテンプレートの開発方針に合わせた初期値です。
 自分のプロジェクト名、ブランチ運用、説明言語、品質ゲートに合わせて編集してください。
 不要な場合は削除して構いません。
 

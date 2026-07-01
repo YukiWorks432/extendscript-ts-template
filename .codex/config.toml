@@ -1,0 +1,6 @@
+# Keep repo-local Codex config permission-neutral.
+# Command approvals remain controlled by the active Codex session policy.
+
+[agents]
+max_threads = 4
+max_depth = 2

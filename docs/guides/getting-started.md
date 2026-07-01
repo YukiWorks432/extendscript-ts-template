@@ -183,9 +183,9 @@ declare class SomeUndefinedClass {
 このリポジトリは `YukiWorks432/extendscript-ts-template` を元に作られたテンプレートリポジトリです。
 元テンプレートにポリフィルやビルドツールの更新があった場合、以下の手順で自分のスクリプトを消さずに取り込めます。
 
-### 0. GitHub Copilot を使う場合
+### 0. AI エージェントを使う場合
 
-Copilot が使える環境なら、`update-from-upstream` スキルに任せると自動で差分確認・取り込みができます。
+Codex など、このリポジトリの `.agents/skills` を読める環境なら、`update-from-upstream` スキルに任せると自動で差分確認・取り込みができます。
 
 ### 1. 元テンプレートを「upstream」として登録する
 
