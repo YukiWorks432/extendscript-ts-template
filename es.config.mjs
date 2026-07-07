@@ -1,4 +1,6 @@
-export default {
+// @ts-check
+/** @type {import("./src/types/es.config.d.ts").EsConfig} */
+const config = {
   // アプリごとにスクリプトを管理します.
   // src/{appId}/{scriptName}/index.ts がビルドされます.
   // 出力先は dist/{appId}/{scriptName}/{scriptName}.jsx です.
@@ -40,3 +42,9 @@ export default {
     },
   ],
 };
+
+export default config;
+
+
+
+
