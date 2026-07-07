@@ -301,6 +301,8 @@ const onwarn = (warning, defaultHandler) => {
   }
   defaultHandler(warning);
 };
+const TEXT_COLOR_YELLOW = "\x1b[33m";
+const TEXT_COLOR_RESET = "\x1b[0m";
 
 const terserConfig = (preamble) =>
   terser({
@@ -385,12 +387,21 @@ export default (commandLineArgs) => {
 
   // アプリ別スクリプトを展開: { appId, script, srcDir, outDir }
   const allScripts = [];
+  let hasDeprecatedBuildFalse = false;
 
   if (config.scripts) {
     for (const [appId, scripts] of Object.entries(config.scripts)) {
       if (appFilter && appId !== appFilter) continue;
       for (const script of scripts) {
-        if (script.build === false) continue;
+        const isBuildEnabled = script.build !== false;
+
+        if (!forceBuildAll && !isBuildEnabled) {
+          continue;
+        }
+
+        if (forceBuildAll && !isBuildEnabled) {
+          hasDeprecatedBuildFalse = true;
+        }
 
         allScripts.push({
           appId,
@@ -407,7 +418,15 @@ export default (commandLineArgs) => {
   // common スクリプト（アプリ非依存）
   if (config.common && !appFilter) {
     for (const script of config.common) {
-      if (script.build === false) continue;
+      const isBuildEnabled = script.build !== false;
+
+      if (!forceBuildAll && !isBuildEnabled) {
+        continue;
+      }
+
+      if (forceBuildAll && !isBuildEnabled) {
+        hasDeprecatedBuildFalse = true;
+      }
 
       allScripts.push({
         appId: null,
@@ -423,6 +442,10 @@ export default (commandLineArgs) => {
   if (allScripts.length === 0) {
     console.error("ビルドするスクリプトがありません。");
     process.exit(1);
+  }
+
+  if (forceBuildAll && hasDeprecatedBuildFalse) {
+    console.warn(`${TEXT_COLOR_YELLOW}注意: es.config.mjs の build:false は非推奨です。build -a 実行時はビルド対象の判定を無視して全件をビルドします。${TEXT_COLOR_RESET}`);
   }
 
   const previousBuildHashes = loadBuildHashes();
@@ -488,3 +511,4 @@ export default (commandLineArgs) => {
 
   return entries;
 };
+
