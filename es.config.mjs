@@ -1,5 +1,4 @@
-// @ts-check
-/** @type {import("./src/types/es.config.d.ts").EsConfig} */
+/** @type {import("./src/types/es.config").EsConfig} */
 const config = {
   // アプリごとにスクリプトを管理します.
   // src/{appId}/{scriptName}/index.ts がビルドされます.
@@ -9,7 +8,6 @@ const config = {
       {
         name: "example",
         version: "0.0.1",
-        build: true,
         license: false,
       },
     ],
@@ -17,7 +15,6 @@ const config = {
       {
         name: "example",
         version: "0.0.1",
-        build: true,
         license: false,
       },
     ],
@@ -25,7 +22,6 @@ const config = {
       {
         name: "example",
         version: "0.0.1",
-        build: true,
         license: false,
       },
     ],
@@ -37,14 +33,9 @@ const config = {
     {
       name: "tests",
       version: "0.0.1",
-      build: true,
       license: true,
     },
   ],
 };
 
 export default config;
-
-
-
-
