@@ -4,8 +4,11 @@
 
 ## 前提条件
 
-- Node.js >= 20
-- pnpm
+- Node.js `^22.13.0 || >=24`
+- pnpm `11.17.0`
+
+TypeScript 4.9.5 を ES3 出力のため固定している理由は、
+[`docs/adr/0001-typescript-4-9-5-for-es3.md`](../adr/0001-typescript-4-9-5-for-es3.md) を参照してください。
 
 ## セットアップ
 

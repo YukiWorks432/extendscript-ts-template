@@ -30,12 +30,16 @@ shimの限界として、正しく動作しないものはeslintによってエ�
 
 ## 環境 / Environment
 
-- Node.js >= 20
-- pnpm
+- Node.js `^22.13.0 || >=24`
+- pnpm `11.17.0`
+- TypeScript `4.9.5`（ES3 出力のため固定）
+
+TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移行とする判断は、
+[ADR 0001](docs/adr/0001-typescript-4-9-5-for-es3.md) に記録しています。
 
 ## テスト環境 / Tested environment
 
-- Node.js v22.15.0
+- Node.js v22.13.0 / v24.13.0
 - Windows 11
 - AfterEffects 2025 / Illustrator 2025 / Photoshop 2025
 
