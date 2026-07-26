@@ -11,19 +11,11 @@ import process from "process";
 import path from "path";
 
 import config from "./es.config.mjs";
-
-// ファイルのハッシュを計算する関数
-const calculateFileHash = (filePath) => {
-  try {
-    const fileBuffer = fs.readFileSync(filePath);
-    const hashSum = crypto.createHash("sha256");
-    hashSum.update(fileBuffer);
-    return hashSum.digest("hex");
-  } catch (error) {
-    console.error(`ファイルのハッシュ計算に失敗: ${filePath}`, error);
-    return "unknown";
-  }
-};
+import {
+  calculateFileHash,
+  calculateScriptHash as calculateScriptHashValue,
+  selectChangedScripts,
+} from "./scripts/buildHash.mjs";
 
 const BUILD_HASH_DIR = "dist/temp";
 const BUILD_HASH_FILE = `${BUILD_HASH_DIR}/build-hashes.json`;
@@ -34,11 +26,8 @@ const ensureDirectory = (dirPath) => {
   }
 };
 
-const hashText = (text) => {
-  const hashSum = crypto.createHash("sha256");
-  hashSum.update(text);
-  return hashSum.digest("hex");
-};
+const hashText = (text) =>
+  crypto.createHash("sha256").update(text).digest("hex");
 
 const normalizePath = (filePath) => filePath.replace(/\\/g, "/");
 
@@ -112,7 +101,6 @@ const calculateInputHash = (inputPaths) => {
 
 const SHARED_BUILD_INPUTS = [
   "rollup.config.mjs",
-  "es.config.mjs",
   "package.json",
   "pnpm-lock.yaml",
   "tsconfig.json",
@@ -237,7 +225,10 @@ const getScriptHashInputs = ({ appId, script, srcDir, tsconfig }) => {
 };
 
 const calculateScriptHash = (scriptContext) =>
-  calculateInputHash(getScriptHashInputs(scriptContext));
+  calculateScriptHashValue({
+    inputHash: calculateInputHash(getScriptHashInputs(scriptContext)),
+    script: scriptContext.script,
+  });
 
 const loadBuildHashes = () => {
   try {
@@ -449,19 +440,16 @@ export default (commandLineArgs) => {
   }
 
   const previousBuildHashes = loadBuildHashes();
-  const currentBuildHashes = appFilter ? { ...previousBuildHashes } : {};
-
-  const targetScripts = allScripts.filter((scriptContext) => {
-    const { hashKey } = scriptContext;
-    const scriptHash = calculateScriptHash(scriptContext);
-    currentBuildHashes[hashKey] = scriptHash;
-
-    if (forceBuildAll) {
-      return true;
-    }
-
-    return previousBuildHashes[hashKey] !== scriptHash;
+  const selection = selectChangedScripts({
+    scripts: allScripts,
+    previousBuildHashes,
+    forceBuildAll,
+    calculateHash: calculateScriptHash,
   });
+  const currentBuildHashes = appFilter
+    ? { ...previousBuildHashes, ...selection.currentBuildHashes }
+    : selection.currentBuildHashes;
+  const targetScripts = selection.targetScripts;
 
   const entries = targetScripts.map(
     ({ script, srcDir, outDir, hashKey, tsconfig }) => {

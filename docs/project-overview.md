@@ -233,16 +233,23 @@ pnpm add-app -- --app=idsn
 | `pnpm new`              | 新規スクリプト追加（対話式 / CLI）   |
 | `pnpm add-app`          | 新規アプリスキャフォールディング     |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
+| `pnpm test`             | ビルド差分判定の回帰テスト           |
 
 ## 差分ビルドの判定
 
 `pnpm build` は、各スクリプトの `index.ts` から相対 `import` / `export ... from`
-で到達するファイルと、ビルド設定ファイルのハッシュを使って再ビルド対象を判定する。
+で到達するファイルと、スクリプトごとの有効な設定のハッシュを使って再ビルド対象を判定する。
 同じ `src/{appId}` 配下にある別スクリプトを変更しても、そのスクリプトを import していない
 他のスクリプトは再ビルド対象にならない。
 
-`rollup.config.mjs`、`es.config.mjs`、`package.json`、`pnpm-lock.yaml`、`tsconfig.json`、
-対象アプリの `tsconfig.json` を変更した場合は、該当するビルド対象のハッシュが変わる。
+`rollup.config.mjs`、`package.json`、`pnpm-lock.yaml`、ルート `tsconfig.json` を変更した場合は
+全スクリプトのハッシュが変わる。対象アプリの `tsconfig.json` を変更した場合は、該当アプリの
+ビルド対象だけのハッシュが変わる。`es.config.mjs` の `version`、`license`、その他の成果物へ
+影響する設定を変更した場合は、対象スクリプトだけのハッシュが変わる。`build` は選択専用のため
+ハッシュに含めない。`license` の省略と `false` は同じ設定として扱う。
+設定値はJSON互換値に限り、関数や循環参照などは明示的なエラーになる。設定の正規化はプロパティ順、
+空白、整形、コメントに依存しない。ハッシュ方式番号を変更した直後は、移行のため一度だけ全件を
+再ビルドする。
 `src/init.ts`、`src/lib/`、`src/{appId}/lib/` は、スクリプトから import で到達している場合だけ、
 そのスクリプトのハッシュに含まれる。
 `src/types/` は全スクリプト、`src/{appId}/types/` は該当アプリのスクリプトで使える ambient 型定義

@@ -146,6 +146,7 @@ pnpm watch
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
+| `pnpm test`             | ビルド差分判定の回帰テスト       |
 
 `pnpm add-app -- --app=<appId>` で正式対応アプリを追加すると、`pnpm build:<appId>` も自動で追加されます。
 
@@ -153,6 +154,8 @@ pnpm watch
 
 `src/tests/index.ts`にテストを記述しています。
 ビルドして実行すればダイアログが表示され、shimが想定通り動いているかが表示されます。
+
+ビルド差分判定の回帰テストは `pnpm test` で実行できます。
 
 ## ドキュメント
 
