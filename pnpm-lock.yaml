@@ -9,6 +9,9 @@ overrides:
   serialize-javascript@<=7.0.2: '>=7.0.3'
   '@eslint/eslintrc>minimatch': ^10.2.5
 
+patchedDependencies:
+  '@eslint/eslintrc@3.3.6': 8416daf0c28e4c2f5be1a4cfa4db386152d17ad468bef627a367ee1a115eadb1
+
 importers:
 
   .:
@@ -42,7 +45,7 @@ importers:
         version: 7.29.7(@babel/core@7.29.7)
       '@eslint/eslintrc':
         specifier: ^3.3.6
-        version: 3.3.6
+        version: 3.3.6(patch_hash=8416daf0c28e4c2f5be1a4cfa4db386152d17ad468bef627a367ee1a115eadb1)
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.8.0)
@@ -2372,7 +2375,7 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
 
-  '@eslint/eslintrc@3.3.6':
+  '@eslint/eslintrc@3.3.6(patch_hash=8416daf0c28e4c2f5be1a4cfa4db386152d17ad468bef627a367ee1a115eadb1)':
     dependencies:
       ajv: 6.14.0
       debug: 4.4.3
