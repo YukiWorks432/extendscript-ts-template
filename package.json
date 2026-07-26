@@ -8,6 +8,7 @@
     "build:ilst": "rollup -c --app=ilst",
     "build:phxs": "rollup -c --app=phxs",
     "clean": "node ./scripts/cleanBuildHashes.mjs",
+    "test": "node --test",
     "watch": "rollup -c -w",
     "lint": "eslint .",
     "format": "prettier --write .",
