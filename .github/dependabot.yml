@@ -8,6 +8,7 @@ updates:
       interval: monthly
     cooldown:
       default-days: 7
+    # 冷却期間は通常の版更新にだけ適用され、セキュリティ更新を遅延させない。
     groups:
       babel:
         patterns:

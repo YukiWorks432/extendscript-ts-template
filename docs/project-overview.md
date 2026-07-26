@@ -19,6 +19,10 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移行とする判断は、
 [`docs/adr/0001-typescript-4-9-5-for-es3.md`](adr/0001-typescript-4-9-5-for-es3.md) に記録しています。
 
+Dependabot の通常の版更新は、配布側の既定ブランチに設定が取り込まれた後、
+`develop` 向けに毎月実行されます。7日間の冷却期間は通常の版更新だけに適用され、
+セキュリティ更新を遅延させません。
+
 ## ディレクトリ構成
 
 ```

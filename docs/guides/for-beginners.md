@@ -100,11 +100,19 @@ node --version
 
 Node.js のパッケージを管理するツールです。`npm` より高速でディスク容量も節約できます。
 
-Node.js 16.9 以降には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
+Node.js 22・24系には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
 
 Node.js をインストールした後、コマンドプロンプトまたは PowerShell で：
 
 ```bash
+corepack enable pnpm
+```
+
+Node.js 25 以降を使う場合は Corepack が同梱されないため、先に Corepack を
+インストールしてから有効化します。
+
+```bash
+npm install --global corepack@latest
 corepack enable pnpm
 ```
 
