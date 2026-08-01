@@ -170,11 +170,11 @@ entry("MyScript", () => {
 import "../../init";
 import { entry, entryUI } from "../../lib/lib";
 
-entryUI("MyScript", __ES_THIS__, (win) => {
+entryUI("MyPanel", __ES_THIS__, (win) => {
   const runButton = win.add("button", undefined, "実行");
   runButton.onClick = () => {
-    entry("MyScript", () => {
-      // TODO: Implement MyScript
+    entry("MyPanel", () => {
+      // TODO: Implement MyPanel
     });
   };
 });

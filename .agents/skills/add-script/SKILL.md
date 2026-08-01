@@ -148,13 +148,14 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license --ui=scriptui
 `@material-symbols` には、[Google Fonts の公式アイコン一覧](https://fonts.google.com/icons) で実在を確認した
 新しい Material Symbols を、意味の異なる3件だけ小文字スネークケースで記載する。
 候補は重複させず、アルファベット順に並べ、カンマと半角空白で区切る。
-公式一覧を参照できない場合は、次の `TODO` を残して作成を続行する:
+Google Fonts を参照できない場合は、[Google の material-design-icons リポジトリ](https://github.com/google/material-design-icons) の
+`symbols` または `update/current_versions.json` で確認する。両方の確認先を参照できない場合だけ、次の `TODO` を残して作成を続行する:
 
 ```typescript
  * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
 ```
 
-候補について利用者へ確認せず、用途から自動で選ぶ。公式一覧を参照できない場合だけ `TODO` を残す。
+候補について利用者へ確認せず、用途から自動で選ぶ。Google Fonts と公式リポジトリの両方を参照できない場合だけ `TODO` を残す。
 `@workflow` も用途が不明な場合は `TODO` を残す。
 
 **ScriptUI の場合**: 生成済みテンプレートが `entryUI` と `__ES_THIS__` を使っていることを確認する:
