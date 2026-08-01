@@ -271,6 +271,23 @@ export const getTypeScriptInputFiles = ({
     .filter(isTypeScriptInputFile)
     .map(normalizePath);
 
+export const getTypeScriptPluginOptions = ({
+  appId,
+  srcDir,
+  tsconfig,
+  watch = false,
+}) => {
+  if (watch) {
+    return { tsconfig };
+  }
+
+  return {
+    tsconfig,
+    include: getTypeScriptInputFiles({ appId, srcDir, tsconfig }),
+    filterRoot: false,
+  };
+};
+
 const getScriptHashInputs = ({ appId, script, srcDir, tsconfig }) => {
   const inputs = [
     ...SHARED_BUILD_INPUTS,
@@ -440,7 +457,7 @@ const persistBuildHashes = (hashes, metadata) => ({
   },
 });
 
-export default (commandLineArgs) => {
+export default (commandLineArgs = {}) => {
   const forceBuildAll = hasForceBuildFlag(commandLineArgs);
   const appFilter = getAppFilter(commandLineArgs);
 
@@ -526,15 +543,17 @@ export default (commandLineArgs) => {
       const inputFile = `${srcDir}/index.ts`;
       const fileHash =
         currentBuildHashes[hashKey] || calculateFileHash(inputFile);
-      const typeScriptInputFiles = getTypeScriptInputFiles({
+      const typeScriptPluginOptions = getTypeScriptPluginOptions({
         appId,
         srcDir,
         tsconfig,
+        watch: Boolean(commandLineArgs.watch),
       });
       const metadata = {
         appId,
         hashKey,
         scriptName: script.name,
+        tsconfig,
         targetName: appId ? `${appId}/${script.name}` : script.name,
       };
 
@@ -550,11 +569,7 @@ export default (commandLineArgs) => {
         context: "this",
         onwarn,
         plugins: [
-          typescript({
-            tsconfig,
-            include: typeScriptInputFiles,
-            filterRoot: false,
-          }),
+          typescript(typeScriptPluginOptions),
           resolve({
             extensions,
           }),

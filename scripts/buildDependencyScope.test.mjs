@@ -7,6 +7,7 @@ import path from "path";
 import {
   collectImportDependencyFiles,
   getTypeScriptInputFiles,
+  getTypeScriptPluginOptions,
 } from "../rollup.config.mjs";
 
 const normalize = (filePath) => filePath.replace(/\\/g, "/");
@@ -103,4 +104,18 @@ test("アプリ別tsconfigの環境型定義を範囲へ含める", () => {
       filePath.endsWith("types-for-adobe/shared/XMPScript.d.ts")
     )
   );
+});
+
+test("監視ビルドは従来のTypeScript設定を使い、単発ビルドだけ範囲を限定する", () => {
+  const common = {
+    appId: "aeft",
+    srcDir: "src/aeft/example",
+    tsconfig: "src/aeft/tsconfig.json",
+  };
+  const watchOptions = getTypeScriptPluginOptions({ ...common, watch: true });
+  const buildOptions = getTypeScriptPluginOptions(common);
+
+  assert.deepEqual(watchOptions, { tsconfig: common.tsconfig });
+  assert.equal(buildOptions.filterRoot, false);
+  assert.ok(Array.isArray(buildOptions.include));
 });

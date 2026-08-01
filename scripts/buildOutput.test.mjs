@@ -4,7 +4,11 @@ import { promisify } from "node:util";
 import fs from "fs";
 import path from "path";
 import { execFile } from "child_process";
+import typescript from "@rollup/plugin-typescript";
+import { loadConfigFile } from "rollup/loadConfigFile";
 
+import { buildOne } from "./build.mjs";
+import { BUILD_HASH_PLUGIN_NAME } from "../rollup.config.mjs";
 const execFileAsync = promisify(execFile);
 const projectRoot = process.cwd();
 const outputFiles = [
@@ -30,6 +34,14 @@ const restoreFile = (filePath, snapshot) => {
   fs.writeFileSync(filePath, snapshot);
 };
 
+const normalizeBuildMetadata = (content) =>
+  content
+    .toString("utf8")
+    .replace(
+      /\/\*\* [^\n]* hash: [0-9a-f]{64} \*\/\n/g,
+      "/** normalized build metadata */\n"
+    );
+
 const runBuild = async (concurrency) => {
   const environment = { ...process.env };
   delete environment.BUILD_ALL;
@@ -45,6 +57,48 @@ const runBuild = async (concurrency) => {
       maxBuffer: 8 * 1024 * 1024,
     }
   );
+};
+
+const restoreEnvironmentValue = (name, value) => {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+  process.env[name] = value;
+};
+
+const runUnboundedBuild = async () => {
+  const previousBuildAll = process.env.BUILD_ALL;
+  const previousDefer = process.env.EXTENDSCRIPT_DEFER_BUILD_HASHES;
+  process.env.BUILD_ALL = "1";
+  process.env.EXTENDSCRIPT_DEFER_BUILD_HASHES = "1";
+
+  try {
+    const { options, warnings } = await loadConfigFile(
+      path.resolve(projectRoot, "rollup.config.mjs"),
+      {}
+    );
+    warnings.flush();
+
+    for (const option of options) {
+      const hashPlugin = option.plugins.find(
+        (plugin) => plugin && plugin.name === BUILD_HASH_PLUGIN_NAME
+      );
+      const tsconfig = hashPlugin.buildHashState.metadata.tsconfig;
+      const unboundedOptions = {
+        ...option,
+        plugins: option.plugins.map((plugin) =>
+          plugin && plugin.name === "typescript"
+            ? typescript({ tsconfig })
+            : plugin
+        ),
+      };
+      await buildOne({ option: unboundedOptions });
+    }
+  } finally {
+    restoreEnvironmentValue("BUILD_ALL", previousBuildAll);
+    restoreEnvironmentValue("EXTENDSCRIPT_DEFER_BUILD_HASHES", previousDefer);
+  }
 };
 
 test("逐次実行と並列実行の生成物はバイト単位で一致する", async () => {
@@ -65,6 +119,15 @@ test("逐次実行と並列実行の生成物はバイト単位で一致する",
       snapshotFile(filePath)
     );
     assert.deepEqual(parallelOutputs, serialOutputs);
+
+    await runUnboundedBuild();
+    const unboundedOutputs = outputFiles.map((filePath) =>
+      snapshotFile(filePath)
+    );
+    assert.deepEqual(
+      unboundedOutputs.map(normalizeBuildMetadata),
+      parallelOutputs.map(normalizeBuildMetadata)
+    );
   } finally {
     snapshots.forEach((snapshot, filePath) => restoreFile(filePath, snapshot));
   }
