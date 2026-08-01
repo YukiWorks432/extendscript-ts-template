@@ -1,8 +1,3 @@
-minimumReleaseAgeExclude:
-  - brace-expansion@5.0.8
 overrides:
   serialize-javascript@<7.0.5: ">=7.0.5"
   serialize-javascript@<=7.0.2: ">=7.0.3"
-  "@eslint/eslintrc>minimatch": ^10.2.5
-patchedDependencies:
-  "@eslint/eslintrc@3.3.6": patches/@eslint__eslintrc@3.3.6.patch
