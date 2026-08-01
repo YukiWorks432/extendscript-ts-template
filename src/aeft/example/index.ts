@@ -1,3 +1,16 @@
+/**
+ * @script example
+ * @app aeft
+ * @material-symbols analytics, layers, visibility
+ * @description
+ *   選択中のレイヤーを対象に名前と不透明度を集計し、結果をダイアログへ表示する。
+ *
+ * @workflow
+ *   1. コンポジションでレイヤーを選択する
+ *   2. スクリプトを実行する
+ *   3. 選択レイヤーの名前、数、不透明度の合計と平均を確認する
+ */
+
 // shimを実行するために、initのimportが必須です。
 import "../../init";
 

@@ -9,6 +9,9 @@ argument-hint: "対象アプリ（After Effects / Illustrator / Photoshop）、�
 プロジェクトのスクリプト生成ツールを使って新規スクリプトを作成し、用途をコメントとして記録する。
 ユーザーの選択に応じてスケルトンで止めるか、実装まで進める。
 
+説明コメントの形式は [docs/script-comment-block.md](../../../docs/script-comment-block.md) を正本とする。
+このスキルでは、生成後に用途から説明、処理手順、Material Symbols の候補を完成させる。
+
 ## When to Use
 
 - 「スクリプトを作りたい」「新しいスクリプトを追加して」と言ったとき
@@ -121,12 +124,14 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license --ui=scriptui
 
 ### 5. 用途（purpose）をファイルに記録する
 
-`src/<appId>/<ScriptName>/index.ts` を開き、ファイル先頭に以下のコメントブロックを追加する:
+`src/<appId>/<ScriptName>/index.ts` を開き、ファイル先頭の雛形を用途に合わせて完成させる。
+コメントブロックは `import` より前へ配置し、次の5項目をこの順序で記載する:
 
 ```typescript
 /**
  * @script <ScriptName>
- * @app <appId>（After Effects / Illustrator / Photoshop）
+ * @app <appId>
+ * @material-symbols <候補1>, <候補2>, <候補3>
  * @description
  *   <ユーザーが述べた用途を具体的に記述する>
  *
@@ -136,7 +141,22 @@ pnpm new -- --app=<appId> --name=<ScriptName> --license --ui=scriptui
  */
 ```
 
-`@workflow` はユーザーの `purpose` から推測して記述する。不明な場合は `TODO` として残す。
+`@script` はディレクトリ名および `es.config.mjs` の設定名と一致させ、`@app` はアプリIDだけを記載する。
+`@description` は対象・操作・結果を含む1〜3文、`@workflow` は利用者から見た操作と結果を1〜5段階で記述する。
+内部関数やAPI呼び出しなどの実装詳細は記載しない。
+
+`@material-symbols` には、[Google Fonts の公式アイコン一覧](https://fonts.google.com/icons) で実在を確認した
+新しい Material Symbols を、意味の異なる3件だけ小文字スネークケースで記載する。
+候補は重複させず、アルファベット順に並べ、カンマと半角空白で区切る。
+Google Fonts を参照できない場合は、[Google の material-design-icons リポジトリ](https://github.com/google/material-design-icons) の
+`symbols` または `update/current_versions.json` で確認する。両方の確認先を参照できない場合だけ、次の `TODO` を残して作成を続行する:
+
+```typescript
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+```
+
+候補について利用者へ確認せず、用途から自動で選ぶ。Google Fonts と公式リポジトリの両方を参照できない場合だけ `TODO` を残す。
+`@workflow` も用途が不明な場合は `TODO` を残す。
 
 **ScriptUI の場合**: 生成済みテンプレートが `entryUI` と `__ES_THIS__` を使っていることを確認する:
 
@@ -157,12 +177,15 @@ entryUI("<ScriptName>", __ES_THIS__, (win) => {
 ### 6. 作成したファイルを確認する
 
 作成した `src/<appId>/<ScriptName>/index.ts` を読み、生成結果とコメントが意図通りか確認する。
+スケルトンのみを作成する場合でも、聞き取った用途から `@description` と `@workflow` を完成させる。
+実装まで進める場合は、実装後の対象・結果・利用者向け手順に合わせてコメントを再確認する。
 
 ### 7a. スケルトンモード — ここで完了
 
 ユーザーが「スケルトンのみ」を選んだ場合:
 
 - ファイルパス `src/<appId>/<ScriptName>/index.ts` をリンク付きでユーザーに報告する
+- `@material-symbols` に記載した候補名を完了報告へ示す。公式一覧を確認できず `TODO` を残した場合は、その `TODO` も示す
 - 実装する際のヒント（どの関数を使うか）を簡単に案内する
 - **実装には着手しない**
 
@@ -176,6 +199,7 @@ entryUI("<ScriptName>", __ES_THIS__, (win) => {
 4. エラーがなければ `pnpm build -- <appId>/<ScriptName>` を実行してビルドする
 5. エラーがあればステップ 3 に戻って修正する
 6. ビルド成功後、実装した内容を簡潔に日本語で報告する
+7. 完了報告に `@material-symbols` へ記載した候補名を示す。公式一覧を確認できず `TODO` を残した場合は、その `TODO` も示す
 
 ---
 

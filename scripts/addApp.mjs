@@ -27,6 +27,17 @@ const EXAMPLE_SCRIPT = {
   license: true,
 };
 
+const createScriptCommentBlock = (appId, name) => `/**
+ * @script ${name}
+ * @app ${appId}
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */`;
+
 // types-for-adobe のアプリID → ディレクトリ名マッピング
 const APP_TYPES_MAP = {
   aeft: {
@@ -374,7 +385,7 @@ async function scaffold(appId) {
   await mkdir(exampleDir, { recursive: true });
   await writeFile(
     path.resolve(exampleDir, "index.ts"),
-    `import "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
+    `${createScriptCommentBlock(appId, EXAMPLE_SCRIPT.name)}\n\nimport "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
     { encoding: "utf8", flag: "wx" }
   );
 

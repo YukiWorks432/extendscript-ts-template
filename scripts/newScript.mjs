@@ -218,8 +218,19 @@ async function updateScriptConfig(appId, newScript) {
   await writeFile(ES_CONFIG_PATH, newConfig, { encoding: "utf8" });
 }
 
-const createIndexTsTemplate = (name) =>
-  `/** @description Explain script */
+const createScriptCommentBlock = (appId, name) => `/**
+ * @script ${name}
+ * @app ${appId}
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */`;
+
+const createIndexTsTemplate = (appId, name) =>
+  `${createScriptCommentBlock(appId, name)}
 
 import "../../init";
 import { entry } from "../../lib/lib";
@@ -229,8 +240,8 @@ entry("${name}", () => {
 });
 `;
 
-const createScriptUiIndexTsTemplate = (name) =>
-  `/** @description Build ScriptUI panel */
+const createScriptUiIndexTsTemplate = (appId, name) =>
+  `${createScriptCommentBlock(appId, name)}
 
 import "../../init";
 import { entry, entryUI } from "../../lib/lib";
@@ -260,8 +271,8 @@ async function createScriptTemplate(appId, name, uiType) {
   await mkdir(scriptDir, { recursive: true });
   const indexContent =
     uiType === "scriptui"
-      ? createScriptUiIndexTsTemplate(name)
-      : createIndexTsTemplate(name);
+      ? createScriptUiIndexTsTemplate(appId, name)
+      : createIndexTsTemplate(appId, name);
   try {
     await writeFile(indexPath, indexContent, {
       encoding: "utf8",

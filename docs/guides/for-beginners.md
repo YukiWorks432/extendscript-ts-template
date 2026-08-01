@@ -306,7 +306,10 @@ Copilot が自律的に以下をすべてやってくれます：
 
 1. 足りない情報（アプリ・スクリプト名など）を質問してくれる
 2. `pnpm new` でファイルを生成する
-3. スクリプトの実装まで書いてくれる
+3. 用途から説明コメントと Material Symbols 候補を記載する
+4. スクリプトの実装まで書いてくれる
+
+説明コメントの項目と候補名の選び方は、[スクリプト説明コメントブロック](../script-comment-block.md) に従います。
 
 > **Agent モードとは**: Copilot がファイル操作やターミナルコマンドを自律的に実行するモードです。チャットモードのドロップダウンから「Agent」を選んでください。
 
@@ -353,6 +356,19 @@ n
 Copilot が以下のようなコードを `src/aeft/WiggleApplier/index.ts` に生成します：
 
 ```typescript
+/**
+ * @script WiggleApplier
+ * @app aeft
+ * @material-symbols animation, layers, tune
+ * @description
+ *   選択中のレイヤーを対象に、Position へウィグルエクスプレッションを適用する。
+ *
+ * @workflow
+ *   1. コンポジションでレイヤーを選択する
+ *   2. スクリプトを実行する
+ *   3. 選択レイヤーの Position にウィグルが適用されたことを確認する
+ */
+
 // shimを実行するために、initのimportが必須です。
 import "../../init";
 
