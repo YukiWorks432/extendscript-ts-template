@@ -1,3 +1,16 @@
+/**
+ * @script example
+ * @app phxs
+ * @material-symbols info, layers, visibility
+ * @description
+ *   アクティブなドキュメントのレイヤーを対象に、アクティブレイヤー名をダイアログへ表示する。
+ *
+ * @workflow
+ *   1. ドキュメントを開き、レイヤーをアクティブにする
+ *   2. スクリプトを実行する
+ *   3. アクティブレイヤーの名前を確認する
+ */
+
 import "../../init";
 import { entry } from "../lib/lib";
 

@@ -81,7 +81,7 @@ gh --version
 
 ### 1-4. Node.js（JavaScript 実行環境）
 
-ビルドツールを動かすために必要です。バージョン **20 以上**をインストールしてください。
+ビルドツールを動かすために必要です。`^22.13.0` または `24` 以降をインストールしてください。
 
 1. https://nodejs.org/ja にアクセス
 2. 「LTS（推奨版）」をクリックしてダウンロード（執筆時点: v22.x）
@@ -91,7 +91,7 @@ gh --version
 
 ```bash
 node --version
-# v22.x.x と表示されれば OK（20以上であればOK）
+# v22.13.0 以上、または v24.x.x と表示されれば OK
 ```
 
 ---
@@ -100,7 +100,7 @@ node --version
 
 Node.js のパッケージを管理するツールです。`npm` より高速でディスク容量も節約できます。
 
-Node.js 16.9 以降には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
+Node.js 22・24系には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
 
 Node.js をインストールした後、コマンドプロンプトまたは PowerShell で：
 
@@ -108,11 +108,19 @@ Node.js をインストールした後、コマンドプロンプトまたは Po
 corepack enable pnpm
 ```
 
+Node.js 25 以降を使う場合は Corepack が同梱されないため、先に Corepack を
+インストールしてから有効化します。
+
+```bash
+npm install --global corepack@latest
+corepack enable pnpm
+```
+
 インストール確認：
 
 ```bash
 pnpm --version
-# 10.x.x と表示されれば OK
+# 11.17.0 と表示されれば OK
 ```
 
 > **Corepack とは**: Node.js に同梱されたパッケージマネージャ管理ツールです。`npm install -g` と異なり、グローバルインストールなしでパッケージマネージャを切り替えられます。
@@ -298,7 +306,10 @@ Copilot が自律的に以下をすべてやってくれます：
 
 1. 足りない情報（アプリ・スクリプト名など）を質問してくれる
 2. `pnpm new` でファイルを生成する
-3. スクリプトの実装まで書いてくれる
+3. 用途から説明コメントと Material Symbols 候補を記載する
+4. スクリプトの実装まで書いてくれる
+
+説明コメントの項目と候補名の選び方は、[スクリプト説明コメントブロック](../script-comment-block.md) に従います。
 
 > **Agent モードとは**: Copilot がファイル操作やターミナルコマンドを自律的に実行するモードです。チャットモードのドロップダウンから「Agent」を選んでください。
 
@@ -345,6 +356,19 @@ n
 Copilot が以下のようなコードを `src/aeft/WiggleApplier/index.ts` に生成します：
 
 ```typescript
+/**
+ * @script WiggleApplier
+ * @app aeft
+ * @material-symbols animation, layers, tune
+ * @description
+ *   選択中のレイヤーを対象に、Position へウィグルエクスプレッションを適用する。
+ *
+ * @workflow
+ *   1. コンポジションでレイヤーを選択する
+ *   2. スクリプトを実行する
+ *   3. 選択レイヤーの Position にウィグルが適用されたことを確認する
+ */
+
 // shimを実行するために、initのimportが必須です。
 import "../../init";
 

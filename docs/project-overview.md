@@ -10,6 +10,19 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 - **型定義**: [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)（有志による非公式定義、不足あり）
 - **パッケージマネージャ**: pnpm
 
+## 開発環境の対応版
+
+- **Node.js**: `^22.13.0 || >=24`
+- **pnpm**: `11.17.0`（`packageManager` で厳密指定）
+- **TypeScript**: `4.9.5`（ES3 出力のため厳密指定）
+
+TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移行とする判断は、
+[`docs/adr/0001-typescript-4-9-5-for-es3.md`](adr/0001-typescript-4-9-5-for-es3.md) に記録しています。
+
+Dependabot の通常の版更新は、配布側の既定ブランチに設定が取り込まれた後、
+`develop` 向けに毎月実行されます。7日間の冷却期間は通常の版更新だけに適用され、
+セキュリティ更新を遅延させません。
+
 ## ディレクトリ構成
 
 ```
@@ -113,11 +126,25 @@ pnpm new
 2. `src/{app}/MyScript/index.ts` をテンプレートから生成
 3. Prettier で `es.config.mjs` を整形
 
+生成直後の説明コメント雛形と、用途から `TODO` を完成させる規則は
+[スクリプト説明コメントブロック](script-comment-block.md) に定める。
+
 ### テンプレート
 
 生成される `index.ts` は以下の構造：
 
 ```ts
+/**
+ * @script MyScript
+ * @app aeft
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */
+
 import "../../init";
 import { entry } from "../../lib/lib";
 
@@ -129,14 +156,25 @@ entry("MyScript", () => {
 `--ui=scriptui` を指定した場合は、以下のように `entryUI` と `__ES_THIS__` を使う：
 
 ```ts
+/**
+ * @script MyPanel
+ * @app aeft
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */
+
 import "../../init";
 import { entry, entryUI } from "../../lib/lib";
 
-entryUI("MyScript", __ES_THIS__, (win) => {
+entryUI("MyPanel", __ES_THIS__, (win) => {
   const runButton = win.add("button", undefined, "実行");
   runButton.onClick = () => {
-    entry("MyScript", () => {
-      // TODO: Implement MyScript
+    entry("MyPanel", () => {
+      // TODO: Implement MyPanel
     });
   };
 });
@@ -215,6 +253,8 @@ pnpm add-app -- --app=idsn
 - `es.config.mjs` に `scripts.{app}` キーを追加し、`example` を `build: true`, `license: true` で登録
 - `package.json` に `build:<appId>` コマンドを追加
 
+`example/index.ts` の先頭には、[スクリプト説明コメントブロック](script-comment-block.md) の `TODO` 雛形も生成される。
+
 既存の `src/{appId}` または `es.config.mjs` の `scripts.{appId}` と衝突する場合は、ファイルを生成せずに停止する。
 
 ## 開発コマンド
@@ -233,16 +273,35 @@ pnpm add-app -- --app=idsn
 | `pnpm new`              | 新規スクリプト追加（対話式 / CLI）   |
 | `pnpm add-app`          | 新規アプリスキャフォールディング     |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
+| `pnpm test`             | ビルド差分判定の回帰テスト           |
+
+`pnpm build`、`pnpm build --all`、`pnpm build --app=<appId>`、アプリ別のビルド別名は、
+対象スクリプトごとにTypeScriptの依存範囲を限定し、上限付きで並列実行します。既定の
+並列度は `min(4, os.availableParallelism(), 対象件数)` です。利用できない実行環境では
+`os.cpus().length` を使います。
+
+並列度は `--concurrency=<正整数>` で上書きできます。`--concurrency=1` は並列実行だけを
+無効にし、スクリプト単位のTypeScript範囲限定は維持します。0、負数、小数、数値以外、
+値なしはエラーとして終了します。
+
+`pnpm watch` は今回の単発ビルド最適化の対象外です。従来どおりRollupの監視処理を使い、
+`--concurrency` の指定は監視ビルドには適用されません。
 
 ## 差分ビルドの判定
 
 `pnpm build` は、各スクリプトの `index.ts` から相対 `import` / `export ... from`
-で到達するファイルと、ビルド設定ファイルのハッシュを使って再ビルド対象を判定する。
+で到達するファイルと、スクリプトごとの有効な設定のハッシュを使って再ビルド対象を判定する。
 同じ `src/{appId}` 配下にある別スクリプトを変更しても、そのスクリプトを import していない
 他のスクリプトは再ビルド対象にならない。
 
-`rollup.config.mjs`、`es.config.mjs`、`package.json`、`pnpm-lock.yaml`、`tsconfig.json`、
-対象アプリの `tsconfig.json` を変更した場合は、該当するビルド対象のハッシュが変わる。
+`rollup.config.mjs`、`package.json`、`pnpm-lock.yaml`、ルート `tsconfig.json` を変更した場合は
+全スクリプトのハッシュが変わる。対象アプリの `tsconfig.json` を変更した場合は、該当アプリの
+ビルド対象だけのハッシュが変わる。`es.config.mjs` の `version`、`license`、その他の成果物へ
+影響する設定を変更した場合は、対象スクリプトだけのハッシュが変わる。`build` は選択専用のため
+ハッシュに含めない。`license` の省略と `false` は同じ設定として扱う。
+設定値はJSON互換値に限り、関数や循環参照などは明示的なエラーになる。設定の正規化はプロパティ順、
+空白、整形、コメントに依存しない。ハッシュ方式番号を変更した直後は、移行のため一度だけ全件を
+再ビルドする。
 `src/init.ts`、`src/lib/`、`src/{appId}/lib/` は、スクリプトから import で到達している場合だけ、
 そのスクリプトのハッシュに含まれる。
 `src/types/` は全スクリプト、`src/{appId}/types/` は該当アプリのスクリプトで使える ambient 型定義

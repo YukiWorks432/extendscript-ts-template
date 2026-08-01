@@ -4,8 +4,11 @@
 
 ## 前提条件
 
-- Node.js >= 20
-- pnpm
+- Node.js `^22.13.0 || >=24`
+- pnpm `11.17.0`
+
+TypeScript 4.9.5 を ES3 出力のため固定している理由は、
+[`docs/adr/0001-typescript-4-9-5-for-es3.md`](../adr/0001-typescript-4-9-5-for-es3.md) を参照してください。
 
 ## セットアップ
 
@@ -37,10 +40,26 @@ pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
 - `src/aeft/MyFirstScript/index.ts`（テンプレートコード）
 - `es.config.mjs` にビルドエントリを追加
 
+生成されたコメントの `@description`、`@workflow`、`@material-symbols` は、
+[スクリプト説明コメントブロック](../script-comment-block.md) の規則に沿って用途へ置き換えます。
+
 ### 2. コードを書く
 
 ```ts
 // src/aeft/MyFirstScript/index.ts
+/**
+ * @script MyFirstScript
+ * @app aeft
+ * @material-symbols layers, list, visibility
+ * @description
+ *   選択したレイヤーの名前を取得し、結果をログへ出力する。
+ *
+ * @workflow
+ *   1. コンポジションでレイヤーを選択する
+ *   2. スクリプトを実行する
+ *   3. 選択レイヤーの名前を確認する
+ */
+
 import "../../init";
 import { entry } from "../../lib/lib";
 
@@ -62,6 +81,11 @@ pnpm build
 ```
 
 出力先: `dist/aeft/MyFirstScript/MyFirstScript.jsx`
+
+複数スクリプトの単発ビルドは、既定で最大4件まで並列に実行されます。並列度を指定する
+場合は `pnpm build --concurrency=2` のように指定してください。`--concurrency=1` では
+スクリプト単位の依存範囲を保ったまま逐次実行できます。監視ビルド `pnpm watch` はこの
+最適化の対象外です。
 
 ### 4. Adobe アプリで実行
 
@@ -175,6 +199,7 @@ declare class SomeUndefinedClass {
 ## 次のステップ
 
 - `docs/project-overview.md` でプロジェクト構成の詳細を確認できます
+- `docs/script-comment-block.md` でスクリプト説明コメントの規則を確認できます
 - `docs/polyfills.md` で使用可能な ES6+ 機能を確認できます
 - `es.config.mjs` でスクリプトのビルド設定を調整できます
 

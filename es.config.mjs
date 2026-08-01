@@ -1,4 +1,5 @@
-export default {
+/** @type {import("./src/types/es.config").EsConfig} */
+const config = {
   // アプリごとにスクリプトを管理します.
   // src/{appId}/{scriptName}/index.ts がビルドされます.
   // 出力先は dist/{appId}/{scriptName}/{scriptName}.jsx です.
@@ -7,7 +8,6 @@ export default {
       {
         name: "example",
         version: "0.0.1",
-        build: true,
         license: false,
       },
     ],
@@ -15,7 +15,6 @@ export default {
       {
         name: "example",
         version: "0.0.1",
-        build: true,
         license: false,
       },
     ],
@@ -23,7 +22,6 @@ export default {
       {
         name: "example",
         version: "0.0.1",
-        build: true,
         license: false,
       },
     ],
@@ -35,8 +33,9 @@ export default {
     {
       name: "tests",
       version: "0.0.1",
-      build: true,
       license: true,
     },
   ],
 };
+
+export default config;

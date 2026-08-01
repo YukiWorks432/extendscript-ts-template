@@ -30,12 +30,16 @@ shimの限界として、正しく動作しないものはeslintによってエ�
 
 ## 環境 / Environment
 
-- Node.js >= 20
-- pnpm
+- Node.js `^22.13.0 || >=24`
+- pnpm `11.17.0`
+- TypeScript `4.9.5`（ES3 出力のため固定）
+
+TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移行とする判断は、
+[ADR 0001](docs/adr/0001-typescript-4-9-5-for-es3.md) に記録しています。
 
 ## テスト環境 / Tested environment
 
-- Node.js v22.15.0
+- Node.js v22.13.0 / v24.13.0
 - Windows 11
 - AfterEffects 2025 / Illustrator 2025 / Photoshop 2025
 
@@ -74,6 +78,9 @@ pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
 pnpm new
 ```
 
+生成される説明コメントの規格と、生成後に `TODO` を完成させる手順は
+[スクリプト説明コメントブロック](docs/script-comment-block.md) を参照してください。
+
 ### es.config.mjs
 
 ```mjs
@@ -105,6 +112,17 @@ export default {
 
 ```ts
 // src/aeft/example/index.ts
+/**
+ * @script example
+ * @app aeft
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */
+
 import "../../init";
 import { entry } from "../../lib/lib";
 
@@ -146,6 +164,7 @@ pnpm watch
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
+| `pnpm test`             | ビルド差分判定の回帰テスト       |
 
 `pnpm add-app -- --app=<appId>` で正式対応アプリを追加すると、`pnpm build:<appId>` も自動で追加されます。
 
@@ -154,9 +173,12 @@ pnpm watch
 `src/tests/index.ts`にテストを記述しています。
 ビルドして実行すればダイアログが表示され、shimが想定通り動いているかが表示されます。
 
+ビルド差分判定の回帰テストは `pnpm test` で実行できます。
+
 ## ドキュメント
 
 - [プロジェクト概要](docs/project-overview.md)
+- [スクリプト説明コメントブロック](docs/script-comment-block.md)
 - [ポリフィル](docs/polyfills.md)
 - [はじめに](docs/guides/getting-started.md)
 - [リリース手順](docs/release-process.md)

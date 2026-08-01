@@ -1,0 +1,53 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    # 冷却期間は通常の版更新にだけ適用され、セキュリティ更新を遅延させない。
+    groups:
+      babel:
+        patterns:
+          - "@babel/*"
+        update-types:
+          - minor
+          - patch
+      typescript-eslint:
+        patterns:
+          - "@typescript-eslint/*"
+        update-types:
+          - minor
+          - patch
+      rollup:
+        patterns:
+          - rollup
+          - "@rollup/*"
+          - rollup-plugin-license
+        update-types:
+          - minor
+          - patch
+      quality:
+        patterns:
+          - eslint
+          - "@eslint/*"
+          - globals
+          - prettier
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: typescript
+      - dependency-name: "@babel/*"
+        versions:
+          - "8.x"
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7

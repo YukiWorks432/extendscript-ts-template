@@ -27,6 +27,17 @@ const EXAMPLE_SCRIPT = {
   license: true,
 };
 
+const createScriptCommentBlock = (appId, name) => `/**
+ * @script ${name}
+ * @app ${appId}
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */`;
+
 // types-for-adobe のアプリID → ディレクトリ名マッピング
 const APP_TYPES_MAP = {
   aeft: {
@@ -288,6 +299,9 @@ function shouldInsertAfterBuildScript(currentKey, nextKey) {
   return isBuildKey && !nextIsBuildKey;
 }
 
+export const getBuildScriptAlias = (appId) =>
+  `node ./scripts/build.mjs --app=${appId}`;
+
 function addBuildScriptAlias(scripts, appId) {
   const scriptName = `build:${appId}`;
   if (Object.prototype.hasOwnProperty.call(scripts, scriptName)) {
@@ -304,13 +318,13 @@ function addBuildScriptAlias(scripts, appId) {
 
     const nextKey = entries[i + 1]?.[0] || null;
     if (!inserted && shouldInsertAfterBuildScript(key, nextKey)) {
-      nextScripts[scriptName] = `rollup -c --app=${appId}`;
+      nextScripts[scriptName] = getBuildScriptAlias(appId);
       inserted = true;
     }
   }
 
   if (!inserted) {
-    nextScripts[scriptName] = `rollup -c --app=${appId}`;
+    nextScripts[scriptName] = getBuildScriptAlias(appId);
   }
 
   return { scripts: nextScripts, added: true };
@@ -374,7 +388,7 @@ async function scaffold(appId) {
   await mkdir(exampleDir, { recursive: true });
   await writeFile(
     path.resolve(exampleDir, "index.ts"),
-    `import "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
+    `${createScriptCommentBlock(appId, EXAMPLE_SCRIPT.name)}\n\nimport "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
     { encoding: "utf8", flag: "wx" }
   );
 
@@ -446,4 +460,10 @@ async function main() {
   }
 }
 
-main();
+const isMainModule =
+  process.argv[1] &&
+  pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+
+if (isMainModule) {
+  await main();
+}
