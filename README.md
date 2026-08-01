@@ -78,6 +78,9 @@ pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
 pnpm new
 ```
 
+生成される説明コメントの規格と、生成後に `TODO` を完成させる手順は
+[スクリプト説明コメントブロック](docs/script-comment-block.md) を参照してください。
+
 ### es.config.mjs
 
 ```mjs
@@ -109,6 +112,17 @@ export default {
 
 ```ts
 // src/aeft/example/index.ts
+/**
+ * @script example
+ * @app aeft
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */
+
 import "../../init";
 import { entry } from "../../lib/lib";
 
@@ -164,6 +178,7 @@ pnpm watch
 ## ドキュメント
 
 - [プロジェクト概要](docs/project-overview.md)
+- [スクリプト説明コメントブロック](docs/script-comment-block.md)
 - [ポリフィル](docs/polyfills.md)
 - [はじめに](docs/guides/getting-started.md)
 - [リリース手順](docs/release-process.md)

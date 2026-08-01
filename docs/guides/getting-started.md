@@ -40,10 +40,26 @@ pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
 - `src/aeft/MyFirstScript/index.ts`（テンプレートコード）
 - `es.config.mjs` にビルドエントリを追加
 
+生成されたコメントの `@description`、`@workflow`、`@material-symbols` は、
+[スクリプト説明コメントブロック](../script-comment-block.md) の規則に沿って用途へ置き換えます。
+
 ### 2. コードを書く
 
 ```ts
 // src/aeft/MyFirstScript/index.ts
+/**
+ * @script MyFirstScript
+ * @app aeft
+ * @material-symbols layers, list, visibility
+ * @description
+ *   選択したレイヤーの名前を取得し、結果をログへ出力する。
+ *
+ * @workflow
+ *   1. コンポジションでレイヤーを選択する
+ *   2. スクリプトを実行する
+ *   3. 選択レイヤーの名前を確認する
+ */
+
 import "../../init";
 import { entry } from "../../lib/lib";
 
@@ -178,6 +194,7 @@ declare class SomeUndefinedClass {
 ## 次のステップ
 
 - `docs/project-overview.md` でプロジェクト構成の詳細を確認できます
+- `docs/script-comment-block.md` でスクリプト説明コメントの規則を確認できます
 - `docs/polyfills.md` で使用可能な ES6+ 機能を確認できます
 - `es.config.mjs` でスクリプトのビルド設定を調整できます
 

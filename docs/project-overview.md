@@ -126,11 +126,25 @@ pnpm new
 2. `src/{app}/MyScript/index.ts` をテンプレートから生成
 3. Prettier で `es.config.mjs` を整形
 
+生成直後の説明コメント雛形と、用途から `TODO` を完成させる規則は
+[スクリプト説明コメントブロック](script-comment-block.md) に定める。
+
 ### テンプレート
 
 生成される `index.ts` は以下の構造：
 
 ```ts
+/**
+ * @script MyScript
+ * @app aeft
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */
+
 import "../../init";
 import { entry } from "../../lib/lib";
 
@@ -142,6 +156,17 @@ entry("MyScript", () => {
 `--ui=scriptui` を指定した場合は、以下のように `entryUI` と `__ES_THIS__` を使う：
 
 ```ts
+/**
+ * @script MyPanel
+ * @app aeft
+ * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
+ * @description
+ *   TODO: 対象・操作・得られる結果を1〜3文で記載
+ *
+ * @workflow
+ *   1. TODO: 利用者から見た操作と結果を記載
+ */
+
 import "../../init";
 import { entry, entryUI } from "../../lib/lib";
 
@@ -227,6 +252,8 @@ pnpm add-app -- --app=idsn
 - `src/{app}/example/index.ts`
 - `es.config.mjs` に `scripts.{app}` キーを追加し、`example` を `build: true`, `license: true` で登録
 - `package.json` に `build:<appId>` コマンドを追加
+
+`example/index.ts` の先頭には、[スクリプト説明コメントブロック](script-comment-block.md) の `TODO` 雛形も生成される。
 
 既存の `src/{appId}` または `es.config.mjs` の `scripts.{appId}` と衝突する場合は、ファイルを生成せずに停止する。
 
