@@ -63,6 +63,3 @@ jobs:
 
       - name: Check diff
         run: git diff --check
-
-      - name: Intentional failure check
-        run: test 1 = 0
