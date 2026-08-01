@@ -19,6 +19,9 @@ test("スクリプト単位のTypeScript範囲は相対依存と環境型だけ�
   const siblingDir = path.join(sourceRoot, "common", "sibling");
   const typesDir = path.join(sourceRoot, "types");
   const runtimeDir = path.join(sourceRoot, "lib");
+  const stringOnlyPath = path.join(siblingDir, "string-only.ts");
+  const commentedPath = path.join(siblingDir, "commented.ts");
+  const lazyPath = path.join(targetDir, "lazy.ts");
 
   try {
     fs.mkdirSync(targetDir, { recursive: true });
@@ -27,7 +30,13 @@ test("スクリプト単位のTypeScript範囲は相対依存と環境型だけ�
     fs.mkdirSync(runtimeDir, { recursive: true });
     fs.writeFileSync(
       path.join(targetDir, "index.ts"),
-      'import "../../init"; import "../shared";\n'
+      [
+        "const text = 'import \"../sibling/string-only\";';",
+        '/* import "../sibling/commented"; */',
+        'import "../../init";',
+        'export * from "../shared";',
+        'const load = import("./lazy");',
+      ].join("\n")
     );
     fs.writeFileSync(
       path.join(sourceRoot, "common", "shared.ts"),
@@ -37,9 +46,12 @@ test("スクリプト単位のTypeScript範囲は相対依存と環境型だけ�
       path.join(siblingDir, "index.ts"),
       "const unrelated: MissingType = 1;\n"
     );
+    fs.writeFileSync(stringOnlyPath, "export {};\n");
+    fs.writeFileSync(commentedPath, "export {};\n");
+    fs.writeFileSync(lazyPath, "export {};\n");
     fs.writeFileSync(
       path.join(sourceRoot, "init.ts"),
-      'import "./lib/runtime";\n'
+      'const text = "// import \'./missing\';";\nimport "./lib/runtime";\n'
     );
     fs.writeFileSync(
       path.join(runtimeDir, "runtime.js"),
@@ -65,6 +77,9 @@ test("スクリプト単位のTypeScript範囲は相対依存と環境型だけ�
     assert.ok(
       dependencies.includes(normalize(path.join(runtimeDir, "runtime.js")))
     );
+    assert.ok(dependencies.includes(normalize(lazyPath)));
+    assert.equal(dependencies.includes(normalize(stringOnlyPath)), false);
+    assert.equal(dependencies.includes(normalize(commentedPath)), false);
     assert.ok(
       typeScriptFiles.includes(normalize(path.join(targetDir, "index.ts")))
     );

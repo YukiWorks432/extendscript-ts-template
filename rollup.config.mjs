@@ -9,6 +9,7 @@ import fs from "fs";
 import crypto from "crypto";
 import process from "process";
 import path from "path";
+import ts from "typescript";
 
 import config from "./es.config.mjs";
 import {
@@ -30,10 +31,6 @@ const hashText = (text) =>
   crypto.createHash("sha256").update(text).digest("hex");
 
 const normalizePath = (filePath) => filePath.replace(/\\/g, "/");
-
-const IMPORT_RESOLVE_EXTENSIONS = [".ts", ".js", ".d.ts"];
-const IMPORT_SPECIFIER_PATTERN =
-  /\b(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g;
 
 const collectFiles = (targetPath) => {
   if (!fs.existsSync(targetPath)) {
@@ -167,63 +164,42 @@ const getTypeScriptConfigTypeInputs = (tsconfig) => {
 const isTypeScriptInputFile = (filePath) =>
   /\.(?:d\.)?(?:c|m)?tsx?$/i.test(filePath);
 
-const stripComments = (source) =>
-  source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-
 const getRelativeImportSpecifiers = (filePath) => {
-  const source = stripComments(fs.readFileSync(filePath, "utf8"));
-  const specifiers = [];
-
-  IMPORT_SPECIFIER_PATTERN.lastIndex = 0;
-
-  let match = IMPORT_SPECIFIER_PATTERN.exec(source);
-  while (match) {
-    const specifier = match[1] || match[2];
-
-    if (specifier && specifier.startsWith(".")) {
-      specifiers.push(specifier);
-    }
-
-    match = IMPORT_SPECIFIER_PATTERN.exec(source);
-  }
-
-  return specifiers;
+  const source = fs.readFileSync(filePath, "utf8");
+  return ts
+    .preProcessFile(source, true, true)
+    .importedFiles.map(({ fileName }) => fileName)
+    .filter((specifier) => specifier.startsWith("."));
 };
 
-const getImportCandidates = (importBasePath) => {
-  const candidates = [];
-
-  if (path.extname(importBasePath)) {
-    candidates.push(importBasePath);
-  } else {
-    IMPORT_RESOLVE_EXTENSIONS.forEach((extension) => {
-      candidates.push(`${importBasePath}${extension}`);
-    });
-  }
-
-  IMPORT_RESOLVE_EXTENSIONS.forEach((extension) => {
-    candidates.push(path.join(importBasePath, `index${extension}`));
-  });
-
-  return candidates;
+const IMPORT_RESOLVE_OPTIONS = {
+  allowJs: true,
+  moduleResolution: ts.ModuleResolutionKind.NodeJs,
 };
 
 const resolveRelativeImport = (fromFilePath, specifier) => {
-  const importBasePath = path.resolve(path.dirname(fromFilePath), specifier);
+  const resolvedModule = ts.resolveModuleName(
+    specifier,
+    fromFilePath,
+    IMPORT_RESOLVE_OPTIONS,
+    ts.sys
+  ).resolvedModule;
+  const resolvedFilePath = resolvedModule?.resolvedFileName;
 
-  return (
-    getImportCandidates(importBasePath).find((candidate) => {
-      if (!fs.existsSync(candidate)) {
-        return false;
-      }
+  if (!resolvedFilePath) {
+    return null;
+  }
 
-      return fs.statSync(candidate).isFile();
-    }) || null
-  );
+  const absoluteFilePath = path.resolve(resolvedFilePath);
+  if (!fs.existsSync(absoluteFilePath)) {
+    return null;
+  }
+
+  return fs.statSync(absoluteFilePath).isFile() ? absoluteFilePath : null;
 };
 
 const canReadImports = (filePath) =>
-  IMPORT_RESOLVE_EXTENSIONS.includes(path.extname(filePath));
+  isTypeScriptInputFile(filePath) || path.extname(filePath) === ".js";
 
 export const collectImportDependencyFiles = (entryFile) => {
   const files = new Map();
@@ -327,9 +303,23 @@ const loadBuildHashes = () => {
   }
 };
 
-export const saveBuildHashes = (hashes) => {
-  ensureDirectory(BUILD_HASH_DIR);
-  fs.writeFileSync(BUILD_HASH_FILE, JSON.stringify(hashes, null, 2), "utf8");
+export const saveBuildHashes = (hashes, buildHashFile = BUILD_HASH_FILE) => {
+  const targetPath = path.resolve(buildHashFile);
+  const temporaryPath = `${targetPath}.${process.pid}.${Date.now()}.tmp`;
+
+  ensureDirectory(path.dirname(targetPath));
+
+  try {
+    fs.writeFileSync(temporaryPath, JSON.stringify(hashes, null, 2), "utf8");
+    fs.renameSync(temporaryPath, targetPath);
+  } catch (error) {
+    try {
+      fs.rmSync(temporaryPath, { force: true });
+    } catch {
+      // 元の履歴を保持することを優先し、一時ファイルの削除失敗は元のエラーに委ねる。
+    }
+    throw error;
+  }
 };
 
 const isTruthyFlag = (value) =>

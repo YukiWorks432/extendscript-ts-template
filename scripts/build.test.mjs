@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-import { BUILD_HASH_PLUGIN_NAME } from "../rollup.config.mjs";
+import { BUILD_HASH_PLUGIN_NAME, saveBuildHashes } from "../rollup.config.mjs";
 import { executeBuild } from "./build.mjs";
 
 const createOption = (label, hashes) => ({
@@ -87,4 +90,37 @@ test("失敗時は開始済みbundleを閉じ、ハッシュを保存しない",
   assert.deepEqual(started, ["failing", "running"]);
   assert.deepEqual(closed.sort(), ["failing", "running"]);
   assert.deepEqual(saved, []);
+});
+
+test("ハッシュ履歴の保存失敗時は既存内容を保持する", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-build-hash-"));
+  const hashFile = path.join(root, "build-hashes.json");
+  const existingContent = Buffer.from('{"existing":"hash"}');
+  const originalWriteFileSync = fs.writeFileSync;
+
+  try {
+    fs.writeFileSync(hashFile, existingContent);
+    t.mock.method(fs, "writeFileSync", (filePath, data, options) => {
+      if (String(filePath).endsWith(".tmp")) {
+        originalWriteFileSync.call(
+          fs,
+          filePath,
+          String(data).slice(0, 2),
+          options
+        );
+        throw new Error("ハッシュ履歴の保存失敗");
+      }
+
+      return originalWriteFileSync.call(fs, filePath, data, options);
+    });
+
+    assert.throws(
+      () => saveBuildHashes({ next: "hash" }, hashFile),
+      /ハッシュ履歴の保存失敗/
+    );
+    assert.deepEqual(fs.readFileSync(hashFile), existingContent);
+    assert.deepEqual(fs.readdirSync(root), ["build-hashes.json"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
