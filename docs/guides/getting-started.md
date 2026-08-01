@@ -82,6 +82,11 @@ pnpm build
 
 出力先: `dist/aeft/MyFirstScript/MyFirstScript.jsx`
 
+複数スクリプトの単発ビルドは、既定で最大4件まで並列に実行されます。並列度を指定する
+場合は `pnpm build --concurrency=2` のように指定してください。`--concurrency=1` では
+スクリプト単位の依存範囲を保ったまま逐次実行できます。監視ビルド `pnpm watch` はこの
+最適化の対象外です。
+
 ### 4. Adobe アプリで実行
 
 - After Effects: `File > Scripts > Run Script File...` からビルド済み `.jsx` を選択します

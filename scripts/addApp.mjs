@@ -299,6 +299,9 @@ function shouldInsertAfterBuildScript(currentKey, nextKey) {
   return isBuildKey && !nextIsBuildKey;
 }
 
+export const getBuildScriptAlias = (appId) =>
+  `node ./scripts/build.mjs --app=${appId}`;
+
 function addBuildScriptAlias(scripts, appId) {
   const scriptName = `build:${appId}`;
   if (Object.prototype.hasOwnProperty.call(scripts, scriptName)) {
@@ -315,13 +318,13 @@ function addBuildScriptAlias(scripts, appId) {
 
     const nextKey = entries[i + 1]?.[0] || null;
     if (!inserted && shouldInsertAfterBuildScript(key, nextKey)) {
-      nextScripts[scriptName] = `rollup -c --app=${appId}`;
+      nextScripts[scriptName] = getBuildScriptAlias(appId);
       inserted = true;
     }
   }
 
   if (!inserted) {
-    nextScripts[scriptName] = `rollup -c --app=${appId}`;
+    nextScripts[scriptName] = getBuildScriptAlias(appId);
   }
 
   return { scripts: nextScripts, added: true };
@@ -457,4 +460,10 @@ async function main() {
   }
 }
 
-main();
+const isMainModule =
+  process.argv[1] &&
+  pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+
+if (isMainModule) {
+  await main();
+}

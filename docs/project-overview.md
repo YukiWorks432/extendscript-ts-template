@@ -275,6 +275,18 @@ pnpm add-app -- --app=idsn
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
 | `pnpm test`             | ビルド差分判定の回帰テスト           |
 
+`pnpm build`、`pnpm build --all`、`pnpm build --app=<appId>`、アプリ別のビルド別名は、
+対象スクリプトごとにTypeScriptの依存範囲を限定し、上限付きで並列実行します。既定の
+並列度は `min(4, os.availableParallelism(), 対象件数)` です。利用できない実行環境では
+`os.cpus().length` を使います。
+
+並列度は `--concurrency=<正整数>` で上書きできます。`--concurrency=1` は並列実行だけを
+無効にし、スクリプト単位のTypeScript範囲限定は維持します。0、負数、小数、数値以外、
+値なしはエラーとして終了します。
+
+`pnpm watch` は今回の単発ビルド最適化の対象外です。従来どおりRollupの監視処理を使い、
+`--concurrency` の指定は監視ビルドには適用されません。
+
 ## 差分ビルドの判定
 
 `pnpm build` は、各スクリプトの `index.ts` から相対 `import` / `export ... from`

@@ -9,6 +9,7 @@ import fs from "fs";
 import crypto from "crypto";
 import process from "process";
 import path from "path";
+import ts from "typescript";
 
 import config from "./es.config.mjs";
 import {
@@ -30,10 +31,6 @@ const hashText = (text) =>
   crypto.createHash("sha256").update(text).digest("hex");
 
 const normalizePath = (filePath) => filePath.replace(/\\/g, "/");
-
-const IMPORT_RESOLVE_EXTENSIONS = [".ts", ".js", ".d.ts"];
-const IMPORT_SPECIFIER_PATTERN =
-  /\b(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g;
 
 const collectFiles = (targetPath) => {
   if (!fs.existsSync(targetPath)) {
@@ -119,65 +116,92 @@ const getAmbientTypeInputs = (appId) => {
   return inputs;
 };
 
-const stripComments = (source) =>
-  source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-
-const getRelativeImportSpecifiers = (filePath) => {
-  const source = stripComments(fs.readFileSync(filePath, "utf8"));
-  const specifiers = [];
-
-  IMPORT_SPECIFIER_PATTERN.lastIndex = 0;
-
-  let match = IMPORT_SPECIFIER_PATTERN.exec(source);
-  while (match) {
-    const specifier = match[1] || match[2];
-
-    if (specifier && specifier.startsWith(".")) {
-      specifiers.push(specifier);
-    }
-
-    match = IMPORT_SPECIFIER_PATTERN.exec(source);
-  }
-
-  return specifiers;
+const resolveTypeScriptConfigPath = (configPath, extendsValue) => {
+  const basePath = path.resolve(path.dirname(configPath), extendsValue);
+  const candidates = [basePath, `${basePath}.json`];
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
 };
 
-const getImportCandidates = (importBasePath) => {
-  const candidates = [];
-
-  if (path.extname(importBasePath)) {
-    candidates.push(importBasePath);
-  } else {
-    IMPORT_RESOLVE_EXTENSIONS.forEach((extension) => {
-      candidates.push(`${importBasePath}${extension}`);
-    });
+const getTypeScriptConfigTypes = (configPath, visited = new Set()) => {
+  const resolvedConfigPath = path.resolve(configPath);
+  if (visited.has(resolvedConfigPath) || !fs.existsSync(resolvedConfigPath)) {
+    return [];
   }
 
-  IMPORT_RESOLVE_EXTENSIONS.forEach((extension) => {
-    candidates.push(path.join(importBasePath, `index${extension}`));
-  });
+  visited.add(resolvedConfigPath);
+  const parsedConfig = JSON.parse(fs.readFileSync(resolvedConfigPath, "utf8"));
+  const compilerOptions = parsedConfig.compilerOptions || {};
+  if (Object.prototype.hasOwnProperty.call(compilerOptions, "types")) {
+    return compilerOptions.types || [];
+  }
 
-  return candidates;
+  if (parsedConfig.extends) {
+    const parentConfigPath = resolveTypeScriptConfigPath(
+      resolvedConfigPath,
+      parsedConfig.extends
+    );
+    if (parentConfigPath) {
+      return getTypeScriptConfigTypes(parentConfigPath, visited);
+    }
+  }
+
+  return [];
+};
+
+const getTypeScriptConfigTypeInputs = (tsconfig) => {
+  const configPath = path.resolve(tsconfig);
+  return getTypeScriptConfigTypes(configPath).flatMap((typePath) => {
+    const basePath = path.resolve(path.dirname(configPath), typePath);
+    const candidates = [
+      basePath,
+      `${basePath}.d.ts`,
+      path.join(basePath, "index.d.ts"),
+    ];
+    return candidates.find((candidate) => fs.existsSync(candidate)) || [];
+  });
+};
+
+const isTypeScriptInputFile = (filePath) =>
+  /\.(?:d\.)?(?:c|m)?tsx?$/i.test(filePath);
+
+const getRelativeImportSpecifiers = (filePath) => {
+  const source = fs.readFileSync(filePath, "utf8");
+  return ts
+    .preProcessFile(source, true, true)
+    .importedFiles.map(({ fileName }) => fileName)
+    .filter((specifier) => specifier.startsWith("."));
+};
+
+const IMPORT_RESOLVE_OPTIONS = {
+  allowJs: true,
+  moduleResolution: ts.ModuleResolutionKind.NodeJs,
 };
 
 const resolveRelativeImport = (fromFilePath, specifier) => {
-  const importBasePath = path.resolve(path.dirname(fromFilePath), specifier);
+  const resolvedModule = ts.resolveModuleName(
+    specifier,
+    fromFilePath,
+    IMPORT_RESOLVE_OPTIONS,
+    ts.sys
+  ).resolvedModule;
+  const resolvedFilePath = resolvedModule?.resolvedFileName;
 
-  return (
-    getImportCandidates(importBasePath).find((candidate) => {
-      if (!fs.existsSync(candidate)) {
-        return false;
-      }
+  if (!resolvedFilePath) {
+    return null;
+  }
 
-      return fs.statSync(candidate).isFile();
-    }) || null
-  );
+  const absoluteFilePath = path.resolve(resolvedFilePath);
+  if (!fs.existsSync(absoluteFilePath)) {
+    return null;
+  }
+
+  return fs.statSync(absoluteFilePath).isFile() ? absoluteFilePath : null;
 };
 
 const canReadImports = (filePath) =>
-  IMPORT_RESOLVE_EXTENSIONS.includes(path.extname(filePath));
+  isTypeScriptInputFile(filePath) || path.extname(filePath) === ".js";
 
-const collectImportDependencyFiles = (entryFile) => {
+export const collectImportDependencyFiles = (entryFile) => {
   const files = new Map();
 
   const visit = (filePath) => {
@@ -207,6 +231,37 @@ const collectImportDependencyFiles = (entryFile) => {
   return Array.from(files.values()).sort((left, right) =>
     normalizePath(left).localeCompare(normalizePath(right))
   );
+};
+
+export const getTypeScriptInputFiles = ({
+  appId,
+  srcDir,
+  tsconfig,
+  ambientTypeInputs = getAmbientTypeInputs(appId),
+}) =>
+  getUniqueSortedFiles([
+    ...collectImportDependencyFiles(`${srcDir}/index.ts`),
+    ...ambientTypeInputs,
+    ...(tsconfig ? getTypeScriptConfigTypeInputs(tsconfig) : []),
+  ])
+    .filter(isTypeScriptInputFile)
+    .map(normalizePath);
+
+export const getTypeScriptPluginOptions = ({
+  appId,
+  srcDir,
+  tsconfig,
+  watch = false,
+}) => {
+  if (watch) {
+    return { tsconfig };
+  }
+
+  return {
+    tsconfig,
+    include: getTypeScriptInputFiles({ appId, srcDir, tsconfig }),
+    filterRoot: false,
+  };
 };
 
 const getScriptHashInputs = ({ appId, script, srcDir, tsconfig }) => {
@@ -248,9 +303,23 @@ const loadBuildHashes = () => {
   }
 };
 
-const saveBuildHashes = (hashes) => {
-  ensureDirectory(BUILD_HASH_DIR);
-  fs.writeFileSync(BUILD_HASH_FILE, JSON.stringify(hashes, null, 2), "utf8");
+export const saveBuildHashes = (hashes, buildHashFile = BUILD_HASH_FILE) => {
+  const targetPath = path.resolve(buildHashFile);
+  const temporaryPath = `${targetPath}.${process.pid}.${Date.now()}.tmp`;
+
+  ensureDirectory(path.dirname(targetPath));
+
+  try {
+    fs.writeFileSync(temporaryPath, JSON.stringify(hashes, null, 2), "utf8");
+    fs.renameSync(temporaryPath, targetPath);
+  } catch (error) {
+    try {
+      fs.rmSync(temporaryPath, { force: true });
+    } catch {
+      // 元の履歴を保持することを優先し、一時ファイルの削除失敗は元のエラーに委ねる。
+    }
+    throw error;
+  }
 };
 
 const isTruthyFlag = (value) =>
@@ -271,7 +340,8 @@ const hasForceBuildFlag = (commandLineArgs = {}) => {
 };
 
 const getAppFilter = (commandLineArgs = {}) => {
-  const appFilter = commandLineArgs.app || null;
+  const appFilter =
+    commandLineArgs.app || process.env.EXTENDSCRIPT_BUILD_APP || null;
   delete commandLineArgs.app;
   return appFilter;
 };
@@ -359,11 +429,16 @@ const createBabelConfig = () =>
   });
 
 let hasSavedBuildHashes = false;
+export const BUILD_HASH_PLUGIN_NAME = "persist-build-hashes";
 
-const persistBuildHashes = (hashes) => ({
-  name: "persist-build-hashes",
+const persistBuildHashes = (hashes, metadata) => ({
+  name: BUILD_HASH_PLUGIN_NAME,
+  buildHashState: { hashes, metadata },
   closeBundle() {
-    if (hasSavedBuildHashes) {
+    if (
+      hasSavedBuildHashes ||
+      process.env.EXTENDSCRIPT_DEFER_BUILD_HASHES === "1"
+    ) {
       return;
     }
 
@@ -372,7 +447,7 @@ const persistBuildHashes = (hashes) => ({
   },
 });
 
-export default (commandLineArgs) => {
+export default (commandLineArgs = {}) => {
   const forceBuildAll = hasForceBuildFlag(commandLineArgs);
   const appFilter = getAppFilter(commandLineArgs);
 
@@ -454,10 +529,23 @@ export default (commandLineArgs) => {
   const targetScripts = selection.targetScripts;
 
   const entries = targetScripts.map(
-    ({ script, srcDir, outDir, hashKey, tsconfig }) => {
+    ({ appId, script, srcDir, outDir, hashKey, tsconfig }) => {
       const inputFile = `${srcDir}/index.ts`;
       const fileHash =
         currentBuildHashes[hashKey] || calculateFileHash(inputFile);
+      const typeScriptPluginOptions = getTypeScriptPluginOptions({
+        appId,
+        srcDir,
+        tsconfig,
+        watch: Boolean(commandLineArgs.watch),
+      });
+      const metadata = {
+        appId,
+        hashKey,
+        scriptName: script.name,
+        tsconfig,
+        targetName: appId ? `${appId}/${script.name}` : script.name,
+      };
 
       const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
 
@@ -471,7 +559,7 @@ export default (commandLineArgs) => {
         context: "this",
         onwarn,
         plugins: [
-          typescript({ tsconfig }),
+          typescript(typeScriptPluginOptions),
           resolve({
             extensions,
           }),
@@ -480,7 +568,7 @@ export default (commandLineArgs) => {
           extractCommentsToTop(),
           terserConfig(banner),
           script.license ? licenser(srcDir) : null,
-          persistBuildHashes(currentBuildHashes),
+          persistBuildHashes(currentBuildHashes, metadata),
         ],
       };
     }
