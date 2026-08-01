@@ -10,6 +10,8 @@
 - GitHub Copilot 専用の `.github/copilot-instructions.md`、`.github/instructions/`、`.github/skills/` は正本にせず、この配布用リポジトリには置きません。
 - 作業前にこの `AGENTS.md` を確認してください。対象ファイルに対応する追加指示がある場合は、その指示も確認してください。
 - `src/**/*.ts` を編集する場合は、`.agents/instructions/extendscript.md` を確認してください。
+- Node.js と pnpm の対応版、TypeScript 4.9.5 固定の理由は、
+  [`docs/adr/0001-typescript-4-9-5-for-es3.md`](docs/adr/0001-typescript-4-9-5-for-es3.md) を参照してください。
 - 参照先 docs / skills とこのファイルが矛盾する場合は、このファイルを優先し、必要なら矛盾を報告してください。
 
 ## 必ず守ること

@@ -436,7 +436,9 @@ export default (commandLineArgs) => {
   }
 
   if (forceBuildAll && hasDeprecatedBuildFalse) {
-    console.warn(`${TEXT_COLOR_YELLOW}注意: es.config.mjs の build:false は非推奨です。build -a 実行時はビルド対象の判定を無視して全件をビルドします。${TEXT_COLOR_RESET}`);
+    console.warn(
+      `${TEXT_COLOR_YELLOW}注意: es.config.mjs の build:false は非推奨です。build -a 実行時はビルド対象の判定を無視して全件をビルドします。${TEXT_COLOR_RESET}`
+    );
   }
 
   const previousBuildHashes = loadBuildHashes();
@@ -499,4 +501,3 @@ export default (commandLineArgs) => {
 
   return entries;
 };
-

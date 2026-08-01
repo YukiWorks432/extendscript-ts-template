@@ -10,6 +10,19 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 - **型定義**: [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)（有志による非公式定義、不足あり）
 - **パッケージマネージャ**: pnpm
 
+## 開発環境の対応版
+
+- **Node.js**: `^22.13.0 || >=24`
+- **pnpm**: `11.17.0`（`packageManager` で厳密指定）
+- **TypeScript**: `4.9.5`（ES3 出力のため厳密指定）
+
+TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移行とする判断は、
+[`docs/adr/0001-typescript-4-9-5-for-es3.md`](adr/0001-typescript-4-9-5-for-es3.md) に記録しています。
+
+Dependabot の通常の版更新は、配布側の既定ブランチに設定が取り込まれた後、
+`develop` 向けに毎月実行されます。7日間の冷却期間は通常の版更新だけに適用され、
+セキュリティ更新を遅延させません。
+
 ## ディレクトリ構成
 
 ```
