@@ -28,6 +28,19 @@
     root.returnExports = factory(); // eslint-disable-line no-param-reassign
   }
 })(this, function () {
+  // $.global survives $.evalFile() re-evaluation in ExtendScript.
+  var esTsGlobal =
+    typeof $ !== "undefined" && $.global ? $.global : null;
+  var esTsCacheKey = "__ES_TS_TEMPLATE_ES5_SHIM__";
+  var esTsCacheVersion = "v1";
+  var esTsCache = esTsGlobal && esTsGlobal[esTsCacheKey];
+  if (
+    esTsCache &&
+    esTsCache.version === esTsCacheVersion
+  ) {
+    return esTsCache.exports;
+  }
+
   /**
    * Brings an environment as close to ECMAScript 5 compliance
    * as is possible with the facilities of erstwhile engines.
@@ -2806,5 +2819,12 @@
     };
     // can't use defineProperties here because of toString enumeration issue in IE <= 8
     RegExp.prototype.toString = regexToString;
+  }
+
+  if (esTsGlobal) {
+    esTsGlobal[esTsCacheKey] = {
+      version: esTsCacheVersion,
+      exports: undefined,
+    };
   }
 });
