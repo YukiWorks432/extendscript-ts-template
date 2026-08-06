@@ -27,6 +27,19 @@
 })(this, function () {
   ("use strict");
 
+  // $.global survives $.evalFile() re-evaluation in ExtendScript.
+  var esTsGlobal =
+    typeof $ !== "undefined" && $.global ? $.global : null;
+  var esTsCacheKey = "__ES_TS_TEMPLATE_ES6_SHIM__";
+  var esTsCacheVersion = "v1";
+  var esTsCache = esTsGlobal && esTsGlobal[esTsCacheKey];
+  if (
+    esTsCache &&
+    esTsCache.version === esTsCacheVersion
+  ) {
+    return esTsCache.exports;
+  }
+
   var _apply = Function.call.bind(Function.apply);
   var _call = Function.call.bind(Function.call);
   var isArray = Array.isArray;
@@ -186,10 +199,14 @@
   };
 
   var getGlobal = function () {
-    /* global self, window */
+    /* global $, self, window, global */
     // the only reliable means to get the global object is
     // `Function('return this')()`
     // However, this causes CSP violations in Chrome apps.
+    // ExtendScript exposes the engine global through $.global.
+    if (typeof $ !== "undefined" && $.global) {
+      return $.global;
+    }
     if (typeof self !== "undefined") {
       return self;
     }
@@ -3013,5 +3030,11 @@
     });
   }
 
+  if (esTsGlobal) {
+    esTsGlobal[esTsCacheKey] = {
+      version: esTsCacheVersion,
+      exports: globals,
+    };
+  }
   return globals;
 });
