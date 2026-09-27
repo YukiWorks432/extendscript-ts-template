@@ -7,11 +7,11 @@
 
 ## 必ず確認する項目
 
-### リリース workflow
+### リリースワークフロー
 
-`.github/workflows/release.yml` は、`main` への Pull Request マージ時に `package.json` の `version` 更新、tag 作成、GitHub Release 作成を行う workflow です。
+`.github/workflows/release.yml` は、GitHub Actions から手動で起動すると、`package.json` の `version` 更新、タグ作成、GitHub Release 作成を行うワークフローです。`main` 向け Pull Request のマージだけではリリースしません。
 
-この workflow は、Repository Variable `RELEASE_AUTOMATION_ENABLED` が `true` の場合だけ動きます。
+このワークフローは、リポジトリ変数 `RELEASE_AUTOMATION_ENABLED` が `true` の場合だけ動きます。
 不要な場合は `.github/workflows/release.yml` を削除してください。
 使う場合は、`docs/release-process.md` を読んでから有効化してください。
 
@@ -49,4 +49,4 @@
 feature/my-script -> develop -> main
 ```
 
-リリース workflow を使う場合は、`docs/release-process.md` を確認してください。
+リリースワークフローを使う場合は、`docs/release-process.md` を確認してください。

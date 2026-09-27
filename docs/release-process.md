@@ -1,15 +1,15 @@
 # リリース手順
 
-このリポジトリには、GitHub Actions から手動実行してリリースを作成する workflow があります。
+このリポジトリには、GitHub Actions から手動実行してリリースを作成するワークフローがあります。
 `main` 向け Pull Request のマージだけでは、版番号、タグ、GitHub Release は作成されません。
 
-この workflow はテンプレート利用先にもコピーされます。
+このワークフローはテンプレート利用先にもコピーされます。
 不要な場合は `.github/workflows/release.yml` を削除してください。
-使う場合は Repository Variable `RELEASE_AUTOMATION_ENABLED=true` を設定してください。
+使う場合はリポジトリ変数 `RELEASE_AUTOMATION_ENABLED=true` を設定してください。
 
 ## 手動リリース
 
-`.github/workflows/release.yml` は、Repository Variable `RELEASE_AUTOMATION_ENABLED=true` の場合だけ動きます。
+`.github/workflows/release.yml` は、リポジトリ変数 `RELEASE_AUTOMATION_ENABLED=true` の場合だけ動きます。
 GitHub Actions の `release` ワークフローを `main` から実行し、`bump` に `major`、`minor`、
 `patch` のいずれかを指定します。`notes` は任意で、空欄の場合は既定の説明を使います。
 
@@ -35,7 +35,7 @@ GitHub Actions の `release` ワークフローを `main` から実行し、`bum
 
 この区分は、0.x 系列ではマイナー番号の更新を互換性を壊す変更に割り当てるという、セマンティック バージョニングの運用上の取り決めです。1.0.0 に到達した時点で、互換性を壊す変更に指定する `bump` を `minor` から `major` に切り替えます。
 
-既存の `release:*` ラベルは変更のリリース影響を記録する補助情報です。workflow はラベルを読み取らず、
+既存の `release:*` ラベルは変更のリリース影響を記録する補助情報です。ワークフローはラベルを読み取らず、
 ラベルによる自動実行や `release:none` による抑止は行いません。
 
 ## 通常の変更
@@ -46,12 +46,12 @@ Pull Request のマージ後、必要なタイミングで手動リリースを�
 
 ## 事前設定
 
-GitHub Actions が `main` へリリースコミットを push し、タグと Release を作れる必要があります。
+GitHub Actions が `main` へリリースコミットをプッシュし、タグと GitHub Release を作れる必要があります。
 
 リポジトリの Actions 設定で `GITHUB_TOKEN` に書き込み権限を許可してください。
-`main` にブランチ保護を設定している場合は、GitHub Actions の push を許可するか、リリース用の例外を設定してください。
+`main` にブランチ保護を設定している場合は、GitHub Actions のプッシュを許可するか、リリース用の例外を設定してください。
 
-手動リリースを使う場合は、Repository Variable を設定してください。
+手動リリースを使う場合は、リポジトリ変数を設定してください。
 
 ```text
 RELEASE_AUTOMATION_ENABLED=true

@@ -12,7 +12,7 @@
 main -> feat/<topic> -> Pull Request -> main
 ```
 
-通常の Pull Request は squash merge を基本とします。
+通常の Pull Request はスカッシュマージを基本とします。
 複数の変更を組み合わせた状態で事前検証する必要がある場合だけ、`main` から短命な
 `integration/<topic>` ブランチを作り、そこで変更を統合します。検証後はそのブランチから
 `main` 向け Pull Request を作成します。
@@ -26,7 +26,7 @@ main
      Pull Request -> main
 ```
 
-常設の `develop` は通常の統合先として使いません。移行時は `develop` を base にした未完了
+常設の `develop` は通常の統合先として使いません。移行時は `develop` を対象ブランチにした未完了
 Pull Request の扱いを決め、CI と Dependabot の設定、ブランチ保護を `main` 基準へ整えた後に削除します。
 
 ## 継続的インテグレーション
@@ -71,7 +71,7 @@ After Effects の実機試験と `pnpm audit` は自動化対象外です。こ�
 ## リリース
 
 リリース自動化は `.github/workflows/release.yml` で管理します。
-Repository Variable `RELEASE_AUTOMATION_ENABLED=true` が設定されている場合だけ、手動実行できます。
+リポジトリ変数 `RELEASE_AUTOMATION_ENABLED=true` が設定されている場合だけ、手動実行できます。
 `main` 向け Pull Request のマージだけではリリースを作成しません。
 
 `release:*` ラベルは変更のリリース影響を記録するために使います。ラベルはリリースを起動せず、
@@ -98,13 +98,13 @@ Repository Variable `RELEASE_AUTOMATION_ENABLED=true` が設定されている�
 
 具体的には、次の方針を守ります。
 
-- 自動で外部状態を変更する workflow は、明示的な有効化フラグを必須にする。
+- 自動で外部状態を変更するワークフローは、明示的な有効化フラグを必須にする。
 - 個人やこのリポジトリ固有の設定は、README または docs で調整方法を明記する。
 - テンプレート利用者が最初に確認すべき項目は `docs/template-customization.md` に集約する。
 
 ## GitHub 設定
 
-現時点では、merge 方法やブランチ保護は GitHub 設定で強制しません。
+現時点では、マージ方法やブランチ保護は GitHub 設定で強制しません。
 運用ルールはこの文書で規定します。
 
-将来、作業者が増えて事故リスクが高くなった場合は、`main` のブランチ保護、必須チェック、merge 方法の制限を検討します。
+将来、作業者が増えて事故リスクが高くなった場合は、`main` のブランチ保護、必須チェック、マージ方法の制限を検討します。
