@@ -31,6 +31,10 @@ jobs:
 
       - name: Set up pnpm and Node.js
         uses: pnpm/setup@v3
+        # pnpm/setup resolves the range to the latest release; keep its version
+        # check from switching to the lockfile's resolved pnpm version.
+        env:
+          pnpm_config_pm_on_fail: ignore
         with:
           runtime: node@${{ matrix.node-version }}
           install: false
