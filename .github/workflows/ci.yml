@@ -29,21 +29,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v3
         with:
-          version: 11.17.0
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
+          runtime: node@${{ matrix.node-version }}
+          install: false
+          cache: true
 
       - name: Verify tool versions
         run: |
-          test "$(pnpm --version)" = "11.17.0"
+          pnpm_version="$(pnpm --version)"
+          pnpm_major="${pnpm_version%%.*}"
+          if [ "$pnpm_major" != "12" ]; then
+            echo "Expected pnpm 12.x, got $pnpm_version" >&2
+            exit 1
+          fi
           node --version
 
       - name: Install dependencies

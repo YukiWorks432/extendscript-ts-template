@@ -30,7 +30,7 @@ Dependabot が作成した Pull Request も、通常の Pull Request と同じ�
 Node.js の行列ごとに次の検証を実行します。
 
 - Node.js 22 と 24
-- pnpm `11.17.0` の確認
+- pnpm 12 系の確認
 - `pnpm install --frozen-lockfile --strict-peer-dependencies`
 - `pnpm lint`
 - `pnpm test`
@@ -38,7 +38,7 @@ Node.js の行列ごとに次の検証を実行します。
 - `pnpm exec prettier --check .`
 - `git diff --check`
 
-`package.json` の `packageManager` と同じ pnpm の版をワークフローに明記し、実行時にも版を確認します。
+`package.json` の `devEngines.packageManager.version` に pnpm `^12.0.0` を指定します。CI の `pnpm/setup@v3` はこの範囲から pnpm を解決し、同じ action の `runtime` で Node.js を行列ごとに設定します。ワークフローでは実際に使う pnpm が 12 系であることを確認します。
 ロックファイルを固定したインストールと厳格なピア依存関係検査を、キャッシュによって省略することはありません。
 同じ Pull Request または `develop` 更新に対する古い実行は、新しい実行を開始すると中止します。
 ワークフローの権限は、ソース取得に必要な `contents: read` だけを付与しています。
