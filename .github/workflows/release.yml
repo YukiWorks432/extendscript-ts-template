@@ -1,15 +1,10 @@
 name: release
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
   workflow_dispatch:
     inputs:
       bump:
-        description: Version bump type.
+        description: 更新するバージョンの区分
         required: true
         type: choice
         options:
@@ -17,13 +12,12 @@ on:
           - minor
           - major
       notes:
-        description: Release notes. Optional.
+        description: リリースノート本文。省略した場合は既定の説明を使います。
         required: false
         type: string
 
 permissions:
   contents: write
-  pull-requests: read
 
 concurrency:
   group: release-main
@@ -32,10 +26,17 @@ concurrency:
 jobs:
   release:
     name: Create release
-    if: vars.RELEASE_AUTOMATION_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true)
+    if: vars.RELEASE_AUTOMATION_ENABLED == 'true'
     runs-on: ubuntu-latest
 
     steps:
+      - name: Verify workflow was started on main
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "release workflow は main から実行してください。" >&2
+            exit 1
+          fi
+
       - name: Checkout main
         uses: actions/checkout@v7
         with:
@@ -45,81 +46,33 @@ jobs:
       - name: Determine release settings
         id: settings
         env:
-          EVENT_NAME: ${{ github.event_name }}
           MANUAL_BUMP: ${{ inputs.bump }}
           MANUAL_NOTES: ${{ inputs.notes }}
-          PR_LABELS_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          REPOSITORY: ${{ github.repository }}
         run: |
           node <<'NODE'
           const fs = require("fs");
 
-          const eventName = process.env.EVENT_NAME;
           const outputPath = process.env.GITHUB_OUTPUT;
           const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-          const labels = JSON.parse(process.env.PR_LABELS_JSON || "[]");
+          const bump = process.env.MANUAL_BUMP;
+          const validBumps = ["major", "minor", "patch"];
 
-          let shouldRelease = true;
-          let bump = "patch";
-          let notes = "";
-          let syncDevelop = false;
-
-          if (eventName === "workflow_dispatch") {
-            bump = process.env.MANUAL_BUMP || "patch";
-            notes = process.env.MANUAL_NOTES || "手動実行によるリリースです。";
-          } else {
-            syncDevelop =
-              process.env.PR_HEAD_REF === "develop" &&
-              process.env.PR_HEAD_REPO === process.env.REPOSITORY;
-
-            if (labels.includes("release:none")) {
-              shouldRelease = false;
-            }
-
-            const releaseLabels = labels.filter((label) => /^release:(major|minor|patch)$/.test(label));
-            if (releaseLabels.includes("release:major")) {
-              bump = "major";
-            } else if (releaseLabels.includes("release:minor")) {
-              bump = "minor";
-            } else if (releaseLabels.includes("release:patch")) {
-              bump = "patch";
-            }
-
-            const prNumber = process.env.PR_NUMBER;
-            const prTitle = process.env.PR_TITLE || "";
-            const prBody = process.env.PR_BODY || "";
-            notes = [
-              `main へマージされた PR #${prNumber} から作成したリリースです。`,
-              "",
-              `## PR`,
-              `- #${prNumber} ${prTitle}`,
-              "",
-              prBody.trim() ? `## Notes\n${prBody.trim()}` : "",
-            ]
-              .filter(Boolean)
-              .join("\n");
+          if (!validBumps.includes(bump)) {
+            throw new Error(`Unsupported bump type: ${bump}`);
           }
 
-          fs.appendFileSync(outputPath, `should_release=${shouldRelease}\n`);
-          fs.appendFileSync(outputPath, `sync_develop=${syncDevelop}\n`);
+          const notes = process.env.MANUAL_NOTES || "手動実行によるリリースです。";
           fs.appendFileSync(outputPath, `bump=${bump}\n`);
           fs.writeFileSync("release-notes.md", notes);
-          fs.appendFileSync(summaryPath, `release: ${shouldRelease}\n\nbump: ${bump}\n\nsync develop: ${syncDevelop}\n`);
+          fs.appendFileSync(summaryPath, `bump: ${bump}\n`);
           NODE
 
       - name: Set up Node.js
-        if: steps.settings.outputs.should_release == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: 24
 
       - name: Bump package version
-        if: steps.settings.outputs.should_release == 'true'
         id: version
         env:
           BUMP: ${{ steps.settings.outputs.bump }}
@@ -162,7 +115,6 @@ jobs:
           NODE
 
       - name: Verify tag does not exist
-        if: steps.settings.outputs.should_release == 'true'
         env:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
@@ -173,7 +125,6 @@ jobs:
           fi
 
       - name: Commit version and create local tag
-        if: steps.settings.outputs.should_release == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
@@ -184,30 +135,14 @@ jobs:
           git commit -m "chore: v${VERSION} をリリース"
           git tag -a "$TAG" -m "$TAG"
 
-      - name: Verify develop can be fast-forwarded
-        if: steps.settings.outputs.should_release == 'true' && steps.settings.outputs.sync_develop == 'true'
-        run: |
-          git fetch origin develop
-          if ! git merge-base --is-ancestor origin/develop HEAD; then
-            echo "develop をリリースコミットへ早送りできません。" >&2
-            echo "develop から main への PR は merge commit でマージしてください。" >&2
-            exit 1
-          fi
-
       - name: Push release commit and tag
-        if: steps.settings.outputs.should_release == 'true'
         env:
           TAG: ${{ steps.version.outputs.tag }}
-          SYNC_DEVELOP: ${{ steps.settings.outputs.sync_develop }}
         run: |
           git push origin HEAD:main
-          if [ "$SYNC_DEVELOP" = "true" ]; then
-            git push origin HEAD:develop
-          fi
           git push origin "$TAG"
 
       - name: Create GitHub Release
-        if: steps.settings.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
@@ -216,8 +151,3 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "$TAG" \
             --notes-file release-notes.md
-
-      - name: Report skipped release
-        if: steps.settings.outputs.should_release != 'true'
-        run: |
-          echo "release:none が付いているため、リリース作成をスキップしました。" >> "$GITHUB_STEP_SUMMARY"

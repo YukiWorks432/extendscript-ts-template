@@ -1,100 +1,57 @@
 # リリース手順
 
-このリポジトリには、`main` に Pull Request をマージしたときに GitHub Actions でリリースを作成する workflow があります。
+このリポジトリには、GitHub Actions から手動実行してリリースを作成するワークフローがあります。
+`main` 向け Pull Request のマージだけでは、版番号、タグ、GitHub Release は作成されません。
 
-この workflow はテンプレート利用先にもコピーされます。
+このワークフローはテンプレート利用先にもコピーされます。
 不要な場合は `.github/workflows/release.yml` を削除してください。
-使う場合は Repository Variable `RELEASE_AUTOMATION_ENABLED=true` を設定してください。
+使う場合はリポジトリ変数 `RELEASE_AUTOMATION_ENABLED=true` を設定してください。
 
-## 自動リリース
+## 手動リリース
 
-`.github/workflows/release.yml` は、`RELEASE_AUTOMATION_ENABLED=true` の場合だけ動きます。
+`.github/workflows/release.yml` は、リポジトリ変数 `RELEASE_AUTOMATION_ENABLED=true` の場合だけ動きます。
+GitHub Actions の `release` ワークフローを `main` から実行し、`bump` に `major`、`minor`、
+`patch` のいずれかを指定します。`notes` は任意で、空欄の場合は既定の説明を使います。
 
-ワークフローは以下を自動で行います。
+ワークフローは以下を行います。
 
 1. `package.json` の `version` を更新
 2. `chore: vX.Y.Z をリリース` コミットを `main` に追加
 3. `vX.Y.Z` の注釈付きタグを作成
 4. GitHub Release を作成
-5. `develop` から `main` へマージした場合は、同じリリースコミットを `develop` にも早送り反映
 
 `pnpm-lock.yaml` にはこのリポジトリ自身の `version` が含まれないため、通常は更新されません。
 
-## バージョンの決まり方
+## バージョンの決め方
 
-Pull Request に付けたラベルで、上げるバージョンを決めます。
+リリース実行時に指定した `bump` で上げる番号を決めます。
 
-| ラベル          | 動作                                                       |
-| --------------- | ---------------------------------------------------------- |
-| `release:major` | メジャー番号を 1 上げ、マイナー番号とパッチ番号を 0 にする |
-| `release:minor` | マイナー番号を 1 上げ、パッチ番号を 0 にする               |
-| `release:patch` | パッチ番号を 1 上げる                                      |
-| `release:none`  | リリースを作らない                                         |
+`bump` はリリース前の現在の系列と変更内容に合わせて選びます。
 
-`release:*` ラベルがない場合は `release:patch` として扱います。
+- `0.x` 系列では、互換性を壊す変更も `minor` とする。たとえば、公開している設定形式の変更や、対応する Node.js の最低バージョンを引き上げて利用可能な環境を狭める変更が該当する。
+- `1.0.0` 以降では、互換性を壊す変更を `major` とする。
+- 互換性を維持する修正や文書更新は `patch`、互換性を維持する機能追加は `minor` とする。
+- リリースを作らない管理変更では、手動実行しない。
 
-複数のリリースラベルが付いた場合は、`major`、`minor`、`patch` の順で大きいものを採用します。
+この区分は、0.x 系列ではマイナー番号の更新を互換性を壊す変更に割り当てるという、セマンティック バージョニングの運用上の取り決めです。1.0.0 に到達した時点で、互換性を壊す変更に指定する `bump` を `minor` から `major` に切り替えます。
 
-ラベルの選択は、リリース前の現在のバージョン系列で決めます。
+既存の `release:*` ラベルは変更のリリース影響を記録する補助情報です。ワークフローはラベルを読み取らず、
+ラベルによる自動実行や `release:none` による抑止は行いません。
 
-- `0.x` 系列では、互換性を壊す変更も `release:minor` とする。たとえば、公開している設定形式の変更や、対応する Node.js の最低バージョンを引き上げて利用可能な環境を狭める変更が該当する。
-- `1.0.0` 以降では、互換性を壊す変更を `release:major` とする。
-- 互換性を維持する修正や文書更新は `release:patch`、互換性を維持する機能追加は `release:minor` とする。
-- リリースを作らない管理変更は、系列に関係なく `release:none` とする。
+## 通常の変更
 
-この区分は、0.x 系列ではマイナー番号の更新を互換性を壊す変更に割り当てるという、セマンティック バージョニングの運用上の取り決めです。1.0.0 に到達した時点で、互換性を壊す変更のラベルを `release:major` に切り替えます。
-
-自動リリース処理は、付与されたラベルに応じてメジャー、マイナー、パッチの番号を更新するだけです。この系列ごとのラベル選択は運用上の規則であり、`.github/workflows/release.yml` の変更は必要ありません。
-
-## main 単独運用
-
-`main` だけで運用する場合は、feature ブランチから `main` へ Pull Request を作ります。
-
-```text
-feature/my-script -> main
-```
-
-Pull Request をマージすると、workflow が `main` に version 更新コミットを追加し、tag と GitHub Release を作成します。
-
-## develop を使う運用
-
-`develop` を使う場合は、通常の変更を feature ブランチで行い、`develop` に squash merge します。
-リリースするまとまりになったら、`develop` から `main` へ Pull Request を作ります。
-
-```text
-feature/my-script -> develop -> main
-```
-
-`develop` から `main` への Pull Request は、squash merge ではなく merge commit でマージしてください。
-これにより、リリースコミットを `develop` にも安全に早送りできます。
-
-## Pull Request ラベル
-
-`main` 向け Pull Request には、変更の大きさに応じてラベルを付けます。
-
-- `0.x` 系列の互換性を壊す変更: `release:minor`
-- `1.0.0` 以降の互換性を壊す変更: `release:major`
-- 機能追加: `release:minor`
-- 修正やドキュメント更新: `release:patch`
-- リリース不要の管理変更: `release:none`
-
-## 手動リリース
-
-GitHub Actions の `release` ワークフローは手動実行もできます。
-
-手動実行でも `RELEASE_AUTOMATION_ENABLED=true` が必要です。
-`bump` に `major`、`minor`、`patch` のいずれかを指定します。
-`notes` を入力した場合は、その内容が GitHub Release の本文になります。
-手動実行では `develop` への自動同期は行いません。
+通常の変更は `main` から作業ブランチを作り、`main` 向け Pull Request で統合します。
+複数の変更を組み合わせて検証する必要がある場合だけ、短命な `integration/<topic>` を使います。
+Pull Request のマージ後、必要なタイミングで手動リリースを実行してください。
 
 ## 事前設定
 
-GitHub Actions が `main` へリリースコミットを push し、タグと Release を作れる必要があります。
+GitHub Actions が `main` へリリースコミットをプッシュし、タグと GitHub Release を作れる必要があります。
 
 リポジトリの Actions 設定で `GITHUB_TOKEN` に書き込み権限を許可してください。
-`main` にブランチ保護を設定している場合は、GitHub Actions の push を許可するか、リリース用の例外を設定してください。
+`main` にブランチ保護を設定している場合は、GitHub Actions のプッシュを許可するか、リリース用の例外を設定してください。
 
-自動リリースを有効化する場合は、Repository Variable を設定してください。
+手動リリースを使う場合は、リポジトリ変数を設定してください。
 
 ```text
 RELEASE_AUTOMATION_ENABLED=true
@@ -102,7 +59,6 @@ RELEASE_AUTOMATION_ENABLED=true
 
 ## 失敗した場合
 
-ワークフローがタグ作成後、Release 作成前に失敗した場合は、同じタグ名で Release を手動作成してください。
-
-ワークフローが `main` への push に失敗した場合は、別のリリース処理が先に `main` を進めた可能性があります。
-その場合は `main` を確認し、必要なら新しい Pull Request で再実行してください。
+ワークフローが失敗した場合は、再実行する前に `main`、タグ、GitHub Release の状態を確認してください。
+リリースコミットが `main` に反映済みなら、同じ版をもう一度上げないよう、既存のコミットとタグを確認してから不足分を復旧します。
+タグ作成後に GitHub Release の作成だけが失敗した場合は、そのタグから Release を作成してください。
