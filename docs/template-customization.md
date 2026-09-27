@@ -38,14 +38,15 @@
 
 ## ブランチ運用
 
-小さく始める場合は `main` だけで運用できます。
-変更を段階的に確認したい場合は `develop` を作り、feature ブランチから `develop` へ取り込んでから `main` へリリースしてください。
+このテンプレートの配布元では、通常の作業ブランチから `main` 向け Pull Request を作成します。
+複数の変更を組み合わせて事前検証する必要がある場合だけ、短命な `integration/<topic>` を使います。
 
-`develop` を使う場合の例:
+テンプレートから作成したリポジトリでは、チームの運用に合わせて `develop` を設けることもできます。
+その場合も、通常の作業ブランチをどこへ取り込むか、どの時点で `main` へ反映するかを決めてください。
+`develop` を使う例:
 
 ```text
 feature/my-script -> develop -> main
 ```
 
-このテンプレートは `main` 単独運用と `develop` 運用の両方で使えます。
-リリース自動化を使う場合は、`docs/release-process.md` を確認してください。
+リリース workflow を使う場合は、`docs/release-process.md` を確認してください。
