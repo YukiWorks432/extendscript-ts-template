@@ -29,22 +29,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v3
+        # pnpm/setup resolves the range to the latest release; keep its version
+        # check from switching to the lockfile's resolved pnpm version.
+        env:
+          pnpm_config_pm_on_fail: ignore
         with:
-          version: 11.17.0
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
-
-      - name: Verify tool versions
-        run: |
-          test "$(pnpm --version)" = "11.17.0"
-          node --version
+          runtime: node@${{ matrix.node-version }}
+          install: false
+          cache: true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies

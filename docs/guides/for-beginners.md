@@ -100,30 +100,20 @@ node --version
 
 Node.js のパッケージを管理するツールです。`npm` より高速でディスク容量も節約できます。
 
-Node.js 22・24系には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
+このテンプレートは `package.json` の `devEngines.packageManager` で pnpm 12 系を指定します。pnpm を npm からインストールすると、テンプレート内で起動したときに、この範囲に合う版が使われます。
 
-Node.js をインストールした後、コマンドプロンプトまたは PowerShell で：
-
-```bash
-corepack enable pnpm
-```
-
-Node.js 25 以降を使う場合は Corepack が同梱されないため、先に Corepack を
-インストールしてから有効化します。
+Node.js をインストールした後、プロジェクトをクローンする前に、コマンドプロンプトまたは PowerShell で pnpm をインストールします。
 
 ```bash
-npm install --global corepack@latest
-corepack enable pnpm
+npm install --global pnpm
 ```
 
-インストール確認：
+プロジェクトをクローンして移動した後、pnpm の版を確認します。
 
 ```bash
 pnpm --version
-# 11.17.0 と表示されれば OK
+# pnpm 12.x と表示されれば OK
 ```
-
-> **Corepack とは**: Node.js に同梱されたパッケージマネージャ管理ツールです。`npm install -g` と異なり、グローバルインストールなしでパッケージマネージャを切り替えられます。
 
 ---
 
@@ -465,8 +455,7 @@ pnpm build
 
 ### `pnpm: コマンドが見つかりません`
 
-Node.js のインストール後にターミナルを再起動してから、再度 `corepack enable pnpm` を実行してみてください。  
-それでもダメなら管理者権限でコマンドプロンプトを開いて実行してください。
+Node.js のインストール後にターミナルを再起動してください。それでも見つからない場合は、プロジェクト外のフォルダへ移動してから `npm install --global pnpm` を実行します。
 
 ### ビルドエラー: `TS2339: Property 'xxx' does not exist`
 
