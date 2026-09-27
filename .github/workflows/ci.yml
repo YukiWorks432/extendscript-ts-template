@@ -17,14 +17,8 @@ concurrency:
 
 jobs:
   verify:
-    name: Node.js ${{ matrix.node-version }}
+    name: Node.js 24
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version:
-          - 22
-          - 24
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -38,7 +32,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 24
           cache: pnpm
 
       - name: Verify tool versions

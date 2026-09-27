@@ -81,17 +81,17 @@ gh --version
 
 ### 1-4. Node.js（JavaScript 実行環境）
 
-ビルドツールを動かすために必要です。`^22.13.0` または `24` 以降をインストールしてください。
+ビルドツールを動かすために必要です。`^24.0.0`（Node.js 24 系）をインストールしてください。
 
-1. https://nodejs.org/ja にアクセス
-2. 「LTS（推奨版）」をクリックしてダウンロード（執筆時点: v22.x）
-3. インストーラを実行（デフォルトのまま）
+1. https://nodejs.org/ja/download にアクセス
+2. Node.js 24 系のインストーラーを選んでダウンロード
+3. インストーラーを実行（デフォルトのまま）
 
 インストール確認：
 
 ```bash
 node --version
-# v22.13.0 以上、または v24.x.x と表示されれば OK
+# v24.x.x と表示されれば OK
 ```
 
 ---
@@ -100,19 +100,11 @@ node --version
 
 Node.js のパッケージを管理するツールです。`npm` より高速でディスク容量も節約できます。
 
-Node.js 22・24系には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
+Node.js 24 系には **Corepack** というツール管理機能が同梱されています。これを使うのが最も簡単な方法です。
 
 Node.js をインストールした後、コマンドプロンプトまたは PowerShell で：
 
 ```bash
-corepack enable pnpm
-```
-
-Node.js 25 以降を使う場合は Corepack が同梱されないため、先に Corepack を
-インストールしてから有効化します。
-
-```bash
-npm install --global corepack@latest
 corepack enable pnpm
 ```
 

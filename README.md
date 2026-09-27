@@ -30,7 +30,7 @@ shimの限界として、正しく動作しないものはeslintによってエ�
 
 ## 環境 / Environment
 
-- Node.js `^22.13.0 || >=24`
+- Node.js `^24.0.0`
 - pnpm `11.17.0`
 - TypeScript `4.9.5`（ES3 出力のため固定）
 
@@ -39,7 +39,7 @@ TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移�
 
 ## テスト環境 / Tested environment
 
-- Node.js v22.13.0 / v24.13.0
+- Node.js v24.18.0
 - Windows 11
 - AfterEffects 2025 / Illustrator 2025 / Photoshop 2025
 
