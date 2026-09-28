@@ -31,9 +31,9 @@ argument-hint: "確認のみ / 自動更新 / 特定ファイルのみ など、
 | `src/phxs/lib/`, `src/phxs/types/`     | Photoshop 共通ライブラリ・型       |
 | `rollup.config.mjs`                    | バンドル設定                       |
 | `tsconfig.json`                        | TypeScript 設定                    |
-| `eslint.config.mjs`                    | Lint 設定                          |
+| `.oxlintrc.json`                       | Lint 設定                          |
 | `package.json`                         | パッケージ情報・依存関係           |
-| `.prettierrc`, `.prettierignore`       | フォーマット設定                   |
+| `.oxfmtrc.json`                        | フォーマット設定                   |
 | `pnpm-workspace.yaml`                  | ワークスペース設定                 |
 | `AGENTS.md`                            | エージェント共通の入口             |
 | `.agents/instructions/`                | Codex 向け追加指示                 |
@@ -130,8 +130,8 @@ git checkout upstream/main -- src/types/
 git checkout upstream/main -- src/aeft/lib/ src/aeft/types/
 git checkout upstream/main -- src/ilst/lib/ src/ilst/types/
 git checkout upstream/main -- src/phxs/lib/ src/phxs/types/
-git checkout upstream/main -- rollup.config.mjs tsconfig.json eslint.config.mjs
-git checkout upstream/main -- package.json .prettierrc .prettierignore pnpm-workspace.yaml
+git checkout upstream/main -- rollup.config.mjs tsconfig.json .oxlintrc.json
+git checkout upstream/main -- package.json .oxfmtrc.json pnpm-workspace.yaml
 git checkout upstream/main -- AGENTS.md .agents/instructions/
 git checkout upstream/main -- .agents/skills/add-script/ .agents/skills/debug-script/
 git checkout upstream/main -- .agents/skills/es-to-ts/ .agents/skills/update-from-upstream/

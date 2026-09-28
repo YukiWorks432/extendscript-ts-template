@@ -9,8 +9,8 @@ TypeScriptからトランスパイルするため、文法は最新のものを�
 ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブラリはオミットされています。  
 詳細は `docs/polyfills.md` を参照してください。  
 また、shimの詳細な動作は各shimを参照してください。
-shimの限界として、正しく動作しないものはeslintによってエラーとして表示されます。
-また、一般的なprettierルールを同封しています。
+shimの制約に反するコードや ExtendScript 固有の禁止事項は、Oxlint がエラーとして表示します。
+コード整形には Oxfmt を使用します。
 
 型情報には[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)を使用しています。  
 これは有志によって作成されたもので、公式の情報ではないため、定義されていない情報がいくつもあります。足りない定義などがあればプルリクエストを検討してください。
@@ -159,8 +159,9 @@ pnpm watch
 | `pnpm build:ilst`       | Illustrator のみビルド           |
 | `pnpm build:phxs`       | Photoshop のみビルド             |
 | `pnpm watch`            | ファイル変更を監視して自動ビルド |
-| `pnpm lint`             | ESLint でコード検査              |
-| `pnpm format`           | Prettier でコード整形            |
+| `pnpm lint`             | Oxlint でコード検査              |
+| `pnpm format`           | Oxfmt でコード整形               |
+| `pnpm format:check`     | Oxfmt で整形を検査               |
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
