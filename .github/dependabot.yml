@@ -16,12 +16,6 @@ updates:
         update-types:
           - minor
           - patch
-      typescript-eslint:
-        patterns:
-          - "@typescript-eslint/*"
-        update-types:
-          - minor
-          - patch
       rollup:
         patterns:
           - rollup
@@ -32,10 +26,8 @@ updates:
           - patch
       quality:
         patterns:
-          - eslint
-          - "@eslint/*"
-          - globals
-          - prettier
+          - oxlint
+          - oxfmt
         update-types:
           - minor
           - patch
