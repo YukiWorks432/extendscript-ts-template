@@ -34,9 +34,9 @@ Pull Request の扱いを決め、CI と Dependabot の設定、ブランチ保�
 `.github/workflows/ci.yml` は、`main` を対象とする Pull Request と、`main` への更新で起動します。
 Dependabot が作成した Pull Request も、通常の Pull Request と同じ検証対象です。
 
-Node.js の行列ごとに次の検証を実行します。
+Node.js 24 で次の検証を実行します。
 
-- Node.js 22 と 24
+- Node.js 24
 - `pnpm install --frozen-lockfile --strict-peer-dependencies`
 - `pnpm lint`
 - `pnpm test`
@@ -44,14 +44,13 @@ Node.js の行列ごとに次の検証を実行します。
 - `pnpm exec prettier --check .`
 - `git diff --check`
 
-`package.json` の `devEngines.packageManager.version` に pnpm `^12.0.0` を指定します。CI の `pnpm/setup@v3` はこの範囲から pnpm を解決し、同じ action の `runtime` で Node.js を行列ごとに設定します。セットアップ後は、固定ロックファイルと厳格なピア依存関係検査を含む品質ゲートを実行します。
+`package.json` の `devEngines.packageManager.version` に pnpm `^12.0.0` を指定します。CI の `pnpm/setup@v3` はこの範囲から pnpm を解決し、同じ action の `runtime` で Node.js 24 を設定します。セットアップ後は、固定ロックファイルと厳格なピア依存関係検査を含む品質ゲートを実行します。
 ロックファイルを固定したインストールと厳格なピア依存関係検査を、キャッシュによって省略することはありません。
 同じ Pull Request または `main` 更新に対する古い実行は、新しい実行を開始すると中止します。
 ワークフローの権限は、ソース取得に必要な `contents: read` だけを付与しています。
 
-行列の検証名は次のとおりです。
+検証名は次のとおりです。
 
-- `CI / Node.js 22`
 - `CI / Node.js 24`
 
 After Effects の実機試験と `pnpm audit` は自動化対象外です。これらは Issue #45 で確定した手動検証として、CI の合否に含めません。
@@ -62,8 +61,8 @@ After Effects の実機試験と `pnpm audit` は自動化対象外です。こ�
 
 1. **Settings > Branches > Branch protection rules** から `main` を対象にした規則を作成または編集する。
 2. Pull Request を必須にし、**Require status checks to pass before merging** を有効にする。
-3. 必須チェックとして `CI / Node.js 22` と `CI / Node.js 24` を追加する。`CI` だけではなく、両方の行列チェックを指定する。
-4. 保存後、`main` を対象にした Pull Request で両方のチェックが成功することを確認する。
+3. 必須チェックとして `CI / Node.js 24` を追加する。
+4. 保存後、`main` を対象にした Pull Request でこのチェックが成功することを確認する。
 
 ブランチ保護をまだ設定しない場合も、上記のチェック名を変更せずに運用します。ワークフローのジョブ名を変更した場合は、ブランチ保護側の必須チェックも同時に更新してください。
 

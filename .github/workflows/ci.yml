@@ -17,14 +17,8 @@ concurrency:
 
 jobs:
   verify:
-    name: Node.js ${{ matrix.node-version }}
+    name: Node.js 24
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version:
-          - 22
-          - 24
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -36,7 +30,7 @@ jobs:
         env:
           pnpm_config_pm_on_fail: ignore
         with:
-          runtime: node@${{ matrix.node-version }}
+          runtime: node@24
           install: false
           cache: true
 
