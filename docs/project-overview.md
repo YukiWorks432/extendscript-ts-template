@@ -12,7 +12,7 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 
 ## 開発環境の対応版
 
-- **Node.js**: `^22.13.0 || >=24`
+- **Node.js**: `^24.0.0`
 - **pnpm**: `11.17.0`（`packageManager` で厳密指定）
 - **TypeScript**: `4.9.5`（ES3 出力のため厳密指定）
 
