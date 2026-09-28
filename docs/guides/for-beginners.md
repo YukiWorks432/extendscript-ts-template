@@ -81,17 +81,17 @@ gh --version
 
 ### 1-4. Node.js（JavaScript 実行環境）
 
-ビルドツールを動かすために必要です。`^22.13.0` または `24` 以降をインストールしてください。
+ビルドツールを動かすために必要です。`^24.0.0`（Node.js 24 系）をインストールしてください。
 
-1. https://nodejs.org/ja にアクセス
-2. 「LTS（推奨版）」をクリックしてダウンロード（執筆時点: v22.x）
-3. インストーラを実行（デフォルトのまま）
+1. https://nodejs.org/ja/download にアクセス
+2. Node.js 24 系のインストーラーを選んでダウンロード
+3. インストーラーを実行（デフォルトのまま）
 
 インストール確認：
 
 ```bash
 node --version
-# v22.13.0 以上、または v24.x.x と表示されれば OK
+# v24.x.x と表示されれば OK
 ```
 
 ---
@@ -253,14 +253,12 @@ pnpm i
 
 ---
 
-### （オプション）ESLint と Prettier の拡張機能を入れる
+### （オプション）Oxc の拡張機能を入れる
 
-コードの品質チェック（ESLint）と自動整形（Prettier）を VSCode で使えるようにしておくと便利です。
+Oxlint の診断と Oxfmt による自動整形を VSCode で使うには、Oxc の拡張機能を利用できます。
 
 1. VSCode の拡張機能パネル（左サイドバーの四角いアイコン）を開く
-2. 以下の 2 つをインストール：
-   - 「**ESLint**」（`dbaeumer.vscode-eslint`）
-   - 「**Prettier - Code formatter**」（`esbenp.prettier-vscode`）
+2. Oxc 拡張機能をインストールします（oxc.oxc-vscode）。
 
 **保存時に自動整形を有効にする**（Ctrl+S で整形）：
 
@@ -268,15 +266,18 @@ VSCode の設定（`Ctrl + ,`）を開き、右上の「**{}**（設定を JSON 
 
 ```json
 {
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
   }
 }
 ```
 
-これで TypeScript ファイルを Ctrl+S で保存するたびに自動整形されます。
+これで JavaScript と TypeScript ファイルを Ctrl+S で保存するたびに Oxfmt で整形されます。
 
 ---
 
@@ -487,8 +488,7 @@ gh auth status
 - **Illustrator / Photoshop 向けも作る**: `--app=ilst` や `--app=phxs` で他アプリ向けも同じ手順で作れます
 - **VSCode の推奨拡張機能を使う**:
   - [ExtendScript Debugger](https://marketplace.visualstudio.com/items?itemName=Adobe.extendscript-debug): スクリプトを VSCode からデバッグ実行できる（Adobe 公式）
-  - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint): コードの問題をリアルタイムで検出
-  - [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode): コードを自動整形
+  - [Oxc](https://marketplace.visualstudio.com/items?itemName=oxc.oxc-vscode): Oxlint でコードの問題を検出し、Oxfmt で自動整形
 
 ---
 

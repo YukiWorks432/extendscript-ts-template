@@ -12,7 +12,7 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 
 ## 開発環境の対応版
 
-- **Node.js**: `^22.13.0 || >=24`
+- **Node.js**: `^24.0.0`
 - **pnpm**: 12 系（`package.json` の `devEngines.packageManager.version` で `^12.0.0` を指定）
 - **TypeScript**: `4.9.5`（ES3 出力のため厳密指定）
 
@@ -124,7 +124,7 @@ pnpm new
 
 1. `es.config.mjs` の `scripts.{app}` 配列先頭にエントリ追加
 2. `src/{app}/MyScript/index.ts` をテンプレートから生成
-3. Prettier で `es.config.mjs` を整形
+3. Oxfmt で `es.config.mjs` を整形
 
 生成直後の説明コメント雛形と、用途から `TODO` を完成させる規則は
 [スクリプト説明コメントブロック](script-comment-block.md) に定める。
@@ -268,8 +268,9 @@ pnpm add-app -- --app=idsn
 | `pnpm build:ilst`       | Illustrator のスクリプトのみビルド   |
 | `pnpm build:phxs`       | Photoshop のスクリプトのみビルド     |
 | `pnpm watch`            | ファイル変更を監視して自動ビルド     |
-| `pnpm lint`             | ESLint でコード検査                  |
-| `pnpm format`           | Prettier でコード整形                |
+| `pnpm lint`             | Oxlint でコード検査                  |
+| `pnpm format`           | Oxfmt でコード整形                   |
+| `pnpm format:check`     | Oxfmt で整形を検査                   |
 | `pnpm new`              | 新規スクリプト追加（対話式 / CLI）   |
 | `pnpm add-app`          | 新規アプリスキャフォールディング     |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |

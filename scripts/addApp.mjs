@@ -395,7 +395,7 @@ async function scaffold(appId) {
   // es.config.mjs 更新
   await updateEsConfig(appId, esConfigContent);
   const packageScriptAdded = await updatePackageScripts(appId);
-  execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+  execSync(`oxfmt --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
   if (packageScriptAdded) {
     console.log(L.packageScriptUpdated(appId));
   }

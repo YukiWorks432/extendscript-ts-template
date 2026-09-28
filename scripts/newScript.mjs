@@ -5,7 +5,7 @@
 //   ScriptUI:   pnpm new -- --app=aeft --name=MyPanel --license --ui=scriptui
 // es.config.mjsに新しいスクリプトを追加し、src/{app}/{name}配下にテンプレートを作成します。
 // 新しいスクリプトはes.config.mjsのscripts.{app}配列の先頭に追加されます。
-// es.config.mjsはprettierで整形されます。
+// es.config.mjsはOxfmtで整形されます。
 
 import { createInterface } from "node:readline";
 import { stdin as input, stdout as output } from "node:process";
@@ -341,7 +341,7 @@ async function main() {
 
       await createScriptTemplate(appId, script.name, uiType);
       console.log(L.doneMake(script.name, appId));
-      execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+      execSync(`oxfmt --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
     } catch (err) {
       process.exitCode = 1;
       if (err instanceof CliError) {
@@ -364,7 +364,7 @@ async function main() {
 
     await createScriptTemplate(appId, script.name, uiType);
     console.log(L.doneMake(script.name, appId));
-    execSync(`prettier --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+    execSync(`oxfmt --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
   } catch (err) {
     process.exitCode = 1;
     if (err instanceof CliError) {

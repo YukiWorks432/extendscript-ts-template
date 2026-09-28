@@ -9,8 +9,8 @@ TypeScriptからトランスパイルするため、文法は最新のものを�
 ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブラリはオミットされています。  
 詳細は `docs/polyfills.md` を参照してください。  
 また、shimの詳細な動作は各shimを参照してください。
-shimの限界として、正しく動作しないものはeslintによってエラーとして表示されます。
-また、一般的なprettierルールを同封しています。
+shimの制約に反するコードや ExtendScript 固有の禁止事項は、Oxlint がエラーとして表示します。
+コード整形には Oxfmt を使用します。
 
 型情報には[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)を使用しています。  
 これは有志によって作成されたもので、公式の情報ではないため、定義されていない情報がいくつもあります。足りない定義などがあればプルリクエストを検討してください。
@@ -30,7 +30,7 @@ shimの限界として、正しく動作しないものはeslintによってエ�
 
 ## 環境 / Environment
 
-- Node.js `^22.13.0 || >=24`
+- Node.js `^24.0.0`
 - pnpm 12 系（`package.json` の `devEngines.packageManager.version` で `^12.0.0` を指定）
 - TypeScript `4.9.5`（ES3 出力のため固定）
 
@@ -39,7 +39,7 @@ TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移�
 
 ## テスト環境 / Tested environment
 
-- Node.js v22.13.0 / v24.13.0
+- Node.js v24.18.0
 - Windows 11
 - AfterEffects 2025 / Illustrator 2025 / Photoshop 2025
 
@@ -159,8 +159,9 @@ pnpm watch
 | `pnpm build:ilst`       | Illustrator のみビルド           |
 | `pnpm build:phxs`       | Photoshop のみビルド             |
 | `pnpm watch`            | ファイル変更を監視して自動ビルド |
-| `pnpm lint`             | ESLint でコード検査              |
-| `pnpm format`           | Prettier でコード整形            |
+| `pnpm lint`             | Oxlint でコード検査              |
+| `pnpm format`           | Oxfmt でコード整形               |
+| `pnpm format:check`     | Oxfmt で整形を検査               |
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
