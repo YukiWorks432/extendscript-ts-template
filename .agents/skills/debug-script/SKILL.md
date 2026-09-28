@@ -25,12 +25,12 @@ argument-hint: "エラーメッセージを貼り付けるか、対象ファイ�
 
 エラーメッセージを確認し、以下のどれかに分類する:
 
-| 種類                    | 特徴                                                         |
-| ----------------------- | ------------------------------------------------------------ |
-| **TypeScript 型エラー** | `TS2xxx` のエラーコード、または `error TS` から始まる        |
-| **Rollup エラー**       | `[!] Error:` から始まる、またはバンドル失敗                  |
-| **ESLint エラー**       | `error` / `warning` + ルール名（例: `no-restricted-syntax`） |
-| **import エラー**       | `Cannot find module` / `Module not found`                    |
+| 種類                    | 特徴                                                      |
+| ----------------------- | --------------------------------------------------------- |
+| **TypeScript 型エラー** | `TS2xxx` のエラーコード、または `error TS` から始まる     |
+| **Rollup エラー**       | `[!] Error:` から始まる、またはバンドル失敗               |
+| **Oxlint エラー**       | `error` / `warning` + ルール名（例: `no-nested-ternary`） |
+| **import エラー**       | `Cannot find module` / `Module not found`                 |
 
 エラーメッセージが提供されていない場合は、ユーザーに貼り付けてもらうか、
 ターミナルで以下を実行してエラーを取得する:
@@ -59,9 +59,9 @@ pnpm lint 2>&1 | head -60
 - エラーに含まれるファイルパスと行番号を確認する
 - 循環 import や存在しない import パスが原因であることが多い
 
-#### ESLint エラーの場合
+#### Oxlint エラーの場合
 
-- ルール名を確認する（例: `no-restricted-syntax` は三項演算子禁止ルール）
+- ルール名を確認する（例: `no-nested-ternary` は三項演算子禁止ルール）
 - `.agents/instructions/extendscript.md` のコーディングルールを確認する
 
 #### import エラーの場合
@@ -89,7 +89,7 @@ pnpm lint && pnpm build
 
 ## Notes
 
-- **三項演算子** (`? :`) は ExtendScript の既知バグのため `no-restricted-syntax` ESLint エラーになる（`ConditionalExpression` ルール）。
+- **三項演算子** (`? :`) は ExtendScript の既知バグのため Oxlint の `no-nested-ternary` ルールで検出されます。
   `const` が必要なら即時呼び出し無名関数 + `if` に、`let` でよければ `let` + `if` に書き直す
 - **`Symbol` / `Promise`** は使用禁止。代替手段を提案する
 - **型定義の不足** は `src/types/index.d.ts`（共通）または `src/{appId}/types/index.d.ts`（アプリ固有）に追加する

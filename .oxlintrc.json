@@ -1,0 +1,98 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "off"
+  },
+  "ignorePatterns": [
+    "dist/*",
+    "node_modules/*",
+    "src/lib/polyfills/*",
+    "es.config.mjs"
+  ],
+  "plugins": ["eslint"],
+  "overrides": [
+    {
+      "files": ["**/*.ts"],
+      "rules": {
+        "no-unused-vars": [
+          "warn",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrorsIgnorePattern": "^_",
+            "destructuredArrayIgnorePattern": "^_"
+          }
+        ],
+        "no-restricted-globals": ["error", "Symbol", "Promise"],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Object",
+            "property": "defineProperty",
+            "message": "Object.defineProperty は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "defineProperties",
+            "message": "Object.defineProperties は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "create",
+            "message": "Object.create は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "getPrototypeOf",
+            "message": "Object.getPrototypeOf は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "getOwnPropertyNames",
+            "message": "Object.getOwnPropertyNames は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "isSealed",
+            "message": "Object.isSealed は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "isFrozen",
+            "message": "Object.isFrozen は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "isExtensible",
+            "message": "Object.isExtensible は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "getOwnPropertyDescriptor",
+            "message": "Object.getOwnPropertyDescriptor は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "seal",
+            "message": "Object.seal は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "freeze",
+            "message": "Object.freeze は使用禁止です。"
+          },
+          {
+            "object": "Object",
+            "property": "preventExtensions",
+            "message": "Object.preventExtensions は使用禁止です。"
+          },
+          {
+            "property": "toFixed",
+            "message": ".toFixed は高頻度でスタックオーバーランを誘発します。"
+          }
+        ],
+        "no-nested-ternary": "error"
+      }
+    }
+  ]
+}

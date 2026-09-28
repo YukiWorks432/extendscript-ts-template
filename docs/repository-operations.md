@@ -35,7 +35,7 @@ Node.js 24 で次の検証を実行します。
 - `pnpm lint`
 - `pnpm test`
 - `pnpm build --all`
-- `pnpm exec prettier --check .`
+- `pnpm format:check`
 - `git diff --check`
 
 `package.json` の `packageManager` と同じ pnpm の版をワークフローに明記し、実行時にも版を確認します。
