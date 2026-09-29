@@ -109,13 +109,7 @@ export const getTypecheckConfigs = ({
 export const runTypecheck = ({
   projectRoot = process.cwd(),
   app = null,
-  tscPath = path.join(
-    projectRoot,
-    "node_modules",
-    "typescript",
-    "bin",
-    "tsc"
-  ),
+  tscPath = path.join(projectRoot, "node_modules", "typescript", "bin", "tsc"),
   stdio = "inherit",
   spawn = spawnSync,
 } = {}) => {
