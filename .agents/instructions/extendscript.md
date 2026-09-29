@@ -9,7 +9,7 @@ description: "ExtendScript (ES3) 向け TypeScript コーディングルール�
 
 - ExtendScript は ES3 ベース。`src/` 以下の `.ts` コードは ES3 にトランスパイルされる
 - `tsconfig.json` の `target: "ES3"` は変更しないこと
-- ES3 トランスパイル時のプロンプト警告は無視してよい
+- TypeScript の診断は未解決のまま完了しないこと。無視可能な既知診断を追加する場合は、診断コードと適用条件を文書化すること
 
 ## 使用禁止機能
 
