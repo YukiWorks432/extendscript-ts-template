@@ -69,9 +69,10 @@ test("全体型チェックは追加されたアプリのtsconfigを自動検出
       ["aeft", "ppro"]
     );
     assert.equal(getTypecheckConfigs({ projectRoot: root }).length, 3);
-    assert.deepEqual(getTypecheckConfigs({ projectRoot: root, app: "ppro" }), [
-      path.join(root, "src", "ppro", "tsconfig.json"),
-    ]);
+    assert.deepEqual(
+      getTypecheckConfigs({ projectRoot: root, app: "ppro" }),
+      [path.join(root, "src", "ppro", "tsconfig.json")]
+    );
     assert.throws(
       () => getTypecheckConfigs({ projectRoot: root, app: "unknown" }),
       TypecheckArgumentError
