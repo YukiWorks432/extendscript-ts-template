@@ -47,7 +47,7 @@ jobs:
         run: pnpm build --all
 
       - name: Check formatting
-        run: pnpm format:check
+        run: pnpm fmt:check
 
       - name: Check diff
         run: git diff --check
