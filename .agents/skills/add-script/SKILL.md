@@ -195,7 +195,7 @@ entryUI("<ScriptName>", __ES_THIS__, (win) => {
 
 1. `.agents/instructions/extendscript.md` を読み、コーディングルールを確認する
 2. `purpose` と `@workflow` コメントを元に実装する
-3. 実装完了後に `pnpm lint && pnpm format` を実行する
+3. 実装完了後に `pnpm lint && pnpm fmt` を実行する
 4. エラーがなければ `pnpm build -- <appId>/<ScriptName>` を実行してビルドする
 5. エラーがあればステップ 3 に戻って修正する
 6. ビルド成功後、実装した内容を簡潔に日本語で報告する
