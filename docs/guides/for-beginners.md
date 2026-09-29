@@ -410,20 +410,21 @@ entry("WiggleApplier", () => {
 
 ---
 
-## STEP 6: ビルドする
+## STEP 6: 型チェックしてビルドする
 
 ```bash
+pnpm typecheck -- --app=aeft
 pnpm build
 ```
 
-成功すると `dist/aeft/WiggleApplier/WiggleApplier.jsx` が生成されます。
+型チェックでは成果物を作らず TypeScript の型エラーを確認します。両方が成功すると `dist/aeft/WiggleApplier/WiggleApplier.jsx` が生成されます。
 
 エラーが出た場合は Copilot Chat に「このエラーを修正して」と貼り付けると直してくれます。
 
 <details>
 <summary>AI を使わずにエラーを修正する場合</summary>
 
-ビルドエラーが出たときは、エラーメッセージに含まれるファイル名・行番号を確認して該当箇所を修正します。
+型チェックまたはビルドでエラーが出たときは、エラーメッセージに含まれるファイル名・行番号を確認して該当箇所を修正します。
 
 **よくあるエラーと対処法**:
 
@@ -433,7 +434,7 @@ pnpm build
 | `TS2304: Cannot find name 'xxx'`        | AE のグローバルオブジェクト名が間違っている。スクリプティングガイドで正式名称を確認する                                                      |
 | `TS1005: ',' expected` など構文エラー   | 該当行の括弧・カンマ・クォートの対応を確認する                                                                                               |
 
-修正後は再度 `pnpm build` を実行してエラーが消えることを確認してください。
+修正後は再度 `pnpm typecheck -- --app=aeft` と `pnpm build` を実行してエラーが消えることを確認してください。
 
 </details>
 
@@ -500,6 +501,7 @@ gh auth status
 | リポジトリ作成       | GitHub の Use this template → Code > GitHub CLI → `gh repo clone` |
 | 依存関係インストール | `pnpm i`                                                          |
 | スクリプト作成（AI） | Copilot Chat（Agent モード）で `/add-script ...` と入力           |
+| 型チェック           | `pnpm typecheck -- --app=aeft`                                  |
 | ビルド               | `pnpm build`                                                      |
 | AE で実行            | ファイル → スクリプト → スクリプトファイルを実行...               |
 
