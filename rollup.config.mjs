@@ -253,12 +253,14 @@ export const getTypeScriptPluginOptions = ({
   tsconfig,
   watch = false,
 }) => {
+  const baseOptions = { tsconfig, noEmitOnError: true };
+
   if (watch) {
-    return { tsconfig };
+    return baseOptions;
   }
 
   return {
-    tsconfig,
+    ...baseOptions,
     include: getTypeScriptInputFiles({ appId, srcDir, tsconfig }),
     filterRoot: false,
   };
