@@ -52,6 +52,7 @@ TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移�
 
 ```bash
 pnpm i
+pnpm typecheck
 pnpm build
 ```
 
@@ -131,6 +132,15 @@ entry("example", () => {
 });
 ```
 
+## 型チェック / Type Check
+
+```bash
+pnpm typecheck                 # 共通コードと全アプリを型チェック
+pnpm typecheck -- --app=aeft  # After Effects だけ型チェック
+```
+
+型チェックは TypeScript 4.9.5 で実行し、成果物は生成しません。
+
 ## ビルド / Build
 
 ```bash
@@ -160,12 +170,13 @@ pnpm watch
 | `pnpm build:phxs`       | Photoshop のみビルド             |
 | `pnpm watch`            | ファイル変更を監視して自動ビルド |
 | `pnpm lint`             | Oxlint でコード検査              |
+| `pnpm typecheck`        | TypeScript で全体を型チェック    |
 | `pnpm fmt`              | Oxfmt でコード整形               |
 | `pnpm fmt:check`        | Oxfmt で整形を検査               |
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
-| `pnpm test`             | ビルド差分判定の回帰テスト       |
+| `pnpm test`             | Node.js 側の回帰テスト           |
 
 `pnpm add-app -- --app=<appId>` で正式対応アプリを追加すると、`pnpm build:<appId>` も自動で追加されます。
 
@@ -174,7 +185,7 @@ pnpm watch
 `src/tests/index.ts`にテストを記述しています。
 ビルドして実行すればダイアログが表示され、shimが想定通り動いているかが表示されます。
 
-ビルド差分判定の回帰テストは `pnpm test` で実行できます。
+ビルド・型チェック基盤を含む Node.js 側の回帰テストは `pnpm test` で実行できます。
 
 ## ドキュメント
 

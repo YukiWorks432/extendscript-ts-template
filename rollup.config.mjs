@@ -253,12 +253,14 @@ export const getTypeScriptPluginOptions = ({
   tsconfig,
   watch = false,
 }) => {
+  const baseOptions = { tsconfig, noEmitOnError: !watch };
+
   if (watch) {
-    return { tsconfig };
+    return baseOptions;
   }
 
   return {
-    tsconfig,
+    ...baseOptions,
     include: getTypeScriptInputFiles({ appId, srcDir, tsconfig }),
     filterRoot: false,
   };
@@ -431,11 +433,13 @@ const createBabelConfig = () =>
 let hasSavedBuildHashes = false;
 export const BUILD_HASH_PLUGIN_NAME = "persist-build-hashes";
 
-const persistBuildHashes = (hashes, metadata) => ({
+const persistBuildHashes = (hashes, metadata, { watch = false } = {}) => ({
   name: BUILD_HASH_PLUGIN_NAME,
   buildHashState: { hashes, metadata },
   closeBundle() {
+    // watch は型エラーでも出力するため、検証済み履歴として保存しません。
     if (
+      watch ||
       hasSavedBuildHashes ||
       process.env.EXTENDSCRIPT_DEFER_BUILD_HASHES === "1"
     ) {
@@ -568,7 +572,9 @@ export default (commandLineArgs = {}) => {
           extractCommentsToTop(),
           terserConfig(banner),
           script.license ? licenser(srcDir) : null,
-          persistBuildHashes(currentBuildHashes, metadata),
+          persistBuildHashes(currentBuildHashes, metadata, {
+            watch: Boolean(commandLineArgs.watch),
+          }),
         ],
       };
     }

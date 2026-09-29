@@ -196,10 +196,11 @@ entryUI("<ScriptName>", __ES_THIS__, (win) => {
 1. `.agents/instructions/extendscript.md` を読み、コーディングルールを確認する
 2. `purpose` と `@workflow` コメントを元に実装する
 3. 実装完了後に `pnpm lint && pnpm fmt` を実行する
-4. エラーがなければ `pnpm build -- <appId>/<ScriptName>` を実行してビルドする
-5. エラーがあればステップ 3 に戻って修正する
-6. ビルド成功後、実装した内容を簡潔に日本語で報告する
-7. 完了報告に `@material-symbols` へ記載した候補名を示す。公式一覧を確認できず `TODO` を残した場合は、その `TODO` も示す
+4. `pnpm typecheck -- --app=<appId>` を実行し、TypeScript 診断がないことを確認する
+5. エラーがなければ `pnpm build -- <appId>/<ScriptName>` を実行してビルドする
+6. lint / typecheck / build のいずれかにエラーがあればステップ 3 に戻って修正する
+7. ビルド成功後、実装した内容を簡潔に日本語で報告する
+8. 完了報告に `@material-symbols` へ記載した候補名を示す。公式一覧を確認できず `TODO` を残した場合は、その `TODO` も示す
 
 ---
 

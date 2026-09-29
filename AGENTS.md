@@ -40,7 +40,8 @@
 ### コマンドと品質ゲート
 
 - コマンドは `package.json` の scripts を優先してください。
-- コードを生成・編集した後は、変更範囲に応じて最小の `pnpm lint` / `pnpm fmt` / `pnpm build` を実行してください。
+- コードを生成・編集した後は、変更範囲に応じて最小の `pnpm lint` / `pnpm typecheck` / `pnpm fmt` / `pnpm build` を実行してください。
+- `src/**/*.ts` を生成・編集した場合は、対象アプリに `pnpm typecheck -- --app=<appId>` を実行し、共有コードや複数アプリへ影響する変更では `pnpm typecheck` を実行してください。TypeScript 診断を未解決のまま完了しないでください。
 - 新規スクリプト作成時は `pnpm new -- --app=<appId> --name=<ScriptName> --license` を優先してください。
 - 新規アプリ追加時は `pnpm add-app -- --app=<appId>` を使用してください。
 - README や docs が実態と異なる場合は、workspace の実ファイルと挙動を優先し、必要なら docs を更新してください。

@@ -19,6 +19,7 @@
     "build:phxs": "node ./scripts/build.mjs --app=phxs",
     "clean": "node ./scripts/cleanBuildHashes.mjs",
     "test": "node --test",
+    "typecheck": "node ./scripts/typecheck.mjs",
     "watch": "rollup -c -w",
     "lint": "oxlint",
     "fmt": "oxfmt",
