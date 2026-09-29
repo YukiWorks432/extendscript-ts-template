@@ -41,7 +41,7 @@ const collectFiles = (targetPath) => {
     return [];
   }
 
-  // ドットパスは明示し、Windows の junction を含むリンクは除外する。
+  // ドットパスも含めて再帰し、Windows の junction を含むリンクは除外する。
   return fs
     .globSync(["**/*", "**/.*", "**/.*/**/*"], {
       cwd: absolutePath,

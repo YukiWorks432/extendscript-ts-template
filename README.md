@@ -30,7 +30,7 @@ shimの制約に反するコードや ExtendScript 固有の禁止事項は、Ox
 
 ## 環境 / Environment
 
-- Node.js `^24.0.0`
+- Node.js `^24.13.1`
 - pnpm 12 系（`package.json` の `devEngines.packageManager.version` で `^12.0.0` を指定）
 - TypeScript `4.9.5`（ES3 出力のため固定）
 

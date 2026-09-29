@@ -18,15 +18,25 @@ test("ビルド入力はファイルと再帰ディレクトリから安定し�
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-build-inputs-"));
   const nestedDir = path.join(root, "nested");
   const hiddenDir = path.join(root, ".hidden", "nested");
+  const nestedHiddenDir = path.join(root, ".hidden", ".nested");
   const topLevelFile = path.join(root, "first.d.ts");
   const nestedFile = path.join(nestedDir, "second.d.ts");
   const hiddenFile = path.join(hiddenDir, "third.d.ts");
+  const dotFile = path.join(root, ".hidden", ".input.d.ts");
+  const nestedDotFile = path.join(nestedHiddenDir, "input.d.ts");
   const missingPath = path.join(root, "missing.d.ts");
-  const expectedFiles = [topLevelFile, nestedFile, hiddenFile];
+  const expectedFiles = [
+    topLevelFile,
+    nestedFile,
+    hiddenFile,
+    dotFile,
+    nestedDotFile,
+  ];
 
   try {
     fs.mkdirSync(nestedDir, { recursive: true });
     fs.mkdirSync(hiddenDir, { recursive: true });
+    fs.mkdirSync(nestedHiddenDir, { recursive: true });
     expectedFiles.forEach((filePath) => fs.writeFileSync(filePath, filePath));
 
     const files = getUniqueSortedFiles([root, topLevelFile, missingPath]);
@@ -45,7 +55,13 @@ test("ビルド入力はファイルと再帰ディレクトリから安定し�
       new Set(
         files.map((filePath) => normalize(path.relative(root, filePath)))
       ),
-      new Set(["first.d.ts", "nested/second.d.ts", ".hidden/nested/third.d.ts"])
+      new Set([
+        "first.d.ts",
+        "nested/second.d.ts",
+        ".hidden/nested/third.d.ts",
+        ".hidden/.input.d.ts",
+        ".hidden/.nested/input.d.ts",
+      ])
     );
 
     assert.notEqual(calculateInputHash([topLevelFile]), calculateInputHash([]));
