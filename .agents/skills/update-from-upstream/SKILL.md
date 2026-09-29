@@ -155,9 +155,10 @@ pnpm install
 
 `pnpm-lock.yaml` は自動生成されるため、checkout 対象には含めない。
 
-### 8. ビルドを確認する
+### 8. 型チェック・ビルドを確認する
 
 ```bash
+pnpm typecheck
 pnpm build --all
 ```
 
