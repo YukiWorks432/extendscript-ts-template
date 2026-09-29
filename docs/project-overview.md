@@ -269,12 +269,17 @@ pnpm add-app -- --app=idsn
 | `pnpm build:phxs`       | Photoshop のスクリプトのみビルド     |
 | `pnpm watch`            | ファイル変更を監視して自動ビルド     |
 | `pnpm lint`             | Oxlint でコード検査                  |
+| `pnpm typecheck`        | TypeScript で全体を型チェック        |
+| `pnpm typecheck -- --app=aeft` | After Effects だけ型チェック     |
 | `pnpm format`           | Oxfmt でコード整形                   |
 | `pnpm format:check`     | Oxfmt で整形を検査                   |
 | `pnpm new`              | 新規スクリプト追加（対話式 / CLI）   |
 | `pnpm add-app`          | 新規アプリスキャフォールディング     |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
-| `pnpm test`             | ビルド差分判定の回帰テスト           |
+| `pnpm test`             | Node.js 側の回帰テスト               |
+
+`pnpm typecheck` はルート `tsconfig.json` と `src/*/tsconfig.json` を自動検出して、共通コードと全対応アプリを成果物なしで検査します。
+`pnpm typecheck -- --app=<appId>` は指定アプリの `tsconfig.json` だけを検査します。新しいアプリを追加した場合も、アプリ別 `tsconfig.json` があれば全体型チェックへ自動的に含まれます。
 
 `pnpm build`、`pnpm build --all`、`pnpm build --app=<appId>`、アプリ別のビルド別名は、
 対象スクリプトごとにTypeScriptの依存範囲を限定し、上限付きで並列実行します。既定の
