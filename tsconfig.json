@@ -24,5 +24,11 @@
       "./node_modules/types-for-adobe/shared/ScriptUI"
     ]
   },
-  "include": ["src/lib/**/*", "src/types/**/*", "src/init.ts", "src/tests/**/*"]
+  "include": [
+    "src/lib/**/*",
+    "src/types/**/*",
+    "src/init.ts",
+    "src/tests/**/*",
+    "src/*/index.ts"
+  ]
 }
