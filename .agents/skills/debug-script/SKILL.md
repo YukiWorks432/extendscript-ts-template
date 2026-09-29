@@ -1,20 +1,21 @@
 ---
 name: debug-script
-description: "TypeScript / Rollup のビルドエラーを修正する。Use when: pnpm build でエラーが出た、pnpm lint でエラーが出た、TypeScript の型エラーが出た、ビルドが失敗した、コンパイルエラー、型エラーの修正。"
+description: "TypeScript / Rollup のビルドエラーを修正する。Use when: pnpm typecheck で型エラーが出た、pnpm build でエラーが出た、pnpm lint でエラーが出た、ビルドが失敗した、コンパイルエラー、型エラーの修正。"
 argument-hint: "エラーメッセージを貼り付けるか、対象ファイルを指定してください"
 ---
 
 # ビルドエラーの修正
 
-`pnpm build` や `pnpm lint` で発生したエラーを調査して修正する。
+`pnpm typecheck` / `pnpm build` / `pnpm lint` で発生したエラーを調査して修正する。
 
 > **注意**: ExtendScript のランタイムエラーは minify 後のコードで発生するため、
 > このスキルはビルド時（TypeScript / Rollup）のエラーのみを対象とする。
 
 ## When to Use
 
+- `pnpm typecheck` で TypeScript の型エラーが報告された
 - `pnpm build` を実行してエラーが出た
-- `pnpm lint` で TypeScript の型エラーが報告された
+- `pnpm lint` で Oxlint のエラーが出た
 - エラーメッセージが出ているが原因がわからない
 
 ---
@@ -36,10 +37,16 @@ argument-hint: "エラーメッセージを貼り付けるか、対象ファイ�
 ターミナルで以下を実行してエラーを取得する:
 
 ```bash
+pnpm typecheck 2>&1 | head -60
+```
+
+Rollup のエラーなら:
+
+```bash
 pnpm build 2>&1 | head -60
 ```
 
-または
+Oxlint のエラーなら:
 
 ```bash
 pnpm lint 2>&1 | head -60
@@ -75,7 +82,7 @@ pnpm lint 2>&1 | head -60
 修正後は必ず以下を実行して確認する:
 
 ```bash
-pnpm lint && pnpm build
+pnpm lint && pnpm typecheck && pnpm build
 ```
 
 エラーが残っている場合はステップ 1 に戻る。
