@@ -50,10 +50,7 @@ jobs:
         run: pnpm build --all
 
       - name: Check formatting
-        run: |
-          pnpm format
-          git diff -- scripts/typecheck.test.mjs
-          exit 1
+        run: pnpm format:check
 
       - name: Check diff
         run: git diff --check
