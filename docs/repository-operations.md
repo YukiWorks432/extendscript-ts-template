@@ -39,6 +39,7 @@ Node.js 24 で次の検証を実行します。
 - Node.js 24
 - `pnpm install --frozen-lockfile --strict-peer-dependencies`
 - `pnpm lint`
+- `pnpm typecheck`
 - `pnpm test`
 - `pnpm build --all`
 - `pnpm format:check`
