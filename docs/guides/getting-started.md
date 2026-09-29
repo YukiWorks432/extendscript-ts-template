@@ -76,11 +76,14 @@ entry("MyFirstScript", () => {
 });
 ```
 
-### 3. ビルド
+### 3. 型チェック・ビルド
 
 ```bash
+pnpm typecheck -- --app=aeft
 pnpm build
 ```
+
+型チェックは成果物を生成せず、After Effects 用の TypeScript 設定で型エラーがないことを確認します。
 
 出力先: `dist/aeft/MyFirstScript/MyFirstScript.jsx`
 
@@ -100,9 +103,10 @@ pnpm build
 各アプリのスクリプトは `src/{appId}/` に配置されています。
 デフォルトで `aeft`（After Effects）、`ilst`（Illustrator）、`phxs`（Photoshop）が用意されています。
 
-### 特定アプリのみビルド
+### 特定アプリのみ型チェック・ビルド
 
 ```bash
+pnpm typecheck -- --app=aeft
 pnpm build --app=aeft
 pnpm build:aeft
 ```
@@ -256,9 +260,10 @@ git checkout upstream/main -- scripts/ src/lib/ src/init.ts rollup.config.mjs ts
 > **注意**: `es.config.mjs` には自分のスクリプト設定が含まれているため、上記コマンドには含めていません。
 > 元テンプレートで `es.config.mjs` の構造が変わっていた場合は、手動で確認して反映してください。
 
-### 5. 依存関係を更新してビルド確認する
+### 5. 依存関係を更新して型チェック・ビルド確認する
 
 ```bash
 pnpm install
+pnpm typecheck
 pnpm build --all
 ```
