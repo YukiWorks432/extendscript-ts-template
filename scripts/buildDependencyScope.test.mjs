@@ -5,12 +5,92 @@ import os from "os";
 import path from "path";
 
 import {
+  calculateInputHash,
   collectImportDependencyFiles,
+  getUniqueSortedFiles,
   getTypeScriptInputFiles,
   getTypeScriptPluginOptions,
 } from "../rollup.config.mjs";
 
 const normalize = (filePath) => filePath.replace(/\\/g, "/");
+
+test("ビルド入力はファイルと再帰ディレクトリから安定して集まる", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-build-inputs-"));
+  const nestedDir = path.join(root, "nested");
+  const hiddenDir = path.join(root, ".hidden", "nested");
+  const topLevelFile = path.join(root, "first.d.ts");
+  const nestedFile = path.join(nestedDir, "second.d.ts");
+  const hiddenFile = path.join(hiddenDir, "third.d.ts");
+  const missingPath = path.join(root, "missing.d.ts");
+  const expectedFiles = [topLevelFile, nestedFile, hiddenFile];
+
+  try {
+    fs.mkdirSync(nestedDir, { recursive: true });
+    fs.mkdirSync(hiddenDir, { recursive: true });
+    expectedFiles.forEach((filePath) => fs.writeFileSync(filePath, filePath));
+
+    const files = getUniqueSortedFiles([root, topLevelFile, missingPath]);
+    assert.equal(files.length, expectedFiles.length);
+    assert.ok(files.every((filePath) => path.isAbsolute(filePath)));
+    expectedFiles.forEach((filePath) => assert.ok(files.includes(filePath)));
+    assert.equal(files.includes(root), false);
+
+    assert.deepEqual(
+      files.map((filePath) => normalize(path.relative(root, filePath))),
+      getUniqueSortedFiles([topLevelFile, root, nestedDir]).map((filePath) =>
+        normalize(path.relative(root, filePath))
+      )
+    );
+    assert.deepEqual(
+      new Set(
+        files.map((filePath) => normalize(path.relative(root, filePath)))
+      ),
+      new Set(["first.d.ts", "nested/second.d.ts", ".hidden/nested/third.d.ts"])
+    );
+
+    assert.notEqual(calculateInputHash([topLevelFile]), calculateInputHash([]));
+    assert.equal(calculateInputHash([missingPath]), calculateInputHash([]));
+    assert.equal(calculateInputHash([root]), calculateInputHash(expectedFiles));
+    assert.equal(
+      calculateInputHash([root, topLevelFile]),
+      calculateInputHash([topLevelFile, root])
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ビルド入力はディレクトリのシンボリックリンク先を再帰しない", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-build-symlink-"));
+  const targetDir = path.join(root, "target");
+  const linkedDir = path.join(root, "linked");
+  const targetFile = path.join(targetDir, "input.d.ts");
+
+  try {
+    fs.mkdirSync(targetDir);
+    fs.writeFileSync(targetFile, "declare const target: true;\n");
+
+    try {
+      fs.symlinkSync(
+        targetDir,
+        linkedDir,
+        process.platform === "win32" ? "junction" : "dir"
+      );
+    } catch (error) {
+      if (["EACCES", "ENOTSUP", "EPERM"].includes(error.code)) {
+        t.skip(
+          "この環境ではディレクトリのシンボリックリンクを作成できません。"
+        );
+        return;
+      }
+      throw error;
+    }
+
+    assert.deepEqual(getUniqueSortedFiles([root]), [targetFile]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("スクリプト単位のTypeScript範囲は相対依存と環境型だけを含む", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-build-scope-"));

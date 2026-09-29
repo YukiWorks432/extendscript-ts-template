@@ -21,65 +21,52 @@ import {
 const BUILD_HASH_DIR = "dist/temp";
 const BUILD_HASH_FILE = `${BUILD_HASH_DIR}/build-hashes.json`;
 
-const ensureDirectory = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-};
-
 const hashText = (text) =>
   crypto.createHash("sha256").update(text).digest("hex");
 
 const normalizePath = (filePath) => filePath.replace(/\\/g, "/");
 
 const collectFiles = (targetPath) => {
-  if (!fs.existsSync(targetPath)) {
+  const absolutePath = path.resolve(targetPath);
+  if (!fs.existsSync(absolutePath)) {
     return [];
   }
 
-  const stats = fs.statSync(targetPath);
+  const stats = fs.statSync(absolutePath);
   if (stats.isFile()) {
-    return [path.resolve(targetPath)];
+    return [absolutePath];
   }
 
   if (!stats.isDirectory()) {
     return [];
   }
 
-  const entries = fs.readdirSync(targetPath, { withFileTypes: true });
-  const files = [];
-
-  entries.forEach((entry) => {
-    const fullPath = path.join(targetPath, entry.name);
-
-    if (entry.isDirectory()) {
-      files.push(...collectFiles(fullPath));
-      return;
-    }
-
-    if (entry.isFile()) {
-      files.push(path.resolve(fullPath));
-    }
-  });
-
-  return files;
+  // ドットパスは明示し、Windows の junction を含むリンクは除外する。
+  return fs
+    .globSync(["**/*", "**/.*", "**/.*/**/*"], {
+      cwd: absolutePath,
+      exclude: (entry) => entry.isSymbolicLink(),
+      withFileTypes: true,
+    })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.resolve(entry.parentPath, entry.name));
 };
 
-const getUniqueSortedFiles = (inputPaths) => {
-  const fileMap = new Map();
+export const getUniqueSortedFiles = (inputPaths) => {
+  const files = new Set();
 
   inputPaths.forEach((inputPath) => {
     collectFiles(inputPath).forEach((filePath) => {
-      fileMap.set(filePath, filePath);
+      files.add(filePath);
     });
   });
 
-  return Array.from(fileMap.values()).toSorted((left, right) =>
+  return Array.from(files).toSorted((left, right) =>
     normalizePath(left).localeCompare(normalizePath(right))
   );
 };
 
-const calculateInputHash = (inputPaths) => {
+export const calculateInputHash = (inputPaths) => {
   const files = getUniqueSortedFiles(inputPaths);
 
   if (files.length === 0) {
@@ -307,7 +294,7 @@ export const saveBuildHashes = (hashes, buildHashFile = BUILD_HASH_FILE) => {
   const targetPath = path.resolve(buildHashFile);
   const temporaryPath = `${targetPath}.${process.pid}.${Date.now()}.tmp`;
 
-  ensureDirectory(path.dirname(targetPath));
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
 
   try {
     fs.writeFileSync(temporaryPath, JSON.stringify(hashes, null, 2), "utf8");

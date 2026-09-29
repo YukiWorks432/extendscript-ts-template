@@ -25,8 +25,10 @@ test("全件成功後だけハッシュ確定し、結果は対象名順に返�
   const hashes = { first: "hash-first", second: "hash-second" };
   const saved = [];
   const options = [
-    createOption("second", hashes),
-    createOption("first", hashes),
+    createOption("phxs/Example", hashes),
+    createOption("common", hashes),
+    createOption("ilst/Example", hashes),
+    createOption("aeft/Example", hashes),
   ];
 
   const results = await executeBuild({
@@ -42,7 +44,7 @@ test("全件成功後だけハッシュ確定し、結果は対象名順に返�
 
   assert.deepEqual(
     results.map(({ label }) => label),
-    ["first", "second"]
+    ["aeft/Example", "common", "ilst/Example", "phxs/Example"]
   );
   assert.deepEqual(saved, [hashes]);
 });
