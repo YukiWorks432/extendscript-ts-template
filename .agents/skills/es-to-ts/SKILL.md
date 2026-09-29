@@ -77,7 +77,7 @@ options:
 ### 6. lint・ビルドで確認する
 
 ```bash
-pnpm lint && pnpm format && pnpm build -- <appId>/<ScriptName>
+pnpm lint && pnpm format && pnpm typecheck -- --app=<appId> && pnpm build -- <appId>/<ScriptName>
 ```
 
 エラーがあれば修正する。
