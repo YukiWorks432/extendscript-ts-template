@@ -110,7 +110,7 @@ export const runTypecheck = ({
   projectRoot = process.cwd(),
   app = null,
   tscPath = path.join(
-    process.cwd(),
+    projectRoot,
     "node_modules",
     "typescript",
     "bin",
