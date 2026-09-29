@@ -121,7 +121,7 @@ test("アプリ別tsconfigの環境型定義を範囲へ含める", () => {
   );
 });
 
-test("監視ビルドは従来のTypeScript設定を使い、単発ビルドだけ範囲を限定する", () => {
+test("監視ビルドは型診断後も継続できる設定を使い、単発ビルドだけ範囲を限定する", () => {
   const common = {
     appId: "aeft",
     srcDir: "src/aeft/example",
@@ -132,7 +132,7 @@ test("監視ビルドは従来のTypeScript設定を使い、単発ビルドだ�
 
   assert.deepEqual(watchOptions, {
     tsconfig: common.tsconfig,
-    noEmitOnError: true,
+    noEmitOnError: false,
   });
   assert.equal(buildOptions.noEmitOnError, true);
   assert.equal(buildOptions.filterRoot, false);

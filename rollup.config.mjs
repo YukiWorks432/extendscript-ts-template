@@ -253,7 +253,7 @@ export const getTypeScriptPluginOptions = ({
   tsconfig,
   watch = false,
 }) => {
-  const baseOptions = { tsconfig, noEmitOnError: true };
+  const baseOptions = { tsconfig, noEmitOnError: !watch };
 
   if (watch) {
     return baseOptions;
