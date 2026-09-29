@@ -130,7 +130,11 @@ test("監視ビルドは従来のTypeScript設定を使い、単発ビルドだ�
   const watchOptions = getTypeScriptPluginOptions({ ...common, watch: true });
   const buildOptions = getTypeScriptPluginOptions(common);
 
-  assert.deepEqual(watchOptions, { tsconfig: common.tsconfig });
+  assert.deepEqual(watchOptions, {
+    tsconfig: common.tsconfig,
+    noEmitOnError: true,
+  });
+  assert.equal(buildOptions.noEmitOnError, true);
   assert.equal(buildOptions.filterRoot, false);
   assert.ok(Array.isArray(buildOptions.include));
 });
