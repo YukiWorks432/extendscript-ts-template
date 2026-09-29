@@ -115,7 +115,6 @@ export const runTypecheck = ({
   app = null,
   tscPath = path.join(projectRoot, "node_modules", "typescript", "bin", "tsc"),
   stdio = "inherit",
-  spawn = spawnSync,
 } = {}) => {
   if (!fs.existsSync(tscPath)) {
     throw new Error(
@@ -130,7 +129,7 @@ export const runTypecheck = ({
     const relativeConfig = path.relative(projectRoot, configPath);
     console.log(`型チェック: ${relativeConfig}`);
 
-    const result = spawn(
+    const result = spawnSync(
       process.execPath,
       [tscPath, "--noEmit", "--project", configPath],
       {
