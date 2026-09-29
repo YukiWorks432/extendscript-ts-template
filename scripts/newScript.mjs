@@ -283,6 +283,19 @@ async function createScriptTemplate(appId, name, uiType) {
   }
 }
 
+async function createScriptFromDescriptor(descriptor, config) {
+  const { appId, script, uiType } = descriptor;
+  validateApp(appId, config);
+  validateName(script.name, appId, config);
+
+  await updateScriptConfig(appId, script);
+  console.log(L.doneAdd(script.name, appId, script.license));
+
+  await createScriptTemplate(appId, script.name, uiType);
+  console.log(L.doneMake(script.name, appId));
+  execSync(`oxfmt --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+}
+
 function parseCliArgs() {
   try {
     const { values } = parseArgs({
@@ -330,18 +343,9 @@ async function main() {
 
   if (cliDescriptor) {
     // CLI モード
-    const { appId, script, uiType } = cliDescriptor;
     try {
       const config = await loadConfig();
-      validateApp(appId, config);
-      validateName(script.name, appId, config);
-
-      await updateScriptConfig(appId, script);
-      console.log(L.doneAdd(script.name, appId, script.license));
-
-      await createScriptTemplate(appId, script.name, uiType);
-      console.log(L.doneMake(script.name, appId));
-      execSync(`oxfmt --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+      await createScriptFromDescriptor(cliDescriptor, config);
     } catch (err) {
       process.exitCode = 1;
       if (err instanceof CliError) {
@@ -357,14 +361,8 @@ async function main() {
   const rl = createInterface({ input, output });
   try {
     const config = await loadConfig();
-    const { appId, script, uiType } = await getScriptDescriptor(rl, config);
-
-    await updateScriptConfig(appId, script);
-    console.log(L.doneAdd(script.name, appId, script.license));
-
-    await createScriptTemplate(appId, script.name, uiType);
-    console.log(L.doneMake(script.name, appId));
-    execSync(`oxfmt --write "${ES_CONFIG_PATH}"`, { stdio: "inherit" });
+    const descriptor = await getScriptDescriptor(rl, config);
+    await createScriptFromDescriptor(descriptor, config);
   } catch (err) {
     process.exitCode = 1;
     if (err instanceof CliError) {
