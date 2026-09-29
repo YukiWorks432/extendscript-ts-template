@@ -89,9 +89,11 @@ export const executeBuild = async ({
   });
 
   saveHashes(hashState.hashes);
-  return results.toSorted((left, right) =>
-    left.label.localeCompare(right.label)
-  );
+  return results.toSorted((left, right) => {
+    if (left.label < right.label) return -1;
+    if (left.label > right.label) return 1;
+    return 0;
+  });
 };
 
 const printUsage = () => {

@@ -28,6 +28,8 @@ test("全件成功後だけハッシュ確定し、結果は対象名順に返�
     createOption("phxs/Example", hashes),
     createOption("common", hashes),
     createOption("ilst/Example", hashes),
+    createOption("aeft/Zebra", hashes),
+    createOption("aeft/apple", hashes),
     createOption("aeft/Example", hashes),
   ];
 
@@ -44,7 +46,14 @@ test("全件成功後だけハッシュ確定し、結果は対象名順に返�
 
   assert.deepEqual(
     results.map(({ label }) => label),
-    ["aeft/Example", "common", "ilst/Example", "phxs/Example"]
+    [
+      "aeft/Example",
+      "aeft/Zebra",
+      "aeft/apple",
+      "common",
+      "ilst/Example",
+      "phxs/Example",
+    ]
   );
   assert.deepEqual(saved, [hashes]);
 });
