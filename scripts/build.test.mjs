@@ -88,7 +88,7 @@ test("失敗時は開始済みbundleを閉じ、ハッシュを保存しない",
 
   await assert.rejects(execution, /failing: 出力失敗/);
   assert.deepEqual(started, ["failing", "running"]);
-  assert.deepEqual(closed.sort(), ["failing", "running"]);
+  assert.deepEqual(closed.toSorted(), ["failing", "running"]);
   assert.deepEqual(saved, []);
 });
 

@@ -74,7 +74,7 @@ const normalizeJsonValue = (value, path, ancestors = new Set()) => {
 
   const normalized = {};
   Object.keys(value)
-    .sort()
+    .toSorted()
     .forEach((key) => {
       normalized[key] = normalizeJsonValue(
         value[key],
@@ -94,7 +94,7 @@ export const normalizeScriptConfig = (script) => {
 
   const normalized = {};
   Object.keys(script)
-    .sort()
+    .toSorted()
     .forEach((key) => {
       // build は選択専用のため、成果物のハッシュを失効させません。
       normalized[key] = normalizeJsonValue(script[key], key);
@@ -107,7 +107,7 @@ export const normalizeScriptConfig = (script) => {
   }
 
   return Object.keys(normalized)
-    .sort()
+    .toSorted()
     .reduce((result, key) => {
       result[key] = normalized[key];
       return result;

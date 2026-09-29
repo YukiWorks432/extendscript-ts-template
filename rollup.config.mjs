@@ -74,7 +74,7 @@ const getUniqueSortedFiles = (inputPaths) => {
     });
   });
 
-  return Array.from(fileMap.values()).sort((left, right) =>
+  return Array.from(fileMap.values()).toSorted((left, right) =>
     normalizePath(left).localeCompare(normalizePath(right))
   );
 };
@@ -228,7 +228,7 @@ export const collectImportDependencyFiles = (entryFile) => {
 
   visit(entryFile);
 
-  return Array.from(files.values()).sort((left, right) =>
+  return Array.from(files.values()).toSorted((left, right) =>
     normalizePath(left).localeCompare(normalizePath(right))
   );
 };
