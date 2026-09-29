@@ -67,12 +67,6 @@ export const buildOne = async ({ option, rollupFn = rollup }) => {
   }
 };
 
-const compareLabels = (left, right) => {
-  if (left < right) return -1;
-  if (left > right) return 1;
-  return 0;
-};
-
 export const executeBuild = async ({
   options,
   hashState,
@@ -95,21 +89,11 @@ export const executeBuild = async ({
   });
 
   saveHashes(hashState.hashes);
-  return results.toSorted((left, right) =>
-    compareLabels(left.label, right.label)
-  );
-};
-
-const getAvailableParallelism = () => {
-  if (typeof os.availableParallelism === "function") {
-    try {
-      return os.availableParallelism();
-    } catch (_error) {
-      // 古い実行環境や実行時の取得失敗ではCPU数へフォールバックします。
-    }
-  }
-
-  return os.cpus().length;
+  return results.toSorted((left, right) => {
+    if (left.label < right.label) return -1;
+    if (left.label > right.label) return 1;
+    return 0;
+  });
 };
 
 const printUsage = () => {
@@ -168,7 +152,7 @@ const main = async () => {
     const hashState = findBuildHashState(options);
     const requestedConcurrency =
       argumentsConfig.concurrency ??
-      getDefaultConcurrency(options.length, getAvailableParallelism());
+      getDefaultConcurrency(options.length, os.availableParallelism());
     const concurrency = Math.min(requestedConcurrency, options.length);
 
     console.log(`並列度 ${concurrency} で ${options.length} 件を実行します。`);
