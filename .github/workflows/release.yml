@@ -77,42 +77,10 @@ jobs:
         env:
           BUMP: ${{ steps.settings.outputs.bump }}
         run: |
-          node <<'NODE'
-          const fs = require("fs");
-
-          const bump = process.env.BUMP;
-          const outputPath = process.env.GITHUB_OUTPUT;
-          const packagePath = "package.json";
-          const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-          const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(pkg.version);
-
-          if (!match) {
-            throw new Error(`Unsupported package version: ${pkg.version}`);
-          }
-
-          let major = Number(match[1]);
-          let minor = Number(match[2]);
-          let patch = Number(match[3]);
-
-          if (bump === "major") {
-            major += 1;
-            minor = 0;
-            patch = 0;
-          } else if (bump === "minor") {
-            minor += 1;
-            patch = 0;
-          } else if (bump === "patch") {
-            patch += 1;
-          } else {
-            throw new Error(`Unsupported bump type: ${bump}`);
-          }
-
-          const nextVersion = `${major}.${minor}.${patch}`;
-          pkg.version = nextVersion;
-          fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
-          fs.appendFileSync(outputPath, `version=${nextVersion}\n`);
-          fs.appendFileSync(outputPath, `tag=v${nextVersion}\n`);
-          NODE
+          npm version "$BUMP" --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          printf 'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
+          printf 'tag=v%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Verify tag does not exist
         env:
