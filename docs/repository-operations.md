@@ -42,7 +42,7 @@ Node.js 24 で次の検証を実行します。
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm build --all`
-- `pnpm format:check`
+- `pnpm fmt:check`
 - `git diff --check`
 
 `package.json` の `devEngines.packageManager.version` に pnpm `^12.0.0` を指定します。CI の `pnpm/setup@v3` はこの範囲から pnpm を解決し、同じ action の `runtime` で Node.js 24 を設定します。セットアップ後は、固定ロックファイルと厳格なピア依存関係検査を含む品質ゲートを実行します。

@@ -195,7 +195,7 @@ entryUI("<ScriptName>", __ES_THIS__, (win) => {
 
 1. `.agents/instructions/extendscript.md` を読み、コーディングルールを確認する
 2. `purpose` と `@workflow` コメントを元に実装する
-3. 実装完了後に `pnpm lint && pnpm format` を実行する
+3. 実装完了後に `pnpm lint && pnpm fmt` を実行する
 4. `pnpm typecheck -- --app=<appId>` を実行し、TypeScript 診断がないことを確認する
 5. エラーがなければ `pnpm build -- <appId>/<ScriptName>` を実行してビルドする
 6. lint / typecheck / build のいずれかにエラーがあればステップ 3 に戻って修正する

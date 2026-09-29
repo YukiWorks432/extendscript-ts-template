@@ -12,7 +12,8 @@
   "plugins": ["eslint"],
   "overrides": [
     {
-      "files": ["**/*.ts"],
+      "files": ["src/**/*.ts"],
+      "plugins": ["eslint", "typescript", "oxc"],
       "rules": {
         "no-unused-vars": [
           "warn",
@@ -91,7 +92,19 @@
             "message": ".toFixed は高頻度でスタックオーバーランを誘発します。"
           }
         ],
-        "no-nested-ternary": "error"
+        "no-nested-ternary": "error",
+        "typescript/no-duplicate-enum-values": "error",
+        "typescript/no-wrapper-object-types": "error",
+        "oxc/number-arg-out-of-range": "error"
+      }
+    },
+    {
+      "files": ["scripts/**/*.mjs", "*.mjs"],
+      "plugins": ["eslint", "unicorn", "oxc"],
+      "rules": {
+        "unicorn/no-array-sort": "error",
+        "unicorn/no-array-reverse": "error",
+        "oxc/number-arg-out-of-range": "error"
       }
     }
   ]

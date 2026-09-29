@@ -95,9 +95,9 @@ export const executeBuild = async ({
   });
 
   saveHashes(hashState.hashes);
-  return results
-    .slice()
-    .sort((left, right) => compareLabels(left.label, right.label));
+  return results.toSorted((left, right) =>
+    compareLabels(left.label, right.label)
+  );
 };
 
 const getAvailableParallelism = () => {

@@ -27,6 +27,10 @@ export const parseTypecheckArguments = (argumentsList = []) => {
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
 
+    if (argument === "--" && index === 0) {
+      continue;
+    }
+
     if (argument === "--help" || argument === "-h") {
       result.help = true;
       continue;
@@ -79,7 +83,7 @@ export const discoverTypeScriptConfigs = (projectRoot = process.cwd()) => {
           configPath: path.join(sourceRoot, entry.name, "tsconfig.json"),
         }))
         .filter(({ configPath }) => fs.existsSync(configPath))
-        .sort((left, right) => left.appId.localeCompare(right.appId))
+        .toSorted((left, right) => left.appId.localeCompare(right.appId))
     : [];
 
   return { rootConfig, appConfigs };

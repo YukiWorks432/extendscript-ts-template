@@ -22,8 +22,8 @@
     "typecheck": "node ./scripts/typecheck.mjs",
     "watch": "rollup -c -w",
     "lint": "oxlint",
-    "format": "oxfmt",
-    "format:check": "oxfmt --check",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "new": "node ./scripts/newScript.mjs",
     "add-app": "node ./scripts/addApp.mjs"
   },

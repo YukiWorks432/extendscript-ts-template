@@ -171,8 +171,8 @@ pnpm watch
 | `pnpm watch`            | ファイル変更を監視して自動ビルド |
 | `pnpm lint`             | Oxlint でコード検査              |
 | `pnpm typecheck`        | TypeScript で全体を型チェック    |
-| `pnpm format`           | Oxfmt でコード整形               |
-| `pnpm format:check`     | Oxfmt で整形を検査               |
+| `pnpm fmt`              | Oxfmt でコード整形               |
+| `pnpm fmt:check`        | Oxfmt で整形を検査               |
 | `pnpm new`              | 新規スクリプト追加               |
 | `pnpm add-app`          | 新規アプリ追加                   |
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |

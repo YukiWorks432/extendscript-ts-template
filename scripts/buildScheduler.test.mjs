@@ -63,5 +63,5 @@ test("失敗後に未開始の仕事を増やさず、開始済みの仕事を�
     return true;
   });
   assert.deepEqual(started, ["失敗", "実行中"]);
-  assert.deepEqual(closed.sort(), ["失敗", "実行中"]);
+  assert.deepEqual(closed.toSorted(), ["失敗", "実行中"]);
 });

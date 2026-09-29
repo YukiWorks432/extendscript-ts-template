@@ -39,6 +39,10 @@ test("型チェック引数はアプリ指定とヘルプを解析する", () =>
     app: "aeft",
     help: false,
   });
+  assert.deepEqual(parseTypecheckArguments(["--", "--app=aeft"]), {
+    app: "aeft",
+    help: false,
+  });
   assert.deepEqual(parseTypecheckArguments(["--app", "ilst"]), {
     app: "ilst",
     help: false,
