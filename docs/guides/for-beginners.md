@@ -501,7 +501,7 @@ gh auth status
 | リポジトリ作成       | GitHub の Use this template → Code > GitHub CLI → `gh repo clone` |
 | 依存関係インストール | `pnpm i`                                                          |
 | スクリプト作成（AI） | Copilot Chat（Agent モード）で `/add-script ...` と入力           |
-| 型チェック           | `pnpm typecheck -- --app=aeft`                                  |
+| 型チェック           | `pnpm typecheck -- --app=aeft`                                    |
 | ビルド               | `pnpm build`                                                      |
 | AE で実行            | ファイル → スクリプト → スクリプトファイルを実行...               |
 
