@@ -3,7 +3,7 @@
   "version": "0.6.0",
   "description": "Multi-app ExtendScript TypeScript template for Adobe After Effects, Illustrator, Photoshop, and more",
   "engines": {
-    "node": "^24.13.1"
+    "node": "^24.22.1"
   },
   "devEngines": {
     "packageManager": {
@@ -51,9 +51,9 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "12.3.0",
-    "oxfmt": "^0.70.0",
-    "oxlint": "^1.85.0",
-    "rollup": "^4.63.5",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
+    "rollup": "^4.64.12",
     "rollup-plugin-license": "^3.7.1",
     "tslib": "2.8.1",
     "types-for-adobe": "^7.2.6",
