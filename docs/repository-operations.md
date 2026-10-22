@@ -45,7 +45,7 @@ Node.js 24 で次の検証を実行します。
 - `pnpm fmt:check`
 - `git diff --check`
 
-`package.json` の `devEngines.packageManager.version` に pnpm `^12.0.0` を指定します。CI の `pnpm/setup@v3` はこの範囲から pnpm を解決し、同じ action の `runtime` で Node.js 24 を設定します。セットアップ後は、固定ロックファイルと厳格なピア依存関係検査を含む品質ゲートを実行します。
+`package.json` の `devEngines.packageManager.version` に pnpm `^12.0.0` を指定します。CI の `pnpm/setup@v3` はこの範囲から pnpm を解決し、同じ action の `runtime: node@^24.22.1` で修正済みの Node.js 24 系を設定します。セットアップ後は、固定ロックファイルと厳格なピア依存関係検査を含む品質ゲートを実行します。
 ロックファイルを固定したインストールと厳格なピア依存関係検査を、キャッシュによって省略することはありません。
 同じ Pull Request または `main` 更新に対する古い実行は、新しい実行を開始すると中止します。
 ワークフローの権限は、ソース取得に必要な `contents: read` だけを付与しています。
