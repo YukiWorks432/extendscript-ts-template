@@ -1300,7 +1300,7 @@ packages:
     engines: {node: '>=0.10.0'}
 
   extendscript-compat@file:vendor/extendscript-compat-0.1.0.tgz:
-    resolution: {integrity: sha512-YHONQ5ioB3stVx6tVEEuBZmfrjM1g/0mNoeB4UZGTfwFgchidjqv0lmD+w6cNPs4h12EKGFj20w5igWeZ1DuPA==, tarball: file:vendor/extendscript-compat-0.1.0.tgz}
+    resolution: {integrity: sha512-juk0i06LY7A20QpHNNg91OnMN3XgFxNkiD5n5YA1UpJxhZ2MD18DFVhHhqx/fqocSZ2OqMFFDKnGyPZM5ZO6sg==, tarball: file:vendor/extendscript-compat-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
     peerDependencies:

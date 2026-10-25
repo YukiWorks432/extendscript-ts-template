@@ -1,6 +1,6 @@
 import test from "node:test";
 import { runInNewContext } from "node:vm";
-import { assertExtendscriptExpressionPrecedenceProtected } from "extendscript-compat";
+import { assertPrecedenceProtected } from "extendscript-compat";
 import assert from "node:assert/strict";
 import { promisify } from "node:util";
 import fs from "fs";
@@ -326,7 +326,7 @@ test("圧縮後の実際の生成物で式の優先順位を保護する", () =>
       path.join(root, "dist/aeft/example/example.jsx"),
       "utf8"
     );
-    assertExtendscriptExpressionPrecedenceProtected(code);
+    assertPrecedenceProtected(code);
     const context = { exports: {} };
     runInNewContext(code, context);
     for (const [a, b, c, expected] of [
