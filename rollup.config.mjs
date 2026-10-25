@@ -4,6 +4,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import babel from "@rollup/plugin-babel";
 import license from "rollup-plugin-license";
+import { extendscriptCompat } from "extendscript-compat/rollup";
 
 import fs from "fs";
 import crypto from "crypto";
@@ -559,6 +560,7 @@ export default (commandLineArgs = {}) => {
           extractCommentsToTop(),
           terserConfig(banner),
           script.license ? licenser(srcDir) : null,
+          extendscriptCompat(),
           persistBuildHashes(currentBuildHashes, metadata, {
             watch: Boolean(commandLineArgs.watch),
           }),
