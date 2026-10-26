@@ -1,3 +1,6 @@
+# 所有者が公開・検証した初期版を、この版に限り先行導入する。
+minimumReleaseAgeExclude:
+  - extendscript-compat@0.1.0
 overrides:
   serialize-javascript@<7.0.5: ">=7.0.5"
   serialize-javascript@<=7.0.2: ">=7.0.3"

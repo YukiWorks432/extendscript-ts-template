@@ -1,4 +1,6 @@
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import { assertPrecedenceProtected } from "extendscript-compat";
 import assert from "node:assert/strict";
 import { promisify } from "node:util";
 import fs from "fs";
@@ -301,5 +303,41 @@ try {
     );
   } finally {
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  }
+});
+
+test("圧縮後の実際の生成物で式の優先順位を保護する", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-compat-output-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.writeFileSync(
+      path.join(root, "src", "aeft", "example", "index.ts"),
+      "export function select(a: boolean, b: boolean, c: boolean): number { if (a || b && c) { if (a) return 10; return 20; } if (b) return 30; return 40; }\n"
+    );
+    const environment = { ...process.env, EXTENDSCRIPT_BUILD_APP: "aeft" };
+    delete environment.BUILD_ALL;
+    delete environment.EXTENDSCRIPT_DEFER_BUILD_HASHES;
+    const built = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+      cwd: root,
+      env: environment,
+    });
+    assert.equal(built.status, 0, built.stdout + built.stderr);
+    const code = fs.readFileSync(
+      path.join(root, "dist/aeft/example/example.jsx"),
+      "utf8"
+    );
+    assertPrecedenceProtected(code);
+    const context = { exports: {} };
+    runInNewContext(code, context);
+    for (const [a, b, c, expected] of [
+      [true, false, false, 10],
+      [false, true, true, 20],
+      [false, true, false, 30],
+      [false, false, true, 40],
+    ]) {
+      assert.equal(context.exports.select(a, b, c), expected);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
