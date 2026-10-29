@@ -2,14 +2,13 @@
 
 複数の Adobe アプリ向け ExtendScript を TypeScript からトランスパイルして管理する軽量モノレポテンプレートです。
 
-独自に調節した[es5-shim](https://github.com/es-shims/es5-shim)と[es6-shim](https://github.com/paulmillr/es6-shim)を注入することで、
-ES6相当のライブラリを使用できます。  
-TypeScriptからトランスパイルするため、文法は最新のものを使用できます。
+[extendscript-compat](https://github.com/YukiWorks432/extendscript-compat)でJSONとES5・ES6の一部を補完し、ExtendScript固有の不具合を補正します。
+TypeScriptからExtendScript向けのコードへ変換します。
 
 ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブラリはオミットされています。  
 詳細は `docs/polyfills.md` を参照してください。  
-また、shimの詳細な動作は各shimを参照してください。
-shimの制約に反するコードや ExtendScript 固有の禁止事項は、Oxlint がエラーとして表示します。
+補正の詳細と制限は、リンク先の利用文書を参照してください。
+ポリフィルの制約に反するコードや ExtendScript 固有の禁止事項は、Oxlint がエラーとして表示します。
 コード整形には Oxfmt を使用します。
 
 型情報には[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)を使用しています。  
@@ -183,7 +182,7 @@ pnpm watch
 ## テスト / Test
 
 `src/tests/index.ts`にテストを記述しています。
-ビルドして実行すればダイアログが表示され、shimが想定通り動いているかが表示されます。
+ビルドして実行すればダイアログが表示され、互換補正が想定どおり動いているかを確認できます。
 
 ビルド・型チェック基盤を含む Node.js 側の回帰テストは `pnpm test` で実行できます。
 

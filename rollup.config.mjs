@@ -10,6 +10,7 @@ import fs from "fs";
 import crypto from "crypto";
 import process from "process";
 import path from "path";
+import { fileURLToPath } from "url";
 import ts from "typescript";
 
 import config from "./es.config.mjs";
@@ -19,6 +20,12 @@ import {
   selectChangedScripts,
 } from "./scripts/buildHash.mjs";
 
+const compatPackageDir = path.dirname(
+  fileURLToPath(import.meta.resolve("extendscript-compat/package.json"))
+);
+const compatLicenses = ["LICENSE", "THIRD-PARTY-LICENSES.txt"]
+  .map((name) => fs.readFileSync(path.join(compatPackageDir, name), "utf8"))
+  .join("\n\n");
 const BUILD_HASH_DIR = "dist/temp";
 const BUILD_HASH_FILE = `${BUILD_HASH_DIR}/build-hashes.json`;
 
@@ -539,7 +546,7 @@ export default (commandLineArgs = {}) => {
         targetName: appId ? `${appId}/${script.name}` : script.name,
       };
 
-      const banner = `/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
+      const banner = `/*\n${compatLicenses}\n*/\n/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
 
       return {
         input: inputFile,

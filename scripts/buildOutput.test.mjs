@@ -8,7 +8,7 @@ import os from "os";
 import path from "path";
 import process from "node:process";
 import { execFile, spawnSync } from "child_process";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import typescript from "@rollup/plugin-typescript";
 import { loadConfigFile } from "rollup/loadConfigFile";
 
@@ -337,6 +337,57 @@ test("圧縮後の実際の生成物で式の優先順位を保護する", () =>
     ]) {
       assert.equal(context.exports.select(a, b, c), expected);
     }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ビルドしたスクリプトに実行時補正とBOM・ライセンスを含める", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-compat-runtime-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.copyFileSync(
+      path.join(projectRoot, "src/init.ts"),
+      path.join(root, "src/init.ts")
+    );
+    fs.writeFileSync(
+      path.join(root, "src/aeft/example/index.ts"),
+      'import "../../init"; export function check() { return [parseInt("a-", 16), "\\0".charAt(0).length, JSON.parse("{\\"value\\":3}").value, Number("0b101")]; }\n'
+    );
+    const environment = { ...process.env, EXTENDSCRIPT_BUILD_APP: "aeft" };
+    delete environment.BUILD_ALL;
+    delete environment.EXTENDSCRIPT_DEFER_BUILD_HASHES;
+    const built = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+      cwd: root,
+      env: environment,
+    });
+    assert.equal(built.status, 0, built.stdout + built.stderr);
+    const bytes = fs.readFileSync(
+      path.join(root, "dist/aeft/example/example.jsx")
+    );
+    assert.deepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
+    const code = bytes.toString("utf8");
+    const compatDirectory = path.dirname(
+      fileURLToPath(import.meta.resolve("extendscript-compat/package.json"))
+    );
+    for (const name of ["LICENSE", "THIRD-PARTY-LICENSES.txt"]) {
+      assert.ok(
+        code.includes(
+          fs.readFileSync(path.join(compatDirectory, name), "utf8").trim()
+        )
+      );
+    }
+    const context = { exports: {} };
+    runInNewContext(
+      'var nativeNumber = Number; var nativeParseInt = parseInt; parseInt = function (value, radix) { return value === "a-" && radix === 16 ? 169 : nativeParseInt(value, radix); };',
+      context
+    );
+    runInNewContext(code, context);
+    assert.deepEqual(Array.from(context.exports.check()), [10, 1, 3, 5]);
+    assert.equal(runInNewContext("Number === nativeNumber", context), true);
+    const patchedParseInt = runInNewContext("parseInt", context);
+    runInNewContext(code, context);
+    assert.equal(runInNewContext("parseInt", context), patchedParseInt);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
