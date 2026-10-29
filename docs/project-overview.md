@@ -7,7 +7,7 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 
 - **言語**: TypeScript → ES3 にトランスパイル（ExtendScript 向け）
 - **ビルド**: Rollup + Babel
-- **生成コードの保護**: Terserとライセンス処理の後、npm公開版`extendscript-compat@0.1.0`で混在論理演算子と入れ子三項演算子へ括弧を挿入し、最終検査する。ソースの入れ子三項禁止は維持する。
+- **生成コードの保護**: Terserとライセンス処理の後、npm公開版`extendscript-compat@0.3.0`で優先順位、Unicode、数値変換を補正し、UTF-8 BOMを付与する。ソースの入れ子三項禁止は維持する。
 - **型定義**: [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)（有志による非公式定義、不足あり）
 - **パッケージマネージャ**: pnpm
 
@@ -30,7 +30,7 @@ Dependabot の通常の版更新は、配布側の既定ブランチに設定が
 src/                       # ソースコード
   init.ts                  # ポリフィル読み込みエントリ（全スクリプトで import 必須）
   lib/                     # 全アプリ共通ライブラリ
-    polyfills/             # ES5/ES6/ESNext ポリフィル
+    polyfills/             # 任意で有効にする追加ポリフィル
     lib.ts                 # 汎用ユーティリティ（entry, entryUI, alertError）
   types/                   # 全アプリ共通の型定義
     index.d.ts             # Error, Application 拡張、__ES_THIS__ グローバル変数

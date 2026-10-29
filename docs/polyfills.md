@@ -1,62 +1,11 @@
 # ポリフィル
 
-ExtendScript は ES3 ベースのため、ES5 以降の機能をポリフィルで補っている。
-ポリフィルは `src/lib/polyfills/` に配置され、`src/init.ts` 経由で全スクリプトに注入される。
+`src/init.ts`は、`extendscript-compat/runtime`を読み込み、JSONとES5・ES6の一部を補完します。各スクリプトは既存の`import "../../init"`で、この初期化をアプリ固有コードより先に実行します。
 
-## ポリフィルファイル一覧
+`parseInt`、`String.prototype.charAt`、`split`、`replace`は既存の関数がある場合も補正されます。変更は同じExtendScriptエンジンを共有する他のスクリプトにも及びます。同じエンジンでの再評価では、内部の版付き印により重複した適用を防ぎます。
 
-| ファイル         | ベースライブラリ                                  | 説明                                            |
-| ---------------- | ------------------------------------------------- | ----------------------------------------------- |
-| `es5-shim.js`    | [es5-shim](https://github.com/es-shims/es5-shim)  | ES5 メソッドの補完。ExtendScript 向けに修正済み |
-| `es6-shim.js`    | [es6-shim](https://github.com/paulmillr/es6-shim) | ES6 メソッドの補完。ExtendScript 向けに修正済み |
-| `esnext-shim.js` | 独自実装                                          | ES6 以降の機能を必要に応じて追加したポリフィル  |
-| `json2.js`       | —                                                 | JSON パーサー                                   |
+実行時の機能と制限は[extendscript-compatの実行時補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/runtime/README.ja.md)を参照してください。ES5・ES6のすべてを実装するものではなく、`Symbol`と`Promise`は使用できません。`JSON.parse`は一部の不正なJSONを受け入れるため、厳密な入力検証には使えません。
 
-## 使用不可な機能
+ビルド時には、`extendscriptCompat()`が優先順位、文字列と正規表現の特定のUnicode文字、対応できる`Number`呼び出しを補正します。生成したJSXにはUTF-8 BOMが付きます。補正の範囲は[ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md)を参照してください。生成物には、同梱した互換コードのライセンスも含まれます。
 
-以下の機能は ExtendScript の制約によりポリフィルで対応不可能：
-
-### `Symbol`
-
-`Symbol` は ECMAScript 2015 で導入された言語レベルのプリミティブ型である。
-ExtendScript（ES3）では以下の理由で再現不可能：
-
-- **プリミティブ型**: `Symbol` は `string` や `number` と同じレベルのプリミティブであり、ランタイムが言語レベルでサポートする必要がある
-- **一意性の保証**: `Symbol()` は呼び出すたびにグローバルに一意な値を返す必要があるが、ES3 にはこの仕組みがない
-- **プロパティキー**: `Symbol` をオブジェクトのプロパティキーとして使用する機能は `Object.defineProperty` に依存するが、ExtendScript では正常に動作しない
-- **Well-known Symbols**: `Symbol.iterator`, `Symbol.toPrimitive` 等はエンジン内部の動作を制御するもので、ポリフィルでは対応不可能
-
-### `Promise`
-
-`Promise` は非同期処理を管理するための仕組みだが、ExtendScript では以下の理由で実装不可能：
-
-- **イベントループ**: `Promise` の `.then()` や `.catch()` はマイクロタスクキューを介して非同期に実行されるが、ExtendScript にはイベントループやマイクロタスクキューが存在しない
-- **ExtendScript の実行モデル**: ExtendScript は完全に同期的に実行される。スクリプトは上から下へ順次実行され、非同期コールバックをスケジュールする仕組みがない
-
-これらを `src/` 以下のコードで使用しないこと。Oxlint でもエラーとして検出される。
-
-## ポリフィルの追加・変更手順
-
-1. 対象の shim ファイルを編集する
-   - ES6 以降の機能は `esnext-shim.js` に追加する
-   - 既存 shim の修正は元ライブラリとの差分を意識する
-2. `src/tests/index.ts` にテストコードを追加する
-3. `pnpm build` でビルドし、対象アプリ上で動作確認する
-
-## shim の制限事項
-
-shim では正しく動作しない機能が存在する。
-これらは Oxlint ルールによってエラーとして表示される。
-詳細は各 shim ファイルのコメントを参照。
-
-## 同一 ExtendScript セッションでの再評価
-
-Rollup の CommonJS 変換が生成する `hasRequiredEs5Shim` /
-`hasRequiredEs6Shim` は、1つのバンドル内での require 再実行を防ぐローカル
-ガードである。`$.evalFile()` で同じバンドルを再評価するとローカル変数は
-初期化されるため、このガードだけでは shim の再適用を防げない。
-
-そのため両 shim の `factory` 本体は、実行結果をバージョン付きの `$.global`
-モジュール固有キャッシュへ保存する。バンドル内の既存ガードはそのまま利用し、
-別のバンドルを再評価しても `factory` 本体を再実行しない。`factory` が例外を
-投げた場合は不完全な結果をキャッシュしない。
+`src/lib/polyfills/esnext-shim.js`はテンプレート固有の追加用コードとして残しています。標準では読み込まれません。追加機能が必要な場合は内容と他の補正との重複を確認してから有効にし、`src/tests/index.ts`への検証追加と対象アプリでの動作確認を行ってください。
