@@ -7,7 +7,7 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 
 - **言語**: TypeScript → ES3 にトランスパイル（ExtendScript 向け）
 - **ビルド**: Rollup + Babel
-- **生成コードの保護**: Terserとライセンス処理の後、npm公開版`extendscript-compat@0.3.0`で優先順位、Unicode、数値変換を補正し、UTF-8 BOMを付与する。ソースの入れ子三項禁止は維持する。
+- **生成コードの保護**: Terserとライセンス処理の後、npm公開版`extendscript-compat@0.3.1`で優先順位、Unicode、数値変換を補正し、UTF-8 BOMを付与する。ソースの入れ子三項禁止は維持する。
 - **型定義**: [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)（有志による非公式定義、不足あり）
 - **パッケージマネージャ**: pnpm
 
