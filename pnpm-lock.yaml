@@ -206,8 +206,8 @@ importers:
         specifier: 12.3.0
         version: 12.3.0(rollup@4.64.12)(tslib@2.8.1)(typescript@4.9.5)
       extendscript-compat:
-        specifier: 0.3.0
-        version: 0.3.0(rollup@4.64.12)
+        specifier: 0.3.1
+        version: 0.3.1(rollup@4.64.12)
       oxfmt:
         specifier: ^0.74.0
         version: 0.74.0
@@ -734,6 +734,10 @@ packages:
   '@babel/types@7.29.8':
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
+
+  '@eslint-community/regexpp@4.12.2':
+    resolution: {integrity: sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==}
+    engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1298,8 +1302,8 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  extendscript-compat@0.3.0:
-    resolution: {integrity: sha512-tV3eMXti23KWhXavhOuWIx0ugkZxG6fNeoOaL23nK8lmMCEWEVtcota3l+WwiidrrxCmMIAknIKgmEFOcFCWHw==}
+  extendscript-compat@0.3.1:
+    resolution: {integrity: sha512-bNMb0yMmdOgoyY5usWPCFsifKFM+SPFTjYcNFEcKTRdGpGqxMMCnnFDKKy+xSpKa0hc6AJ0cQt34hkPxKvM10A==}
     engines: {node: '>=22'}
     peerDependencies:
       rollup: ^4.0.0
@@ -2214,6 +2218,8 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
+  '@eslint-community/regexpp@4.12.2': {}
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
@@ -2562,9 +2568,10 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  extendscript-compat@0.3.0(rollup@4.64.12):
+  extendscript-compat@0.3.1(rollup@4.64.12):
     dependencies:
       '@babel/core': 7.29.7
+      '@eslint-community/regexpp': 4.12.2
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
       magic-string: 0.30.21
