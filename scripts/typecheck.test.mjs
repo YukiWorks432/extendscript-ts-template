@@ -165,3 +165,46 @@ test("アプリ限定型チェックは参照する共有コードも検査す�
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("標準の型設定で補完済みAPIを使い、未対応コンストラクターを拒否する", () => {
+  const root = makeProject();
+  try {
+    linkNodeModules(root);
+    fs.copyFileSync(
+      path.resolve("tsconfig.json"),
+      path.join(root, "tsconfig.json")
+    );
+    fs.copyFileSync(
+      path.resolve("src/init.ts"),
+      path.join(root, "src/init.ts")
+    );
+    fs.mkdirSync(path.join(root, "src/tests"), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "src/tests/index.ts"),
+      `import "../init";
+export const last: number | undefined = [1, 2].at(-1);
+export const own: boolean = Object.hasOwn({ value: 1 }, "value");
+export const replaced: string = "a.a".replaceAll(".", "-");
+export const item = [1, 2].values().next().value;
+// @ts-expect-error 要素型は文字列ではない
+const wrong: string = [1, 2].at(-1);
+// @ts-expect-error Mapのコンストラクターは補完しない
+const map = new Map();
+// @ts-expect-error Setのコンストラクターは補完しない
+const set = new Set();
+// @ts-expect-error WeakMapのコンストラクターは補完しない
+const weakMap = new WeakMap();
+// @ts-expect-error WeakSetのコンストラクターは補完しない
+const weakSet = new WeakSet();
+// @ts-expect-error Proxyのコンストラクターは補完しない
+const proxy = new Proxy({}, {});
+// @ts-expect-error Reflect全体の対応は保証しない
+const reflected = Reflect.ownKeys({});
+`
+    );
+    const checked = runTypecheckCli(root);
+    assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

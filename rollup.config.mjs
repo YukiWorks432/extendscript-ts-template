@@ -364,9 +364,8 @@ const TEXT_COLOR_RESET = "\x1b[0m";
 
 const terserConfig = (preamble) =>
   terser({
+    ie8: true,
     compress: {
-      ie8: true,
-      conditionals: false,
       passes: 1,
     },
     format: {
@@ -554,6 +553,9 @@ export default (commandLineArgs = {}) => {
           file: `${outDir}/${script.name}.jsx`,
           format: "cjs",
           strict: false,
+          esModule: false,
+          generatedCode: { preset: "es5", reservedNamesAsProps: false },
+          freeze: false,
         },
         context: "this",
         onwarn,

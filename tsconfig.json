@@ -2,15 +2,8 @@
   "compilerOptions": {
     "target": "ES3",
     "module": "ESNext",
-    "lib": [
-      "ES5",
-      "ES2015.Core",
-      "ES2015.Collection",
-      "ES2015.Iterable",
-      "ES2015.Generator",
-      "ES2015.Proxy",
-      "ES2015.Reflect"
-    ],
+    "moduleResolution": "node",
+    "lib": ["ES5", "ES2015.Core", "ES2015.Iterable"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

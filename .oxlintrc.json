@@ -92,7 +92,6 @@
             "message": ".toFixed は高頻度でスタックオーバーランを誘発します。"
           }
         ],
-        "no-nested-ternary": "error",
         "typescript/no-duplicate-enum-values": "error",
         "typescript/no-wrapper-object-types": "error",
         "oxc/number-arg-out-of-range": "error"

@@ -7,7 +7,7 @@ ExtendScript を TypeScript からトランスパイルして作成するため�
 
 - **言語**: TypeScript → ES3 にトランスパイル（ExtendScript 向け）
 - **ビルド**: Rollup + Babel
-- **生成コードの保護**: Terserとライセンス処理の後、npm公開版`extendscript-compat@0.3.1`で優先順位、Unicode、数値変換を補正し、UTF-8 BOMを付与する。ソースの入れ子三項禁止は維持する。
+- **生成コードの保護**: Terserとライセンス処理の後、npm公開版`extendscript-compat@0.3.1`で優先順位、Unicode、数値変換を補正し、UTF-8 BOMを付与する。条件式の圧縮とソースの入れ子三項を許容し、最終出力の補正・検査で評価順序を保護する。
 - **型定義**: [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)（有志による非公式定義、不足あり）
 - **パッケージマネージャ**: pnpm
 
@@ -92,8 +92,12 @@ export default {
 
 ## tsconfig 構成
 
-- **ルート `tsconfig.json`**: 共通ベース設定（ES3 ターゲット、lib 設定、types なし）
+- **ルート `tsconfig.json`**: 共通ベース設定（ES3ターゲット、Node方式の型解決、標準APIとAdobe共通の型）
 - **`src/{appId}/tsconfig.json`**: ルートを `extends` し、アプリ固有の `types` のみ差し替え
+
+`lib` は `ES5`、`ES2015.Core`、`ES2015.Iterable` に限定する。後年の対応済みAPIの型は `src/init.ts` から読み込む `extendscript-compat/runtime` が追加する。利用できるAPIと型の限界は [ポリフィル](polyfills.md) を参照する。
+
+Rollupが生成する補助コードでは予約語のプロパティ名を引用符で囲み、未対応の `Object.freeze` を呼び出さない。最終JSXはCommonJSのモジュール識別用プロパティを必要としないため、`esModule: false` で識別用の `Object.defineProperty` 呼び出しも生成しない。Terserは最上位の `ie8: true` を圧縮・変数名短縮・出力処理へ適用し、条件式の最適化も行う。`extendscriptCompat()` はコードを変更する最後の工程として維持する。
 
 | アプリ        | tsconfig パス            | types-for-adobe     |
 | ------------- | ------------------------ | ------------------- |
