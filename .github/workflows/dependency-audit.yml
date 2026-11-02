@@ -1,0 +1,35 @@
+name: Dependency Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 毎日09:47 JST。変更がない日も新しい脆弱性情報を確認する。
+    - cron: "47 0 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ソースを取得
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: pnpmを準備
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: "12.6.0"
+          run_install: false
+
+      # ロックファイルの全依存を監査するため、依存導入とビルドは不要。
+      - name: 依存関係の脆弱性を監査
+        run: pnpm audit --audit-level=high

@@ -34,6 +34,9 @@ jobs:
           install: false
           cache: true
 
+      - name: 依存関係の脆弱性を監査
+        run: pnpm audit --audit-level=high
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
