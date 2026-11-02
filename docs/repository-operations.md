@@ -58,7 +58,7 @@ After Effects の実機試験は、引き続き Issue #45 で確定した手動�
 
 CIの依存導入前に `pnpm audit --audit-level=high` を実行し、開発用依存を含むロックファイル全体を検査します。重大度 high / critical の検出と監査サービスへの接続失敗は検査失敗とし、自動修正や検出結果の無視は行いません。
 
-`dependency-audit.yml` は毎日09:47 JSTと手動実行で同じ監査を行います。GitHubホストの Ubuntu ランナーを使い、依存パッケージのインストールやビルドは行いません。結果は Actions の実行履歴で確認します。pnpm の固定版を更新するときは、このワークフローの版指定も合わせて更新してください。既存のDependabotの月次更新、TypeScriptとBabel 8の更新除外は維持します。
+`dependency-audit.yml` は毎日09:49 JSTと手動実行で同じ監査を行います。GitHubホストの Ubuntu ランナーを使い、依存パッケージのインストールやビルドは行いません。結果は Actions の実行履歴で確認します。pnpm の固定版を更新するときは、このワークフローの版指定も合わせて更新してください。既存のDependabotの月次更新、TypeScriptとBabel 8の更新除外は維持します。
 
 ### 必須チェックを設定する手順
 

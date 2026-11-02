@@ -3,8 +3,8 @@ name: Dependency Audit
 on:
   workflow_dispatch:
   schedule:
-    # 毎日09:47 JST。変更がない日も新しい脆弱性情報を確認する。
-    - cron: "47 0 * * *"
+    # 毎日09:49 JST。変更がない日も新しい脆弱性情報を確認する。
+    - cron: "49 0 * * *"
 
 permissions:
   contents: read
