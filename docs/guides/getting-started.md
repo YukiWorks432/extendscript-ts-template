@@ -5,7 +5,7 @@
 ## 前提条件
 
 - Node.js `^24.22.1`
-- pnpm 12 系（`^12.0.0`）
+- pnpm 12 系（`^12.16.1`）
 
 pnpm の対応範囲は `package.json` の `devEngines.packageManager.version` で指定します。
 
