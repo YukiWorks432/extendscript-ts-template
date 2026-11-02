@@ -8,7 +8,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^12.0.0",
+      "version": "^12.16.1",
       "onFail": "download"
     }
   },
@@ -49,14 +49,14 @@
     "@rollup/plugin-babel": "^7.1.0",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-terser": "^1.0.0",
-    "@rollup/plugin-typescript": "12.3.0",
+    "@rollup/plugin-terser": "^1.0.2",
+    "@rollup/plugin-typescript": "12.3.1",
     "extendscript-compat": "0.3.1",
-    "oxfmt": "^0.74.0",
-    "oxlint": "^1.89.0",
-    "rollup": "^4.64.12",
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0",
+    "rollup": "^4.67.4",
     "rollup-plugin-license": "^3.7.1",
-    "tslib": "2.8.1",
+    "tslib": "2.9.1",
     "types-for-adobe": "^7.2.6",
     "typescript": "4.9.5"
   }
