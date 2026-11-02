@@ -8,6 +8,10 @@
 
 ビルド時には、`extendscriptCompat()`が優先順位、文字列と正規表現の特定のUnicode文字、対応できる`Number`呼び出しを補正します。生成したJSXにはUTF-8 BOMが付きます。補正の範囲は[ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md)を参照してください。生成物には、同梱した互換コードのライセンスも含まれます。
 
+生成物の結合テストでは、`extendscript-compat`の`assertES3Syntax()`で予約語を含むES3構文を検査し、`assertPrecedenceProtected()`で優先順位の保護を確認します。構文検査の実装と解析設定はライブラリ側で管理します。実行時APIやAdobe実機の動作は別途確認が必要です。
+
+現在は構文検査APIの追加を検証するため、[ライブラリ側PR #42](https://github.com/YukiWorks432/extendscript-compat/pull/42)のコミットを`package.json`とロックファイルで固定参照しています。このAPIを含むnpm版の公開後、テンプレートのマージ前に公開版の固定指定へ置き換え、全体検証を行います。
+
 ## 型設定とAPIの選択
 
 `moduleResolution: "node"` により、`extendscript-compat/runtime` の型宣言を読み込みます。`Array.at`、`Object.hasOwn`、`String.replaceAll` などの対応済みメソッドのために、`lib` へ `ES2022` や `ESNext` 全体を追加する必要はありません。

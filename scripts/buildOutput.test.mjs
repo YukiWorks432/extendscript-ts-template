@@ -1,7 +1,9 @@
 import test from "node:test";
 import { runInNewContext } from "node:vm";
-import { assertPrecedenceProtected } from "extendscript-compat";
-import { parse } from "acorn";
+import {
+  assertES3Syntax,
+  assertPrecedenceProtected,
+} from "extendscript-compat";
 import assert from "node:assert/strict";
 import { promisify } from "node:util";
 import fs from "fs";
@@ -350,7 +352,7 @@ export function logical(a: boolean, b: boolean, c: boolean, trace: string[]): bo
       path.join(root, "dist/aeft/example/example.jsx"),
       "utf8"
     );
-    parse(code, { ecmaVersion: 3 });
+    assertES3Syntax(code);
     assertPrecedenceProtected(code);
     const context = { exports: {} };
     runInNewContext(code, context);
@@ -476,7 +478,7 @@ export { lookup as default };
       path.join(root, "dist/aeft/example/example.jsx"),
       "utf8"
     );
-    parse(code, { ecmaVersion: 3 });
+    assertES3Syntax(code);
     const context = { exports: {} };
     runInNewContext(
       "Object.freeze = undefined; Object.defineProperty = undefined;",
