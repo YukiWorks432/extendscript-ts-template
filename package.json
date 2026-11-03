@@ -51,7 +51,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^1.0.2",
     "@rollup/plugin-typescript": "12.3.1",
-    "extendscript-compat": "github:YukiWorks432/extendscript-compat#0ed1218d1bc41b3f915cad5c7efef271ea5c547a",
+    "extendscript-compat": "0.3.2",
     "oxfmt": "^0.75.0",
     "oxlint": "^1.90.0",
     "rollup": "^4.67.4",
