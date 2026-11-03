@@ -1,9 +1,6 @@
 import test from "node:test";
 import { runInNewContext } from "node:vm";
-import {
-  assertES3Syntax,
-  assertPrecedenceProtected,
-} from "extendscript-compat";
+import { assertPrecedenceProtected } from "extendscript-compat";
 import assert from "node:assert/strict";
 import { promisify } from "node:util";
 import fs from "fs";
@@ -352,7 +349,6 @@ export function logical(a: boolean, b: boolean, c: boolean, trace: string[]): bo
       path.join(root, "dist/aeft/example/example.jsx"),
       "utf8"
     );
-    assertES3Syntax(code);
     assertPrecedenceProtected(code);
     const context = { exports: {} };
     runInNewContext(code, context);
@@ -478,7 +474,6 @@ export { lookup as default };
       path.join(root, "dist/aeft/example/example.jsx"),
       "utf8"
     );
-    assertES3Syntax(code);
     const context = { exports: {} };
     runInNewContext(
       "Object.freeze = undefined; Object.defineProperty = undefined;",
@@ -489,6 +484,52 @@ export { lookup as default };
     assert.equal(context.exports.lookup("other"), 11);
     assert.equal(context.exports.default("default"), 7);
     assert.equal(context.exports.reserved(42), 42);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("最終出力にES3外の構文が残るとビルドを失敗させる", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-invalid-output-"));
+  try {
+    createTemporaryRollupProject(root);
+    const runner = path.join(root, "build-invalid-output.mjs");
+    fs.writeFileSync(
+      runner,
+      `
+import { buildOne } from ${JSON.stringify(pathToFileURL(buildScriptPath).href)};
+import createConfig from "./rollup.config.mjs";
+const [option] = createConfig({ all: true, app: "aeft" });
+option.plugins.unshift({
+  name: "inject-non-es3-output",
+  generateBundle(_options, bundle) {
+    for (const chunk of Object.values(bundle)) {
+      if (chunk.type === "chunk") chunk.code += "\\nvar invalid = value?.name;";
+    }
+  },
+});
+try {
+  await buildOne({ option });
+} catch (error) {
+  console.error(JSON.stringify({ code: error.code, plugin: error.plugin, hook: error.hook }));
+  process.exitCode = 1;
+}
+`
+    );
+    const built = runNodeScript(runner, [], {
+      cwd: root,
+      env: { ...process.env, EXTENDSCRIPT_DEFER_BUILD_HASHES: "1" },
+    });
+    assert.equal(built.status, 1, built.stdout + built.stderr);
+    assert.deepEqual(JSON.parse(built.stderr.trim()), {
+      code: "PLUGIN_ERROR",
+      plugin: "extendscript-compat",
+      hook: "generateBundle",
+    });
+    assert.equal(
+      fs.existsSync(path.join(root, "dist/aeft/example/example.jsx")),
+      false
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
