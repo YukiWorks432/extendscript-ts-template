@@ -438,12 +438,7 @@ parseInt = function (value, radix) { return value === "a-" && radix === 16 ? 169
 JSON = undefined;
 Object.entries = undefined;
 Object.values = undefined;
-Object.defineProperty = undefined;
-Object.getOwnPropertyDescriptor = undefined;
-var nativeKeys = Object.keys;
-Object.keys = function (value) {
-  return Object.prototype.toString.call(value) === "[object String]" ? [] : nativeKeys(value);
-};`,
+`,
       context
     );
     runInNewContext(code, context);
