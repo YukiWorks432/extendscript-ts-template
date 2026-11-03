@@ -432,12 +432,40 @@ test("ビルドしたスクリプトに実行時補正とBOM・ライセンス�
     }
     const context = { exports: {} };
     runInNewContext(
-      'var nativeNumber = Number; var nativeParseInt = parseInt; parseInt = function (value, radix) { return value === "a-" && radix === 16 ? 169 : nativeParseInt(value, radix); };',
+      `var nativeNumber = Number;
+var nativeParseInt = parseInt;
+parseInt = function (value, radix) { return value === "a-" && radix === 16 ? 169 : nativeParseInt(value, radix); };
+JSON = undefined;
+Object.entries = undefined;
+Object.values = undefined;
+Object.defineProperty = undefined;
+Object.getOwnPropertyDescriptor = undefined;
+var nativeKeys = Object.keys;
+Object.keys = function (value) {
+  return Object.prototype.toString.call(value) === "[object String]" ? [] : nativeKeys(value);
+};`,
       context
     );
     runInNewContext(code, context);
     assert.deepEqual(Array.from(context.exports.check()), [10, 1, 3, 5]);
     assert.equal(runInNewContext("Number === nativeNumber", context), true);
+    assert.throws(
+      () => runInNewContext('JSON.parse("[1,]")', context),
+      (error) => error.name === "SyntaxError"
+    );
+    assert.deepEqual(
+      Array.from(runInNewContext('Object.values("ab")', context)),
+      ["a", "b"]
+    );
+    assert.deepEqual(
+      Array.from(runInNewContext('Object.entries("ab")', context), (pair) =>
+        Array.from(pair)
+      ),
+      [
+        ["0", "a"],
+        ["1", "b"],
+      ]
+    );
     const patchedParseInt = runInNewContext("parseInt", context);
     runInNewContext(code, context);
     assert.equal(runInNewContext("parseInt", context), patchedParseInt);

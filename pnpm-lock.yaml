@@ -206,8 +206,8 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(rollup@4.67.4)(tslib@2.9.1)(typescript@4.9.5)
       extendscript-compat:
-        specifier: 0.4.0
-        version: 0.4.0(rollup@4.67.4)
+        specifier: 1.0.0
+        version: 1.0.0(rollup@4.67.4)
       oxfmt:
         specifier: ^0.75.0
         version: 0.75.0
@@ -1310,8 +1310,8 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  extendscript-compat@0.4.0:
-    resolution: {integrity: sha512-Y4LAUikvKXN8CJfhV+7YStSgZggeHVb6a3BYJTC4H/6HRyiywUDpJThLczg2Wsyyf//PKup9KXo7O4DhDxLnAQ==}
+  extendscript-compat@1.0.0:
+    resolution: {integrity: sha512-0NmymYsPj28uOcIzeMj2wabaJvGX67/ZhgjNal6fOG+LDhUkg4yS43ZMjg4OKBYlkJxEKDkU/XZ6YblmzJmjYw==}
     engines: {node: '>=22'}
     peerDependencies:
       rollup: ^4.0.0
@@ -2584,7 +2584,7 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  extendscript-compat@0.4.0(rollup@4.67.4):
+  extendscript-compat@1.0.0(rollup@4.67.4):
     dependencies:
       '@babel/core': 7.29.7
       '@eslint-community/regexpp': 4.12.2

@@ -4,11 +4,13 @@
 
 `parseInt`、`String.prototype.charAt`、`split`、`replace`は既存の関数がある場合も補正されます。変更は同じExtendScriptエンジンを共有する他のスクリプトにも及びます。同じエンジンでの再評価では、内部の版付き印により重複した適用を防ぎます。
 
-実行時の機能と制限は[extendscript-compatの実行時補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/runtime/README.ja.md)を参照してください。ES5・ES6のすべてを実装するものではなく、`Symbol`と`Promise`は使用できません。`JSON.parse`は一部の不正なJSONを受け入れるため、厳密な入力検証には使えません。
+実行時の機能と制限は[extendscript-compatの実行時補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/runtime/README.ja.md)を参照してください。ES5・ES6のすべてを実装するものではなく、`Symbol`と`Promise`は使用できません。`JSON.parse`はJSON文法外の入力を`SyntaxError`として拒否します。データ構造や値域の検証は利用側で行ってください。
 
 ビルド時には、`extendscriptCompat()`が優先順位、文字列と正規表現の特定のUnicode文字、対応できる`Number`呼び出しを補正します。生成したJSXにはUTF-8 BOMが付きます。補正の範囲は[ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md)を参照してください。生成物には、同梱した互換コードのライセンスも含まれます。
 
-npmの`extendscript-compat@0.4.0`を固定指定しています。通常のビルドでは、`extendscriptCompat()`が互換補正後の出力を予約語も含めてES3構文として自動検査し、不適合ならビルドを停止します。検査関数の追加呼び出しやAcornの直接導入は不要です。
+npmの`extendscript-compat@1.0.0`を固定指定しています。通常のビルドでは、`extendscriptCompat()`が互換補正後の出力を予約語も含めてES3構文として自動検査し、不適合ならビルドを停止します。検査関数の追加呼び出しやAcornの直接導入は不要です。1.xの公開入口、入力条件、診断、実行時の副作用と版更新の方針は[公開契約](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/public-contract.ja.md)に従います。
+
+`Object.entries`と`Object.values`は、文字列のUTF-16の添字を補い、Premiereで`Object.keys`が文字列の添字を省略する場合にも対応します。ホスト固有オブジェクトの扱いなどの制限は実行時API対応表を参照してください。
 
 生成物の結合テストでは、実際のビルドで不正な構文を拒否して成果物を書き出さないことと、評価結果・短絡評価・副作用の順序を確認します。実行時APIやAdobe実機の動作は別途確認が必要です。
 
