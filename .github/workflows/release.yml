@@ -77,7 +77,8 @@ jobs:
         env:
           BUMP: ${{ steps.settings.outputs.bump }}
         run: |
-          npm version "$BUMP" --no-git-tag-version
+          # pnpm指定のdevEnginesを、版番号更新に限って警告扱いにする。
+          npm --force version "$BUMP" --no-git-tag-version
           VERSION=$(node -p "require('./package.json').version")
           printf 'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
           printf 'tag=v%s\n' "$VERSION" >> "$GITHUB_OUTPUT"

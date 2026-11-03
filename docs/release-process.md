@@ -22,6 +22,8 @@ GitHub Actions の `release` ワークフローを `main` から実行し、`bum
 
 `pnpm-lock.yaml` にはこのリポジトリ自身の `version` が含まれないため、通常は更新されません。
 
+版番号の更新には `npm --force version` を使います。`devEngines.packageManager` でpnpmを指定しているため、npmのツール検査をこのコマンドに限って警告扱いにします。依存導入や通常の品質検査は、引き続きpnpmで行います。
+
 ## バージョンの決め方
 
 リリース実行時に指定した `bump` で上げる番号を決めます。
