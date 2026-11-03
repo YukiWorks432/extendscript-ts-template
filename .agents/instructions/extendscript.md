@@ -51,8 +51,9 @@ import { foo } from "../lib/bar"; // アプリ固有ユーティリティ
 
 ポリフィルの詳細は `docs/polyfills.md` を参照。
 
-- ES6 以降の機能追加時は `src/lib/polyfills/esnext-shim.js` への追加を検討する
-- ポリフィル追加時は `src/tests/index.ts` にテストを追加する
+- 追加APIは、先に `extendscript-compat/runtime` の対応範囲を確認する
+- `ES2015.Iterable` は既存の配列反復APIの型に必要だが、`Symbol` や任意の反復可能オブジェクトの実行時対応を保証しない
+- 別のポリフィルを追加する場合は、既存補正との重複と読み込み順を確認し、`src/tests/index.ts` と対象アプリで検証する
 
 ## ダイアログ作成
 
@@ -68,28 +69,16 @@ dialog.add("button", undefined, "Cancel");
 if (dialog.show() !== 1) return;
 ```
 
-## 入れ子の三項演算子の使用禁止
+## 条件式と生成コードの補正
 
-ExtendScript には三項演算子の評価順序に既知のバグがある。
-**入れ子（ネスト）になった三項演算子は使用しないこと。**
-1層のみで副作用を伴わない三項演算子は許容される。
+通常のビルドでは、Terserによる条件式の最適化後に `extendscriptCompat()` が論理演算子と入れ子の三項演算子へ必要な括弧を補い、最終出力を検査する。この経路を使うソースでは入れ子の三項演算子を使用できる。
 
 ```ts
-// ✅ OK: 1層の三項演算子
-const value = condition ? "a" : "b";
-
-// ❌ NG: 入れ子の三項演算子
 const value = a ? (b ? "x" : "y") : "z";
-
-// ✅ OK（入れ子を避ける場合）: 即時呼び出し無名関数 + if
-const value = (() => {
-  if (a) return b ? "x" : "y";
-  return "z";
-})();
-
-// ✅ OK（let でよい場合）: let + if で代入
-let value = "z";
-if (a) value = b ? "x" : "y";
 ```
 
-参考: https://uske-s.hatenablog.com/entry/2021/10/26/184709
+読みやすさを優先し、分岐や副作用が複雑になる場合は `if` 文に分ける。単純な値の選択を、互換性対策だけのために即時呼び出し関数へ書き換える必要はない。
+
+補正を通さない手書きJSXや `eval` に渡す文字列には、この保証は及ばない。補正後の生成物を別の生成器や圧縮器へ渡すと括弧が失われるため、コードを変更する工程は互換補正より前に置く。
+
+詳細は [ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md) を参照する。

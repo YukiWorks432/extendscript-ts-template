@@ -95,18 +95,13 @@ const createTemporaryRollupProject = (root) => {
     path.join(root, "node_modules"),
     "junction"
   );
-  fs.writeFileSync(
-    path.join(root, "src", "aeft", "tsconfig.json"),
-    JSON.stringify({
-      compilerOptions: {
-        strict: true,
-        target: "ES5",
-        module: "ESNext",
-        moduleResolution: "Node",
-        skipLibCheck: true,
-      },
-      include: ["**/*.ts"],
-    })
+  fs.copyFileSync(
+    path.join(projectRoot, "tsconfig.json"),
+    path.join(root, "tsconfig.json")
+  );
+  fs.copyFileSync(
+    path.join(projectRoot, "src/aeft/tsconfig.json"),
+    path.join(root, "src/aeft/tsconfig.json")
   );
   fs.writeFileSync(
     path.join(root, "src", "aeft", "example", "index.ts"),
@@ -306,14 +301,42 @@ try {
   }
 });
 
-test("圧縮後の実際の生成物で式の優先順位を保護する", () => {
+test("圧縮後の条件式で評価結果と短絡評価・副作用の順序を保護する", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-compat-output-"));
   try {
     createTemporaryRollupProject(root);
     fs.writeFileSync(
       path.join(root, "src", "aeft", "example", "index.ts"),
-      "export function select(a: boolean, b: boolean, c: boolean): number { if (a || b && c) { if (a) return 10; return 20; } if (b) return 30; return 40; }\n"
+      `export function select(a: boolean, b: boolean, c: boolean): number {
+  if (a || b && c) { if (a) return 10; return 20; }
+  if (b) return 30;
+  return 40;
+}
+export function nested(a: boolean, b: boolean, c: boolean, trace: string[]): number {
+  function mark(label: string, value: boolean): boolean { trace.push(label); return value; }
+  function result(value: number): number { trace.push(String(value)); return value; }
+  return mark("a", a) ? (mark("b", b) ? result(10) : result(20)) : (mark("c", c) ? result(30) : result(40));
+}
+export function nestedTest(a: boolean, b: boolean, c: boolean, trace: string[]): number {
+  function mark(label: string, value: boolean): boolean { trace.push(label); return value; }
+  return (mark("a", a) ? mark("b", b) : mark("c", c)) ? 1 : 0;
+}
+export function logical(a: boolean, b: boolean, c: boolean, trace: string[]): boolean {
+  function mark(label: string, value: boolean): boolean { trace.push(label); return value; }
+  return mark("a", a) || mark("b", b) && mark("c", c);
+}
+`
     );
+    const linted = runNodeScript(
+      path.join(projectRoot, "node_modules/oxlint/bin/oxlint"),
+      [
+        "--config",
+        path.join(projectRoot, ".oxlintrc.json"),
+        "src/aeft/example/index.ts",
+      ],
+      { cwd: root }
+    );
+    assert.equal(linted.status, 0, linted.stdout + linted.stderr);
     const environment = { ...process.env, EXTENDSCRIPT_BUILD_APP: "aeft" };
     delete environment.BUILD_ALL;
     delete environment.EXTENDSCRIPT_DEFER_BUILD_HASHES;
@@ -336,6 +359,36 @@ test("圧縮後の実際の生成物で式の優先順位を保護する", () =>
       [false, false, true, 40],
     ]) {
       assert.equal(context.exports.select(a, b, c), expected);
+    }
+    for (const [a, b, c, expected, expectedTrace] of [
+      [true, true, false, 10, ["a", "b", "10"]],
+      [true, false, true, 20, ["a", "b", "20"]],
+      [false, true, true, 30, ["a", "c", "30"]],
+      [false, true, false, 40, ["a", "c", "40"]],
+    ]) {
+      const trace = [];
+      assert.equal(context.exports.nested(a, b, c, trace), expected);
+      assert.deepEqual(trace, expectedTrace);
+    }
+    for (const [a, b, c, expected, expectedTrace] of [
+      [true, true, false, 1, ["a", "b"]],
+      [true, false, true, 0, ["a", "b"]],
+      [false, false, true, 1, ["a", "c"]],
+      [false, true, false, 0, ["a", "c"]],
+    ]) {
+      const trace = [];
+      assert.equal(context.exports.nestedTest(a, b, c, trace), expected);
+      assert.deepEqual(trace, expectedTrace);
+    }
+    for (const [a, b, c, expected, expectedTrace] of [
+      [true, false, false, true, ["a"]],
+      [false, true, true, true, ["a", "b", "c"]],
+      [false, true, false, false, ["a", "b", "c"]],
+      [false, false, true, false, ["a", "b"]],
+    ]) {
+      const trace = [];
+      assert.equal(context.exports.logical(a, b, c, trace), expected);
+      assert.deepEqual(trace, expectedTrace);
     }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -388,6 +441,95 @@ test("ビルドしたスクリプトに実行時補正とBOM・ライセンス�
     const patchedParseInt = runInNewContext("parseInt", context);
     runInNewContext(code, context);
     assert.equal(runInNewContext("parseInt", context), patchedParseInt);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("予約語のプロパティと名前空間をES3向けに出力する", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-compat-es3-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.writeFileSync(
+      path.join(root, "src/aeft/example/values.ts"),
+      "export default 7; export const other = 11;\n"
+    );
+    fs.writeFileSync(
+      path.join(root, "src/aeft/example/index.ts"),
+      `import * as values from "./values";
+export function lookup(key: keyof typeof values): number { return values[key]; }
+export function reserved(value: number): number { return { "default": value }["default"]; }
+export { lookup as default };
+`
+    );
+    const environment = { ...process.env, EXTENDSCRIPT_BUILD_APP: "aeft" };
+    delete environment.BUILD_ALL;
+    delete environment.EXTENDSCRIPT_DEFER_BUILD_HASHES;
+    const built = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+      cwd: root,
+      env: environment,
+    });
+    assert.equal(built.status, 0, built.stdout + built.stderr);
+    const code = fs.readFileSync(
+      path.join(root, "dist/aeft/example/example.jsx"),
+      "utf8"
+    );
+    const context = { exports: {} };
+    runInNewContext(
+      "Object.freeze = undefined; Object.defineProperty = undefined;",
+      context
+    );
+    runInNewContext(code, context);
+    assert.equal(context.exports.lookup("default"), 7);
+    assert.equal(context.exports.lookup("other"), 11);
+    assert.equal(context.exports.default("default"), 7);
+    assert.equal(context.exports.reserved(42), 42);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("最終出力にES3外の構文が残るとビルドを失敗させる", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-invalid-output-"));
+  try {
+    createTemporaryRollupProject(root);
+    const runner = path.join(root, "build-invalid-output.mjs");
+    fs.writeFileSync(
+      runner,
+      `
+import { buildOne } from ${JSON.stringify(pathToFileURL(buildScriptPath).href)};
+import createConfig from "./rollup.config.mjs";
+const [option] = createConfig({ all: true, app: "aeft" });
+option.plugins.unshift({
+  name: "inject-non-es3-output",
+  generateBundle(_options, bundle) {
+    for (const chunk of Object.values(bundle)) {
+      if (chunk.type === "chunk") chunk.code += "\\nvar invalid = value?.name;";
+    }
+  },
+});
+try {
+  await buildOne({ option });
+} catch (error) {
+  console.error(JSON.stringify({ code: error.code, plugin: error.plugin, hook: error.hook }));
+  process.exitCode = 1;
+}
+`
+    );
+    const built = runNodeScript(runner, [], {
+      cwd: root,
+      env: { ...process.env, EXTENDSCRIPT_DEFER_BUILD_HASHES: "1" },
+    });
+    assert.equal(built.status, 1, built.stdout + built.stderr);
+    assert.deepEqual(JSON.parse(built.stderr.trim()), {
+      code: "PLUGIN_ERROR",
+      plugin: "extendscript-compat",
+      hook: "generateBundle",
+    });
+    assert.equal(
+      fs.existsSync(path.join(root, "dist/aeft/example/example.jsx")),
+      false
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
