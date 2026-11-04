@@ -1,0 +1,33 @@
+{
+  "packageName": "extendscript-ts-template",
+  "packageAuthor": "YukiWorks432",
+  "apps": ["aeft", "ilst", "phxs"],
+  "files": {
+    "README.md": "a5bc95c069eb9495721b311e26d3c486bba828220e375ba28c5ce201481bd95f",
+    "es.config.mjs": "00b647ac5c31bad854c47e70e10f50a89e89e48965c514d0bcc30fb826d891ce",
+    "AGENTS.md": "7d6edf1b03529646ec3f23d091a3a13db2db6b792957a67b1311bc9c134eb3de",
+    ".agents/instructions/extendscript.md": "e0eea0121dffa0adc8b0a7aa470521f63d5b2d90e7035821049aa3462efdbd51",
+    ".agents/skills/add-script/SKILL.md": "156f62021202d55b9d57f1de8d2bac3677bdb28bb4911c5abb6dbd5c7ef6fe1a",
+    ".agents/skills/debug-script/SKILL.md": "27d4db6a3fe70c5cdbac4e328d3d1512a7a5be47dce967ecf7e4782a9149a2ff",
+    ".agents/skills/es-to-ts/SKILL.md": "115ac8ab2a68851bf753aec1914fd9cf2879ecc685d2229266f0f1ad8400b719",
+    ".agents/skills/update-from-upstream/SKILL.md": "3451a7a4e2c308a643e81dda4f852738cb5aff1dca48ba13d79c5e081da06737",
+    ".codex/README.md": "7b31a1e2f023d5af057611c5dab0b39ec11b7fc89b71b20d5338d04e31f3179b",
+    ".codex/config.toml": "d8a36067d0337eaf3210b30fefe7b75f307470f9d842fb0833c882feadce9fd8",
+    ".github/FUNDING.yml": "7e958b64a7f0fb905bfd3c893e147e06afab5e8d516e0233b2ecc7ae17737e91",
+    "src/aeft/example/index.ts": "5f086345802f68e245a9dd816b372ec82963f07b161764b490c189a8e0c2667e",
+    "src/aeft/lib/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/aeft/lib/lib.ts": "0b49900747f8ed7f55b40eaadba1773b1278d6271e5fd6ed0b815b7ac26f0482",
+    "src/aeft/tsconfig.json": "387ff19b0f6f6cc41915dd0a7bd46a069fbf282721977921672d9c703861ea2a",
+    "src/aeft/types/index.d.ts": "bbcad00a817c8ee64aaf90b87ef032132241d4de7a028f2291a8f63c6335c3d8",
+    "src/ilst/example/index.ts": "98d90f73cd9d28fb019a5276665b371fe45195fffe1208b3624bf97ee34b0713",
+    "src/ilst/lib/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/ilst/lib/lib.ts": "c167c5180527b9eb7bdf4247d1363996399edd526f36c7691f32c751c5ad80e0",
+    "src/ilst/tsconfig.json": "76183eab532f30970414ccff74d54117f2e17c3d2ce5eb70a166d4797bf12de1",
+    "src/ilst/types/index.d.ts": "06ef1c67a825b9cab1b57c35c36f6d082e3dec4177bcb3edca6484e24cfbff91",
+    "src/phxs/example/index.ts": "00142469b62cffc86dda5101c88dfda3875e845ce2451d237da022a7dae2b4a2",
+    "src/phxs/lib/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/phxs/lib/lib.ts": "98130cec355ec031b79f12fd13a1c8bd16a5fc96e1a3eaa4e0f82d1ff2c369d2",
+    "src/phxs/tsconfig.json": "e0bf7510a7cea723d5a8cf72d92735a77f42963db8786de9c68e04b6e2e1b0e8",
+    "src/phxs/types/index.d.ts": "fdb9f1461949779548c77da58c3bc4c46daa8b98569b37350999a2efd293c36b"
+  }
+}

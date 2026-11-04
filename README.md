@@ -67,10 +67,16 @@ TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移�
 初期整理の詳細は [テンプレート利用後の初期整理](docs/template-customization.md) を参照してください。
 
 ```bash
-pnpm i
+pnpm install
+pnpm run configure
+pnpm new
 pnpm typecheck
 pnpm build
 ```
+
+初回設定ではプロジェクト名と使用アプリ、サンプル・AI向け設定の利用を選びます。
+変更一覧を確認してから反映します。選択肢とファイルの保護は
+[テンプレート利用後の初期設定](docs/template-customization.md)を参照してください。
 
 ## 使い方 / Usage
 
@@ -178,6 +184,7 @@ pnpm watch
 
 | コマンド                | 説明                             |
 | ----------------------- | -------------------------------- |
+| `pnpm run configure`    | 新しいコピーの初回設定           |
 | `pnpm build`            | 変更のあるスクリプトをビルド     |
 | `pnpm build --all`      | 全スクリプトを強制ビルド         |
 | `pnpm build --app=aeft` | 特定アプリのみビルド             |

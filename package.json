@@ -25,7 +25,8 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "new": "node ./scripts/newScript.mjs",
-    "add-app": "node ./scripts/addApp.mjs"
+    "add-app": "node ./scripts/addApp.mjs",
+    "configure": "node ./scripts/configure.mjs"
   },
   "keywords": [
     "Adobe",

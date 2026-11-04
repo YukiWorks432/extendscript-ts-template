@@ -15,12 +15,17 @@ import { loadConfigFile } from "rollup/loadConfigFile";
 import { buildOne } from "./build.mjs";
 import { BUILD_HASH_PLUGIN_NAME } from "../rollup.config.mjs";
 const execFileAsync = promisify(execFile);
+import scriptConfig from "../es.config.mjs";
+import { createAppFiles } from "./appScaffold.mjs";
+
 const projectRoot = process.cwd();
 const outputFiles = [
-  "dist/aeft/example/example.jsx",
-  "dist/ilst/example/example.jsx",
-  "dist/phxs/example/example.jsx",
-  "dist/tests/tests.jsx",
+  ...Object.entries(scriptConfig.scripts).flatMap(([app, entries]) =>
+    entries.map(({ name }) => "dist/" + app + "/" + name + "/" + name + ".jsx")
+  ),
+  ...(scriptConfig.common || []).map(
+    ({ name }) => "dist/" + name + "/" + name + ".jsx"
+  ),
 ].map((filePath) => path.resolve(projectRoot, filePath));
 const buildHashFile = path.resolve(projectRoot, "dist/temp/build-hashes.json");
 const buildScriptPath = path.resolve(projectRoot, "scripts/build.mjs");
@@ -82,9 +87,9 @@ const createTemporaryRollupProject = (root) => {
     path.resolve(projectRoot, "rollup.config.mjs"),
     path.join(root, "rollup.config.mjs")
   );
-  fs.copyFileSync(
-    path.resolve(projectRoot, "es.config.mjs"),
-    path.join(root, "es.config.mjs")
+  fs.writeFileSync(
+    path.join(root, "es.config.mjs"),
+    'export default { scripts: { aeft: [{ name: "example", version: "0.0.1", license: false }] } };\n'
   );
   for (const name of fs.readdirSync(path.join(projectRoot, "scripts"))) {
     if (name.endsWith(".mjs") && !name.endsWith(".test.mjs")) {
@@ -103,9 +108,9 @@ const createTemporaryRollupProject = (root) => {
     path.join(projectRoot, "tsconfig.json"),
     path.join(root, "tsconfig.json")
   );
-  fs.copyFileSync(
-    path.join(projectRoot, "src/aeft/tsconfig.json"),
-    path.join(root, "src/aeft/tsconfig.json")
+  fs.writeFileSync(
+    path.join(root, "src/aeft/tsconfig.json"),
+    createAppFiles("aeft")["src/aeft/tsconfig.json"]
   );
   fs.writeFileSync(
     path.join(root, "src", "aeft", "example", "index.ts"),

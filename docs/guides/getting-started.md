@@ -20,10 +20,16 @@ TypeScript 4.9.5 を ES3 出力のため固定している理由は、
 ```bash
 git clone <your-repo-url>
 cd <your-repo>
-pnpm i
+pnpm install
+pnpm run configure
 ```
 
+初期設定では使用アプリを1つ以上選び、変更一覧を確認して反映します。
+選択肢や編集済みファイルの保護は[初期設定](../template-customization.md)を参照してください。
+
 ## 最初のスクリプトを作る
+
+以下はAfter Effectsの例です。別のアプリを選んだ場合は、アプリIDと使用するAdobe APIを置き換えてください。
 
 ### 1. スクリプト追加
 
@@ -210,61 +216,8 @@ declare class SomeUndefinedClass {
 - `docs/polyfills.md` で使用可能な ES6+ 機能を確認できます
 - `es.config.mjs` でスクリプトのビルド設定を調整できます
 
-## テンプレートのアップデートを取り込む
+## 将来のテンプレート更新
 
-このリポジトリは `YukiWorks432/extendscript-ts-template` を元に作られたテンプレートリポジトリです。
-元テンプレートにポリフィルやビルドツールの更新があった場合、以下の手順で自分のスクリプトを消さずに取り込めます。
-
-### 0. AI エージェントを使う場合
-
-Codex など、このリポジトリの `.agents/skills` を読める環境なら、`update-from-upstream` スキルに任せると自動で差分確認・取り込みができます。
-
-### 1. 元テンプレートを「upstream」として登録する
-
-初回のみ実行します（一度設定すれば次回以降は不要です）。
-
-```bash
-git remote add upstream https://github.com/YukiWorks432/extendscript-ts-template.git
-```
-
-登録できているか確認したい場合：
-
-```bash
-git remote -v
-```
-
-出力に `upstream` が表示されれば OK です。
-
-### 2. 最新の情報を取得する
-
-```bash
-git fetch upstream
-```
-
-### 3. アップデート内容を確認する
-
-元テンプレートと自分のリポジトリの差分を確認します：
-
-```bash
-git diff --name-status HEAD..upstream/main
-```
-
-### 4. インフラファイルだけ取り込む
-
-自分のスクリプト（`src/aeft/<スクリプト名>/` など）は上書きしないよう、
-インフラ部分だけを指定して取り込みます：
-
-```bash
-git checkout upstream/main -- scripts/ src/lib/ src/init.ts rollup.config.mjs tsconfig.json package.json
-```
-
-> **注意**: `es.config.mjs` には自分のスクリプト設定が含まれているため、上記コマンドには含めていません。
-> 元テンプレートで `es.config.mjs` の構造が変わっていた場合は、手動で確認して反映してください。
-
-### 5. 依存関係を更新して型チェック・ビルド確認する
-
-```bash
-pnpm install
-pnpm typecheck
-pnpm build --all
-```
+初期設定と将来の更新は別の作業です。`Use this template` で作ったリポジトリは、
+配布元のコミット履歴を引き継ぎません。`upstream` の登録だけで通常のマージが
+できるとは限らないため、[任意の更新作業](../template-customization.md#将来のテンプレート更新)を確認してください。
