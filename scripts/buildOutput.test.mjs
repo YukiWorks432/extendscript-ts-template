@@ -399,6 +399,74 @@ export function logical(a: boolean, b: boolean, c: boolean, trace: string[]): bo
   }
 });
 
+test("コメント風の文字列と正規表現を通常・監視ビルドで保持する", () => {
+  for (const mode of ["normal", "watch"]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-comment-values-"));
+    try {
+      createTemporaryRollupProject(root);
+      fs.writeFileSync(
+        path.join(root, "src/aeft/example/index.ts"),
+        `/** @description コメント風の値を保つ。 */
+/* @preserve comment-regression */
+export function readValues(input: string) {
+  return [
+    "/* keep this text */",
+    'before /* @description not-a-comment */ after',
+    "quote \\\" // line /* preserved */",
+    \`template /* raw */ \${input}\`,
+    /[/*][*/]/.test(input),
+  ];
+}
+`
+      );
+      const environment = { ...process.env };
+      delete environment.BUILD_ALL;
+      delete environment.EXTENDSCRIPT_BUILD_APP;
+      delete environment.EXTENDSCRIPT_DEFER_BUILD_HASHES;
+      let built;
+      if (mode === "normal") {
+        built = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+          cwd: root,
+          env: environment,
+        });
+      } else {
+        const runner = path.join(root, "build-watch-settings.mjs");
+        fs.writeFileSync(
+          runner,
+          `import createConfig from "./rollup.config.mjs";
+import { buildOne } from ${JSON.stringify(pathToFileURL(buildScriptPath).href)};
+const [option] = createConfig({ all: true, app: "aeft", watch: true });
+await buildOne({ option });
+`
+        );
+        built = runNodeScript(runner, [], { cwd: root, env: environment });
+      }
+      assert.equal(built.status, 0, mode + built.stdout + built.stderr);
+      const code = fs.readFileSync(
+        path.join(root, "dist/aeft/example/example.jsx"),
+        "utf8"
+      );
+      const context = { exports: {} };
+      runInNewContext(code, context);
+      assert.deepEqual(
+        Array.from(context.exports.readValues("/*")),
+        [
+          "/* keep this text */",
+          "before /* @description not-a-comment */ after",
+          'quote " // line /* preserved */',
+          "template /* raw */ /*",
+          true,
+        ],
+        mode
+      );
+      assert.match(code, /\/\*\* @description コメント風の値を保つ。 \*\//);
+      assert.match(code, /\/\* @preserve comment-regression \*\//);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
 test("ビルドしたスクリプトに実行時補正とBOM・ライセンスを含める", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-compat-runtime-"));
   try {
