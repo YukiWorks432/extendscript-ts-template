@@ -6,9 +6,9 @@
 
 実行時の機能と制限は[extendscript-compatの実行時補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/runtime/README.ja.md)を参照してください。ES5・ES6のすべてを実装するものではなく、`Symbol`と`Promise`は使用できません。`JSON.parse`はJSON文法外の入力を`SyntaxError`として拒否します。データ構造や値域の検証は利用側で行ってください。
 
-ビルド時には、`extendscriptCompat()`が優先順位、文字列と正規表現の特定のUnicode文字、対応できる`Number`呼び出しを補正します。生成したJSXにはUTF-8 BOMが付きます。補正の範囲は[ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md)を参照してください。生成物には、同梱した互換コードのライセンスも含まれます。
+ビルド時には、`extendscriptCompat()`が優先順位、文字列と正規表現の特定のUnicode文字、対応できる`Number`呼び出し、`for`初期化部分の`in`演算子を補正します。生成したJSXにはUTF-8 BOMが付きます。補正の範囲は[ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md)を参照してください。生成物には、同梱した互換コードのライセンスも含まれます。
 
-npmの`extendscript-compat`は`^1.0.0`を指定し、後方互換性のある1.xの更新を許可します。実際の導入版は`pnpm-lock.yaml`に記録し、CIでは`pnpm install --frozen-lockfile`で再現します。通常のビルドでは、`extendscriptCompat()`が互換補正後の出力を予約語も含めてES3構文として自動検査し、不適合ならビルドを停止します。検査関数の追加呼び出しやAcornの直接導入は不要です。1.xの公開入口、入力条件、診断、実行時の副作用と版更新の方針は[公開契約](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/public-contract.ja.md)に従います。
+npmの`extendscript-compat`は`^1.1.0`を指定し、後方互換性のある1.xの更新を許可します。実際の導入版は`pnpm-lock.yaml`に記録し、CIでは`pnpm install --frozen-lockfile`で再現します。通常のビルドでは、`extendscriptCompat()`が互換補正後の出力を予約語も含めてES3構文として自動検査し、不適合ならビルドを停止します。検査関数の追加呼び出しやAcornの直接導入は不要です。1.xの公開入口、入力条件、診断、実行時の副作用と版更新の方針は[公開契約](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/public-contract.ja.md)に従います。
 
 `Object.entries`と`Object.values`は、文字列のUTF-16の添字を補い、Premiereで`Object.keys`が文字列の添字を省略する場合にも対応します。ホスト固有オブジェクトの扱いなどの制限は実行時API対応表を参照してください。
 
@@ -27,3 +27,5 @@ npmの`extendscript-compat`は`^1.0.0`を指定し、後方互換性のある1.x
 通常のビルドを通すソースでは入れ子の三項演算子を使用できます。Terserの条件式最適化後に互換補正・検査を行うため、複雑な式を読みやすい `if` 文へ分ける判断と、実行時の評価順序の保護を分けて扱えます。補正しない手書きJSXや文字列の `eval` は対象外です。補正後に再圧縮すると保護が失われるため、生成物を変更する工程を後ろへ追加しないでください。
 
 `src/lib/polyfills/esnext-shim.js`はテンプレート固有の追加用コードとして残しています。標準では読み込まれません。追加機能が必要な場合は内容と他の補正との重複を確認してから有効にし、`src/tests/index.ts`への検証追加と対象アプリでの動作確認を行ってください。
+
+依存関係を更新した後は、生成済みJSXを再ビルドして利用先へ反映してください。`for`初期化部分の`in`演算子の補正に、既存スクリプトのソース変更や設定項目の追加は不要です。
