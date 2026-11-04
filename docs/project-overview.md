@@ -246,7 +246,8 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 pnpm add-app -- --app=idsn
 ```
 
-追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみ。
+雛形生成に対応するアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt`。
+この一覧は全製品の実機確認を示すものではない。製品版と確認内容は[検証記録](validation.md)を参照。
 任意のアプリID追加は未対応。
 
 実行すると以下を自動生成：

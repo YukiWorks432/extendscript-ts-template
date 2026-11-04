@@ -121,7 +121,8 @@ Illustrator は `pnpm build:ilst`、Photoshop は `pnpm build:phxs` を使えま
 pnpm add-app -- --app=idsn
 ```
 
-追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみです。
+雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` です。
+雛形生成への対応と実機での確認範囲は異なります。詳細は[検証記録](../validation.md)を参照してください。
 追加したアプリには `pnpm build:<appId>` も自動で追加されます。
 
 ## ディレクトリ構造

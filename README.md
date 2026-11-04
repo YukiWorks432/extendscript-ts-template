@@ -42,22 +42,23 @@ ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブ�
 | Photoshop     | `phxs` | `src/phxs/`  |
 
 `pnpm add-app -- --app=<appId>` で新しいアプリを追加できます。
-追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみです。
+雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` です。
+雛形生成への対応と実機での確認範囲は異なります。詳細は[検証記録](docs/validation.md)を参照してください。
 
 ## 環境 / Environment
 
 - Node.js `^24.22.1`
-- pnpm 12 系（`package.json` の `devEngines.packageManager.version` で `^12.0.0` を指定）
+- pnpm 12 系（`package.json` の `devEngines.packageManager.version` で `^12.16.1` を指定）
 - TypeScript `4.9.5`（ES3 出力のため固定）
 
 TypeScript 4.9.5 を固定する理由と、Babel 8・TypeScript 5 系を別移行とする判断は、
 [ADR 0001](docs/adr/0001-typescript-4-9-5-for-es3.md) に記録しています。
 
-## テスト環境 / Tested environment
+## 検証済みの範囲
 
-- Node.js v24.18.0
-- Windows 11
-- AfterEffects 2025 / Illustrator 2025 / Photoshop 2025
+Windows上のAfter Effects・Illustrator・Photoshop・Premiere Proについて、過去の実機検証記録があります。
+製品版、対象コミット、確認項目と制限は[検証環境と実機確認の記録](docs/validation.md)を参照してください。
+現在の導入条件は上の「環境」に従います。過去の実機結果と、現在のCIによる検証は対象が異なります。
 
 ## インストール / Install
 
@@ -194,7 +195,7 @@ pnpm watch
 | `pnpm clean`            | ビルドハッシュをクリーンアップ   |
 | `pnpm test`             | Node.js 側の回帰テスト           |
 
-`pnpm add-app -- --app=<appId>` で正式対応アプリを追加すると、`pnpm build:<appId>` も自動で追加されます。
+`pnpm add-app -- --app=<appId>` で上記のアプリを追加すると、`pnpm build:<appId>` も自動で追加されます。
 
 ## テスト / Test
 
