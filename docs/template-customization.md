@@ -16,16 +16,17 @@ pnpm build
 | 項目                         | 初期値・動作                                                         |
 | ---------------------------- | -------------------------------------------------------------------- |
 | プロジェクト名               | フォルダ名を初期値にし、`package.json` の `name` へ反映              |
-| 使用アプリ                   | `aeft,ilst,phxs`。対応する7アプリから1つ以上を選択                   |
+| 使用アプリ                   | `aeft,ilst,phxs`。対応する5アプリから1つ以上を選択                   |
 | サンプル                     | 残す。削除を選ぶと、未編集の `example` とその登録を削除              |
 | AI向け設定                   | 利用する。不要なら未編集の `AGENTS.md`・`.agents/`・`.codex/` を削除 |
 | プロジェクトの初期バージョン | `package.json` の `version` を `0.1.0` に設定                        |
 | 作者の情報・支援先           | 配布元の `author` と未編集の `.github/FUNDING.yml` を削除            |
 | リリース                     | 明示的な有効化条件を保ったままワークフローを維持                     |
 
-アプリIDは `aeft / ilst / phxs / idsn / ppro / anmt / audt` です。
+アプリIDは `aeft / ilst / phxs / idsn / audt` です。
 アプリのフォルダ、`es.config.mjs` の登録、`package.json` の `build:<appId>` を揃えます。
 追加アプリにも `pnpm add-app` と同じ型設定と雛形を作成します。
+Animate・Premiere Proは両コマンドの対象外です。対応条件と実行経路は[公開契約](public-contract.ja.md#対応環境と互換補正)を参照してください。
 共通コード、共通テスト、依存関係、ライセンス表記は維持します。
 
 個別スクリプトのバージョンは `es.config.mjs` で管理します。

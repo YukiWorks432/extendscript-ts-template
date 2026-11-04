@@ -63,7 +63,19 @@ extendscript-ts-template の1.xで維持する仕様と、版番号の判断を�
 
 各配布版の `package.json` の `engines`・`devEngines` と、採用するTypeScriptの入力構文・型設定を対応環境の基準とします。対応版はNode.js `^24.22.1`、pnpm `^12.16.1`、TypeScript `4.9.5` です。TypeScriptの固定理由は [ADR 0001](adr/0001-typescript-4-9-5-for-es3.md) を参照してください。コンパイラーの内部更新でも、有効な入力を非互換に制限する場合はメジャー変更です。
 
-初期構成は `aeft`・`ilst`・`phxs` です。構成生成は加えて `idsn`・`ppro`・`anmt`・`audt` に対応します。実機確認済みのアプリ・版・条件は検証記録に示します。非公式のTypes-for-Adobeによる型検査と、実機での動作確認は分けて扱います。
+追加の拡張機能を使わず、生成した単体JSXを標準UIから実行できる製品を対象とします。初期構成は `aeft`・`ilst`・`phxs` です。初期設定とアプリ追加による構成生成は、加えて `idsn`・`audt` に対応します。
+
+| 製品          | ID     | 標準UIでの実行経路                                                                                                                                                             |
+| ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| After Effects | `aeft` | [File → Scripts → Run Script File](https://helpx.adobe.com/after-effects/desktop/automate-in-after-effects/automate-animation/scripts.html)                                    |
+| Illustrator   | `ilst` | [File → Scripts → Other Script](https://helpx.adobe.com/illustrator/desktop/automate-visualize-data/automate-actions/install-and-run-scripts.html)                             |
+| Photoshop     | `phxs` | [File → Scripts → Browse](https://helpx.adobe.com/photoshop/desktop/automate-tasks/automation-settings-and-presets/automate-photoshop-with-scripts.html)                       |
+| InDesign      | `idsn` | [Window → Utilities → Scriptsからスクリプトを実行](https://helpx.adobe.com/indesign/desktop/automation-and-scripting/document-automation/automate-workflows-with-scripts.html) |
+| Audition      | `audt` | [File → Browse and Run Script](https://blog.adobe.com/en/publish/2018/04/03/audition-updates-spring-2018)                                                                      |
+
+AnimateとPremiere Proは対象外です。Animateの[コマンド実行](https://helpx.adobe.com/jp/animate/desktop/multimedia-and-video/automating-tasks-commands-menu.html)はJSFL向けで、[JavaScript API](https://github.com/AdobeDocs/developers-animatesdk-docs/blob/master/Introduction/JavaScript_API_objects.md)も `app` を前提にした現行構成とは異なります。Premiere Proには単体JSXを選んで実行する標準メニューがなく、Adobeが案内する[ExtendScriptの実行経路はCEPパネル](https://community.adobe.com/questions-729/is-there-a-way-to-launch-one-time-use-jsx-script-files-like-you-can-in-after-effects-1401948)です。両製品のIDは初期設定・アプリ追加で拒否しますが、既存の利用者の設定やスクリプトを削除する処理は行いません。
+
+実機確認済みのアプリ・版・条件は[検証記録](validation.md)に示します。InDesign・Auditionは実機未確認です。非公式のTypes-for-Adobeによる型検査・ビルドと、実機での動作確認は分けて扱います。
 
 テンプレートは採用版の `extendscript-compat` の実行時初期化とビルド時補正を組み込み、補正後のES3構文検査を行います。APIごとの対応範囲・副作用・制限は採用版のcompatの契約に従います。[ポリフィル](polyfills.md) が参照先を案内します。`Symbol`・`Promise` やES5以降の全APIを提供する契約ではありません。補正後に再圧縮などコードを変更する工程を追加しないでください。
 

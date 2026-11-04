@@ -34,14 +34,6 @@ export const APP_TYPES_MAP = {
     dir: "InDesign/2022",
     shared: ["shared/ScriptUI"],
   },
-  ppro: {
-    dir: "Premiere/24.0",
-    shared: ["shared/ScriptUI"],
-  },
-  anmt: {
-    dir: "Animate/22.0",
-    shared: ["shared/ScriptUI"],
-  },
   audt: {
     dir: "Audition/2018",
     shared: ["shared/ScriptUI"],

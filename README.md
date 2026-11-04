@@ -46,8 +46,9 @@ ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブ�
 | Photoshop     | `phxs` | `src/phxs/`  |
 
 `pnpm add-app -- --app=<appId>` で新しいアプリを追加できます。
-雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` です。
-雛形生成への対応と実機での確認範囲は異なります。詳細は[検証記録](docs/validation.md)を参照してください。
+雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `audt` です。
+追加の拡張機能なしで単体JSXを標準UIから実行できる製品を対象にします。Animate・Premiere Proは対象外です。
+実行経路と除外理由は[公開契約](docs/public-contract.ja.md#対応環境と互換補正)、実機での確認範囲は[検証記録](docs/validation.md)を参照してください。
 
 ## 環境 / Environment
 

@@ -146,7 +146,10 @@ export async function planConfiguration(root, choices) {
       config.scripts[app] = choices.examples ? [{ ...EXAMPLE_SCRIPT }] : [];
       for (const [relative, content] of Object.entries(createAppFiles(app))) {
         if (choices.examples || !relative.includes("/example/"))
-          writes.set(relative, content);
+          writes.set(
+            relative,
+            content ? formatContent(root, relative, content) : content
+          );
       }
       if (Object.hasOwn(pkg.scripts, "build:" + app))
         throw new Error(

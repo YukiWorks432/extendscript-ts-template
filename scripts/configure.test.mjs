@@ -231,6 +231,26 @@ test("キャンセル・入力終了・不正な選択でファイルを変更�
   }
 });
 
+test("対象外アプリは初期設定・アプリ追加ともに変更前に拒否する", async (t) => {
+  const root = await fixture(t);
+  const before = snapshot(root);
+  for (const app of ["anmt", "ppro"]) {
+    const configure = run(root, [], answers(app));
+    assert.equal(configure.status, 1, configure.stdout + configure.stderr);
+    assert.match(configure.stderr, /対応するID/);
+    assert.deepEqual(snapshot(root), before);
+    const addApp = spawnSync(
+      process.execPath,
+      ["scripts/addApp.mjs", "--app=" + app],
+      { cwd: root, encoding: "utf8", timeout: 30000 }
+    );
+    assert.equal(addApp.error, undefined, addApp.error?.message);
+    assert.equal(addApp.status, 1, addApp.stdout + addApp.stderr);
+    assert.match(addApp.stderr, /未対応|Unsupported/);
+    assert.deepEqual(snapshot(root), before);
+  }
+});
+
 test("再実行しても利用者の名前・版・追加ファイルを戻さない", async (t) => {
   const root = await fixture(t);
   assert.equal(run(root, [], answers()).status, 0);
@@ -321,7 +341,7 @@ test("アプリのリンク先を削除しない", async (t) => {
   assert.equal(fs.existsSync(path.join(root, "src/phxs/custom-link")), true);
 });
 
-test("追加候補の全アプリは既存の型定義マッピングで生成できる", async (t) => {
+test("対応する全アプリを生成し、型検査と整形検査に成功する", async (t) => {
   const root = await fixture(t);
   const result = run(root, [], answers(Object.keys(APP_TYPES_MAP).join(",")));
   assert.equal(result.status, 0, result.stderr);
@@ -330,8 +350,6 @@ test("追加候補の全アプリは既存の型定義マッピングで生成�
     "ilst",
     "phxs",
     "idsn",
-    "ppro",
-    "anmt",
     "audt",
   ]);
   const typecheck = spawnSync(process.execPath, ["scripts/typecheck.mjs"], {
@@ -339,7 +357,20 @@ test("追加候補の全アプリは既存の型定義マッピングで生成�
     encoding: "utf8",
     timeout: 60000,
   });
+  assert.equal(typecheck.error, undefined, typecheck.error?.message);
   assert.equal(typecheck.status, 0, typecheck.stdout + typecheck.stderr);
+  const formatting = spawnSync(
+    process.execPath,
+    [
+      path.join(root, "node_modules/oxfmt/bin/oxfmt"),
+      "--check",
+      "src/idsn",
+      "src/audt",
+    ],
+    { cwd: root, encoding: "utf8", timeout: 30000 }
+  );
+  assert.equal(formatting.error, undefined, formatting.error?.message);
+  assert.equal(formatting.status, 0, formatting.stdout + formatting.stderr);
 });
 
 test("確認前のSIGINTではファイルを変更しない", async (t) => {
