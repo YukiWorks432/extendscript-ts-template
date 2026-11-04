@@ -97,6 +97,10 @@ export default {
 
 `lib` は `ES5`、`ES2015.Core`、`ES2015.Iterable` に限定する。後年の対応済みAPIの型は `src/init.ts` から読み込む `extendscript-compat/runtime` が追加する。利用できるAPIと型の限界は [ポリフィル](polyfills.md) を参照する。
 
+バンドル内のブロックコメントは構文解析で識別し、先頭へまとめる。文字列や正規表現に含まれる
+`/* ... */` はデータとして保持し、コメントを移した位置には空白と改行を残す。
+説明コメント（`@description`）と保持指定（`@preserve`）は圧縮後も残す。
+
 Rollupが生成する補助コードでは予約語のプロパティ名を引用符で囲み、未対応の `Object.freeze` を呼び出さない。最終JSXはCommonJSのモジュール識別用プロパティを必要としないため、`esModule: false` で識別用の `Object.defineProperty` 呼び出しも生成しない。Terserは最上位の `ie8: true` を圧縮・変数名短縮・出力処理へ適用し、条件式の最適化も行う。`extendscriptCompat()` はコードを変更する最後の工程として維持する。
 
 | アプリ        | tsconfig パス            | types-for-adobe     |
