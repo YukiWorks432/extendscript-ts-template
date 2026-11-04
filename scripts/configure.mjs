@@ -203,7 +203,7 @@ async function main() {
   );
   if (status.status !== 0)
     throw new Error(
-      "Gitの状態を確認できません。新しいリポジトリをcloneし、依存導入後・編集前に実行してください。"
+      "Gitの状態を確認できません。新しいリポジトリをクローンし、依存導入後・編集前に実行してください。"
     );
   if (status.stdout)
     throw new Error(
