@@ -31,6 +31,10 @@ ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブ�
 図の結果は、After Effects 26.5x89 / ExtendScript 4.5.6の既存実機検証に基づきます。
 補正の範囲と制限は[ポリフィル](docs/polyfills.md)を参照してください。
 
+## 公開契約
+
+1.xでは、公開した設定・CLI・ソース配置・共通API・成果物の振る舞いを安定対象にします。内部のビルド方式はこの契約を保って改善します。現在はv1準備中です。安定範囲と版番号の判断は[公開契約](docs/public-contract.ja.md)を参照してください。
+
 ## 対応アプリ
 
 デフォルトで以下のアプリが設定済みです：
@@ -107,7 +111,6 @@ export default {
       {
         name: "example",      // src/aeft/example/index.ts がビルドされます
         version: "0.0.1",
-        build: true,           // ビルドの可否
         license: true,         // LICENSE の内容を出力に挿入
       },
     ],
@@ -118,7 +121,6 @@ export default {
     {
       name: "tests",           // src/tests/index.ts がビルドされます
       version: "0.0.1",
-      build: true,
       license: true,
     },
   ],

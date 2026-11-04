@@ -1,5 +1,7 @@
 # ポリフィル
 
+テンプレートの安定範囲は[公開契約](public-contract.ja.md)を参照してください。このページは採用版の互換補正と制限を案内します。
+
 `src/init.ts`は、`extendscript-compat/runtime`を読み込み、JSONとES5・ES6の一部を補完します。各スクリプトは既存の`import "../../init"`で、この初期化をアプリ固有コードより先に実行します。
 
 `parseInt`、`String.prototype.charAt`、`split`、`replace`は既存の関数がある場合も補正されます。変更は同じExtendScriptエンジンを共有する他のスクリプトにも及びます。同じエンジンでの再評価では、内部の版付き印により重複した適用を防ぎます。
