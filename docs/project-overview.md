@@ -286,16 +286,39 @@ pnpm add-app -- --app=idsn
 `pnpm typecheck -- --app=<appId>` は指定アプリの `tsconfig.json` だけを検査します。新しいアプリを追加した場合も、アプリ別 `tsconfig.json` があれば全体型チェックへ自動的に含まれます。
 
 `pnpm build`、`pnpm build --all`、`pnpm build --app=<appId>`、アプリ別のビルド別名は、
-対象スクリプトごとにTypeScriptの依存範囲を限定し、上限付きで並列実行します。既定の
-並列度は `min(4, os.availableParallelism(), 対象件数)` です。利用できない実行環境では
-`os.cpus().length` を使います。
+選択されたスクリプトの依存範囲を集め、同じTypeScript設定を使う対象をまとめて型検査・変換します。
+型検査の対象は各エントリーから到達するファイルと環境型定義です。選択されていない
+別スクリプトの型エラーは、この検査へ含めません。全体の検査には `pnpm typecheck` を使います。
 
-並列度は `--concurrency=<正整数>` で上書きできます。`--concurrency=1` は並列実行だけを
-無効にし、スクリプト単位のTypeScript範囲限定は維持します。0、負数、小数、数値以外、
-値なしはエラーとして終了します。
+型検査・変換用のプロセスを終了した後、変換済みのJavaScriptを上限付きのワーカーで束ねます。
+各ワーカーは対象ごとにRollup設定を適用し、Babel、Terser、`extendscript-compat` による
+補正と最終ES3構文検査まで実行します。Terserは同じワーカー内で動かし、圧縮のたびに
+別のワーカーを起動しません。ソースマップは出力設定で要求された場合に生成します。
+中間ファイルはOSの一時ディレクトリへ置き、成功・失敗にかかわらずビルド終了時に削除します。
 
-`pnpm watch` は今回の単発ビルド最適化の対象外です。従来どおりRollupの監視処理を使い、
-`--concurrency` の指定は監視ビルドには適用されません。
+既定の並列度は `min(4, os.availableParallelism(), 対象件数)` です。
+`--concurrency=<正整数>` で上書きできます。`--concurrency=1` は、型検査・変換後の
+束ねる処理を逐次実行します。0、負数、小数、数値以外、値なしはエラーとして終了します。
+
+型検査・変換用プロセスの旧世代ヒープ上限は512MiB、束ねる処理はワーカーごとに192MiBです。
+これはJavaScriptのヒープ上限であり、プロセス全体の使用メモリを制限する値ではありません。
+親プロセスの `NODE_OPTIONS` に大きな上限が指定されていても、この設定を優先します。
+大規模な依存関係や追加プラグインで上限に達する場合は、環境変数
+`EXTENDSCRIPT_COMPILER_MEMORY_MB` と `EXTENDSCRIPT_WORKER_MEMORY_MB` へ、
+MiB単位の正整数を指定して調整できます。PowerShellでは、例えば次のように指定します。
+
+```powershell
+$env:EXTENDSCRIPT_COMPILER_MEMORY_MB = "768"
+$env:EXTENDSCRIPT_WORKER_MEMORY_MB = "256"
+pnpm build --all
+```
+
+型検査で失敗した場合は束ねる処理へ進まず、既存の成果物を保持します。
+束ねる処理で失敗した場合は新しい対象の開始を止め、開始済みの処理が終わるまで待ちます。
+ハッシュ履歴は全件成功後だけ確定し、失敗時には以前の履歴を保持します。
+
+`pnpm watch` は従来どおりRollupとTypeScriptプラグインの監視処理を使います。
+`--concurrency` と上記のメモリ設定は監視ビルドには適用されません。
 
 ## 差分ビルドの判定
 
@@ -304,7 +327,8 @@ pnpm add-app -- --app=idsn
 同じ `src/{appId}` 配下にある別スクリプトを変更しても、そのスクリプトを import していない
 他のスクリプトは再ビルド対象にならない。
 
-`rollup.config.mjs`、`package.json`、`pnpm-lock.yaml`、ルート `tsconfig.json` を変更した場合は
+`rollup.config.mjs`、`package.json`、`pnpm-lock.yaml`、ルート `tsconfig.json`、
+`scripts/` 直下の実行用 `.mjs` ファイル（`.test.mjs` を除く）を変更した場合は
 全スクリプトのハッシュが変わる。対象アプリの `tsconfig.json` を変更した場合は、該当アプリの
 ビルド対象だけのハッシュが変わる。`es.config.mjs` の `version`、`license`、その他の成果物へ
 影響する設定を変更した場合は、対象スクリプトだけのハッシュが変わる。`build` は選択専用のため

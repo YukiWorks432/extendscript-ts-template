@@ -24,7 +24,7 @@ export const runBuildJobs = async ({ jobs, concurrency, run }) => {
   let nextIndex = 0;
   let failure = null;
 
-  const worker = async () => {
+  const worker = async (workerIndex) => {
     while (true) {
       if (failure || nextIndex >= jobs.length) {
         return;
@@ -35,7 +35,7 @@ export const runBuildJobs = async ({ jobs, concurrency, run }) => {
       const job = jobs[index];
 
       try {
-        results[index] = await run(job, index);
+        results[index] = await run(job, index, workerIndex);
       } catch (error) {
         if (failure === null) {
           failure = { job, cause: error };
@@ -46,7 +46,9 @@ export const runBuildJobs = async ({ jobs, concurrency, run }) => {
   };
 
   const workerCount = Math.min(concurrency, jobs.length);
-  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  await Promise.all(
+    Array.from({ length: workerCount }, (_, index) => worker(index))
+  );
 
   if (failure !== null) {
     throw new BuildSchedulerError(failure.job, failure.cause);

@@ -4,46 +4,34 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-import { BUILD_HASH_PLUGIN_NAME, saveBuildHashes } from "../rollup.config.mjs";
-import { executeBuild } from "./build.mjs";
-
-const createOption = (label, hashes) => ({
-  input: label,
-  output: { file: `${label}.jsx`, format: "cjs" },
-  plugins: [
-    {
-      name: BUILD_HASH_PLUGIN_NAME,
-      buildHashState: {
-        hashes,
-        metadata: { targetName: label },
-      },
-    },
-  ],
-});
+import { saveBuildHashes } from "./buildState.mjs";
+import { buildOne, executeBuild } from "./build.mjs";
 
 test("全件成功後だけハッシュ確定し、結果は対象名順に返す", async () => {
   const hashes = { first: "hash-first", second: "hash-second" };
   const saved = [];
-  const options = [
-    createOption("phxs/Example", hashes),
-    createOption("common", hashes),
-    createOption("ilst/Example", hashes),
-    createOption("aeft/Zebra", hashes),
-    createOption("aeft/apple", hashes),
-    createOption("aeft/Example", hashes),
-  ];
-
+  let completed = false;
+  const plan = {
+    hashes,
+    targets: [
+      "phxs/Example",
+      "common",
+      "ilst/Example",
+      "aeft/Zebra",
+      "aeft/apple",
+      "aeft/Example",
+    ].map((targetName) => ({ targetName })),
+  };
   const results = await executeBuild({
-    options,
-    hashState: { hashes },
-    concurrency: 2,
-    rollupFn: async () => ({
-      async write() {},
-      async close() {},
-    }),
-    saveHashes: (value) => saved.push(value),
+    prepare: async () => plan,
+    bundle: async () => {
+      completed = true;
+    },
+    saveHashes: (value) => {
+      assert.equal(completed, true);
+      saved.push(value);
+    },
   });
-
   assert.deepEqual(
     results.map(({ label }) => label),
     [
@@ -58,49 +46,47 @@ test("全件成功後だけハッシュ確定し、結果は対象名順に返�
   assert.deepEqual(saved, [hashes]);
 });
 
-test("失敗時は開始済みbundleを閉じ、ハッシュを保存しない", async () => {
-  const hashes = { failing: "old", running: "old", later: "old" };
-  const options = [
-    createOption("failing", hashes),
-    createOption("running", hashes),
-    createOption("later", hashes),
-  ];
-  const started = [];
-  const closed = [];
-  const saved = [];
-  let releaseRunning;
-  const running = new Promise((resolve) => {
-    releaseRunning = resolve;
-  });
+test("型検査または出力の失敗時はハッシュを確定しない", async () => {
+  for (const failingStage of ["prepare", "bundle"]) {
+    const saved = [];
+    let bundleStarted = false;
+    await assert.rejects(
+      executeBuild({
+        prepare: async () => {
+          if (failingStage === "prepare") throw new Error("型検査失敗");
+          return { targets: [{ targetName: "aeft/example" }], hashes: {} };
+        },
+        bundle: async () => {
+          bundleStarted = true;
+          throw new Error("出力失敗");
+        },
+        saveHashes: (value) => saved.push(value),
+      }),
+      /型検査失敗|出力失敗/
+    );
+    assert.equal(bundleStarted, failingStage === "bundle");
+    assert.deepEqual(saved, []);
+  }
+});
 
-  const execution = executeBuild({
-    options,
-    hashState: { hashes },
-    concurrency: 2,
-    rollupFn: async (inputOptions) => {
-      started.push(inputOptions.input);
-      return {
+test("出力の成功・失敗のどちらでもbundleを閉じる", async () => {
+  for (const fail of [false, true]) {
+    let closed = false;
+    const execution = buildOne({
+      option: { input: "entry.ts", output: { file: "output.jsx" } },
+      rollupFn: async () => ({
         async write() {
-          if (inputOptions.input === "failing") {
-            throw new Error("出力失敗");
-          }
-          await running;
+          if (fail) throw new Error("出力失敗");
         },
         async close() {
-          closed.push(inputOptions.input);
+          closed = true;
         },
-      };
-    },
-    saveHashes: (value) => saved.push(value),
-  });
-
-  await Promise.resolve();
-  releaseRunning();
-
-  await assert.rejects(execution, /failing: 出力失敗/);
-  assert.deepEqual(started, ["failing", "running"]);
-  assert.deepEqual(closed.toSorted(), ["failing", "running"]);
-  assert.deepEqual(saved, []);
+      }),
+    });
+    if (fail) await assert.rejects(execution, /出力失敗/);
+    else await execution;
+    assert.equal(closed, true);
+  }
 });
 
 test("ハッシュ履歴の保存失敗時は既存内容を保持する", (t) => {

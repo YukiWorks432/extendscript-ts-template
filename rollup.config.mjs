@@ -1,5 +1,3 @@
-import typescript from "@rollup/plugin-typescript";
-import terser from "@rollup/plugin-terser";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import babel from "@rollup/plugin-babel";
@@ -11,7 +9,18 @@ import crypto from "crypto";
 import process from "process";
 import path from "path";
 import { fileURLToPath } from "url";
-import ts from "typescript";
+import { createRequire } from "node:module";
+import { minify } from "terser";
+import { compiledTypescript } from "./scripts/compiledTypescript.mjs";
+import {
+  BUILD_HASH_PLUGIN_NAME,
+  loadBuildHashes,
+  saveBuildHashes,
+} from "./scripts/buildState.mjs";
+export { BUILD_HASH_PLUGIN_NAME, saveBuildHashes };
+
+const require = createRequire(import.meta.url);
+const getCompiler = () => require("typescript");
 
 import config from "./es.config.mjs";
 import {
@@ -26,8 +35,6 @@ const compatPackageDir = path.dirname(
 const compatLicenses = ["LICENSE", "THIRD-PARTY-LICENSES.txt"]
   .map((name) => fs.readFileSync(path.join(compatPackageDir, name), "utf8"))
   .join("\n\n");
-const BUILD_HASH_DIR = "dist/temp";
-const BUILD_HASH_FILE = `${BUILD_HASH_DIR}/build-hashes.json`;
 
 const hashText = (text) =>
   crypto.createHash("sha256").update(text).digest("hex");
@@ -96,6 +103,10 @@ const SHARED_BUILD_INPUTS = [
   "package.json",
   "pnpm-lock.yaml",
   "tsconfig.json",
+  ...fs
+    .readdirSync("scripts")
+    .filter((name) => name.endsWith(".mjs") && !name.endsWith(".test.mjs"))
+    .map((name) => `scripts/${name}`),
 ];
 
 const getLicenseFile = (srcDir) =>
@@ -161,22 +172,18 @@ const isTypeScriptInputFile = (filePath) =>
 
 const getRelativeImportSpecifiers = (filePath) => {
   const source = fs.readFileSync(filePath, "utf8");
-  return ts
+  return getCompiler()
     .preProcessFile(source, true, true)
     .importedFiles.map(({ fileName }) => fileName)
     .filter((specifier) => specifier.startsWith("."));
 };
 
-const IMPORT_RESOLVE_OPTIONS = {
-  allowJs: true,
-  moduleResolution: ts.ModuleResolutionKind.NodeJs,
-};
-
 const resolveRelativeImport = (fromFilePath, specifier) => {
+  const ts = getCompiler();
   const resolvedModule = ts.resolveModuleName(
     specifier,
     fromFilePath,
-    IMPORT_RESOLVE_OPTIONS,
+    { allowJs: true, moduleResolution: ts.ModuleResolutionKind.NodeJs },
     ts.sys
   ).resolvedModule;
   const resolvedFilePath = resolvedModule?.resolvedFileName;
@@ -282,43 +289,6 @@ const calculateScriptHash = (scriptContext) =>
     script: scriptContext.script,
   });
 
-const loadBuildHashes = () => {
-  try {
-    if (!fs.existsSync(BUILD_HASH_FILE)) {
-      return {};
-    }
-
-    const content = fs.readFileSync(BUILD_HASH_FILE, "utf8");
-    const parsed = JSON.parse(content);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (error) {
-    console.warn(
-      "ハッシュ履歴の読み込みに失敗したため、全件ビルドします。",
-      error
-    );
-    return {};
-  }
-};
-
-export const saveBuildHashes = (hashes, buildHashFile = BUILD_HASH_FILE) => {
-  const targetPath = path.resolve(buildHashFile);
-  const temporaryPath = `${targetPath}.${process.pid}.${Date.now()}.tmp`;
-
-  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-
-  try {
-    fs.writeFileSync(temporaryPath, JSON.stringify(hashes, null, 2), "utf8");
-    fs.renameSync(temporaryPath, targetPath);
-  } catch (error) {
-    try {
-      fs.rmSync(temporaryPath, { force: true });
-    } catch {
-      // 元の履歴を保持することを優先し、一時ファイルの削除失敗は元のエラーに委ねる。
-    }
-    throw error;
-  }
-};
-
 const isTruthyFlag = (value) =>
   value !== undefined && value !== "" && value !== "false" && value !== "0";
 
@@ -362,17 +332,26 @@ const onwarn = (warning, defaultHandler) => {
 const TEXT_COLOR_YELLOW = "\x1b[33m";
 const TEXT_COLOR_RESET = "\x1b[0m";
 
-const terserConfig = (preamble) =>
-  terser({
+const terserConfig = (preamble, staged) => {
+  const options = {
     ie8: true,
-    compress: {
-      passes: 1,
+    compress: { passes: 1 },
+    format: { comments: /(@preserve|@description)/, preamble },
+  };
+  if (!staged) return require("@rollup/plugin-terser")(options);
+  // すでに隔離されたワーカー内なので、圧縮専用ワーカーを重ねて起動しない。
+  return {
+    name: "terser",
+    async renderChunk(code, _chunk, output) {
+      return minify(code, {
+        ...options,
+        sourceMap: Boolean(output.sourcemap),
+        ...(output.format === "es" ? { module: true } : {}),
+        ...(output.format === "cjs" ? { toplevel: true } : {}),
+      });
     },
-    format: {
-      comments: /(@preserve|@description)/,
-      preamble,
-    },
-  });
+  };
+};
 
 const extractCommentsToTop = () => ({
   name: "extract-comments-to-top",
@@ -398,8 +377,9 @@ const licenser = (srcDir) => {
   });
 };
 
-const createBabelConfig = () =>
+const createBabelConfig = (sourceMaps = true) =>
   babel({
+    sourceMaps,
     extensions,
     babelrc: false,
     babelHelpers: "bundled",
@@ -425,7 +405,6 @@ const createBabelConfig = () =>
   });
 
 let hasSavedBuildHashes = false;
-export const BUILD_HASH_PLUGIN_NAME = "persist-build-hashes";
 
 const persistBuildHashes = (hashes, metadata, { watch = false } = {}) => ({
   name: BUILD_HASH_PLUGIN_NAME,
@@ -446,6 +425,13 @@ const persistBuildHashes = (hashes, metadata, { watch = false } = {}) => ({
 });
 
 export default (commandLineArgs = {}) => {
+  const preparing = process.env.EXTENDSCRIPT_BUILD_PHASE === "prepare";
+  const manifest =
+    process.env.EXTENDSCRIPT_BUILD_PHASE === "bundle"
+      ? JSON.parse(
+          fs.readFileSync(process.env.EXTENDSCRIPT_BUILD_MANIFEST, "utf8")
+        )
+      : null;
   const forceBuildAll = hasForceBuildFlag(commandLineArgs);
   const appFilter = getAppFilter(commandLineArgs);
 
@@ -453,7 +439,7 @@ export default (commandLineArgs = {}) => {
   const allScripts = [];
   let hasDeprecatedBuildFalse = false;
 
-  if (config.scripts) {
+  if (!manifest && config.scripts) {
     for (const [appId, scripts] of Object.entries(config.scripts)) {
       if (appFilter && appId !== appFilter) continue;
       for (const script of scripts) {
@@ -480,7 +466,7 @@ export default (commandLineArgs = {}) => {
   }
 
   // common スクリプト（アプリ非依存）
-  if (config.common && !appFilter) {
+  if (!manifest && config.common && !appFilter) {
     for (const script of config.common) {
       const isBuildEnabled = script.build !== false;
 
@@ -503,7 +489,7 @@ export default (commandLineArgs = {}) => {
     }
   }
 
-  if (allScripts.length === 0) {
+  if (!manifest && allScripts.length === 0) {
     console.error("ビルドするスクリプトがありません。");
     process.exit(1);
   }
@@ -514,82 +500,100 @@ export default (commandLineArgs = {}) => {
     );
   }
 
-  const previousBuildHashes = loadBuildHashes();
-  const selection = selectChangedScripts({
-    scripts: allScripts,
-    previousBuildHashes,
-    forceBuildAll,
-    calculateHash: calculateScriptHash,
-  });
+  const previousBuildHashes = manifest ? {} : loadBuildHashes();
+  const selection = manifest
+    ? {
+        currentBuildHashes: manifest.hashes,
+        targetScripts: manifest.targets
+          .filter(
+            (target) =>
+              target.targetName === process.env.EXTENDSCRIPT_BUILD_TARGET
+          )
+          .map((target) => target.descriptor),
+      }
+    : selectChangedScripts({
+        scripts: allScripts,
+        previousBuildHashes,
+        forceBuildAll,
+        calculateHash: calculateScriptHash,
+      });
   const currentBuildHashes = appFilter
     ? { ...previousBuildHashes, ...selection.currentBuildHashes }
     : selection.currentBuildHashes;
   const targetScripts = selection.targetScripts;
 
-  const entries = targetScripts.map(
-    ({ appId, script, srcDir, outDir, hashKey, tsconfig }) => {
-      const inputFile = `${srcDir}/index.ts`;
-      const fileHash =
-        currentBuildHashes[hashKey] || calculateFileHash(inputFile);
-      const typeScriptPluginOptions = getTypeScriptPluginOptions({
+  const entries = targetScripts.map((descriptor) => {
+    const { appId, script, srcDir, outDir, hashKey, tsconfig } = descriptor;
+    const inputFile = `${srcDir}/index.ts`;
+    const fileHash =
+      currentBuildHashes[hashKey] || calculateFileHash(inputFile);
+    const typeScriptPluginOptions =
+      descriptor.typeScriptPluginOptions ||
+      getTypeScriptPluginOptions({
         appId,
         srcDir,
         tsconfig,
         watch: Boolean(commandLineArgs.watch),
       });
-      const metadata = {
-        appId,
-        hashKey,
-        scriptName: script.name,
-        tsconfig,
-        targetName: appId ? `${appId}/${script.name}` : script.name,
-      };
+    const metadata = {
+      appId,
+      hashKey,
+      scriptName: script.name,
+      tsconfig,
+      targetName: appId ? `${appId}/${script.name}` : script.name,
+      descriptor: { ...descriptor, typeScriptPluginOptions },
+    };
 
-      const banner = `/*\n${compatLicenses}\n*/\n/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
+    const banner = `/*\n${compatLicenses}\n*/\n/** ${script.name} v${script.version} hash: ${fileHash} */\nvar __ES_THIS__=this;`;
 
-      return {
-        input: inputFile,
-        output: {
-          file: `${outDir}/${script.name}.jsx`,
-          format: "cjs",
-          strict: false,
-          esModule: false,
-          generatedCode: { preset: "es5", reservedNamesAsProps: false },
-          freeze: false,
-        },
-        context: "this",
-        onwarn,
-        plugins: [
-          typescript(typeScriptPluginOptions),
-          resolve({
-            extensions,
-          }),
-          commonjs(),
-          createBabelConfig(),
-          extractCommentsToTop(),
-          terserConfig(banner),
-          script.license ? licenser(srcDir) : null,
-          extendscriptCompat(),
-          persistBuildHashes(currentBuildHashes, metadata, {
-            watch: Boolean(commandLineArgs.watch),
-          }),
-        ],
-      };
-    }
-  );
+    return {
+      input: inputFile,
+      output: {
+        file: `${outDir}/${script.name}.jsx`,
+        format: "cjs",
+        strict: false,
+        esModule: false,
+        generatedCode: { preset: "es5", reservedNamesAsProps: false },
+        freeze: false,
+      },
+      context: "this",
+      onwarn,
+      plugins: preparing
+        ? [persistBuildHashes(currentBuildHashes, metadata)]
+        : [
+            manifest
+              ? compiledTypescript(descriptor.cacheDir)
+              : require("@rollup/plugin-typescript")(typeScriptPluginOptions),
+            resolve({
+              extensions,
+            }),
+            commonjs({ sourceMap: manifest ? descriptor.sourceMaps : true }),
+            createBabelConfig(manifest ? descriptor.sourceMaps : true),
+            extractCommentsToTop(),
+            terserConfig(banner, Boolean(manifest)),
+            script.license ? licenser(srcDir) : null,
+            extendscriptCompat(),
+            persistBuildHashes(currentBuildHashes, metadata, {
+              watch: Boolean(commandLineArgs.watch),
+            }),
+          ],
+    };
+  });
 
   if (entries.length === 0) {
     saveBuildHashes(currentBuildHashes);
     console.log("変更されたスクリプトがないため、ビルドをスキップしました。");
-    process.exit(0);
+    if (!preparing) process.exit(0);
+    return [];
   }
 
   const filterMsg = appFilter ? ` (app: ${appFilter})` : "";
-  console.log(
-    forceBuildAll
-      ? `--all/-a 指定により ${entries.length} 件を強制ビルドします。${filterMsg}`
-      : `${entries.length} 件の変更スクリプトをビルドします。${filterMsg}`
-  );
+  if (!manifest)
+    console.log(
+      forceBuildAll
+        ? `--all/-a 指定により ${entries.length} 件を強制ビルドします。${filterMsg}`
+        : `${entries.length} 件の変更スクリプトをビルドします。${filterMsg}`
+    );
 
   return entries;
 };

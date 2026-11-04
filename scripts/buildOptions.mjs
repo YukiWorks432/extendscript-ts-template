@@ -74,3 +74,18 @@ export const parseBuildArguments = (argumentsList = [], environment = {}) => {
     help: values.help ?? false,
   };
 };
+
+export const parseMemoryLimit = (name, environment, defaultValue) => {
+  const value = environment[name];
+  if (value === undefined) return defaultValue;
+  if (
+    !/^\d+$/.test(value) ||
+    !Number.isSafeInteger(Number(value)) ||
+    Number(value) < 1
+  ) {
+    throw new BuildArgumentError(
+      `${name} にはMiB単位の1以上の整数を指定してください。`
+    );
+  }
+  return Number(value);
+};
