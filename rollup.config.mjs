@@ -11,6 +11,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "node:module";
 import { minify } from "terser";
+import { parseSync } from "@babel/core";
 import { compiledTypescript } from "./scripts/compiledTypescript.mjs";
 import {
   BUILD_HASH_PLUGIN_NAME,
@@ -356,13 +357,30 @@ const terserConfig = (preamble, staged) => {
 const extractCommentsToTop = () => ({
   name: "extract-comments-to-top",
   renderChunk(code) {
-    const comments = [];
-    const stripped = code.replace(/\/\*[\s\S]*?\*\//g, (match) => {
-      comments.push(match);
-      return "";
-    });
+    if (!code.includes("/*")) return null;
+    const comments = parseSync(code, {
+      babelrc: false,
+      configFile: false,
+      sourceType: "unambiguous",
+      parserOpts: { attachComment: false },
+    }).comments.filter((comment) => comment.type === "CommentBlock");
     if (comments.length === 0) return null;
-    return comments.join("\n") + "\n" + stripped;
+
+    const header = [];
+    const body = [];
+    let offset = 0;
+    for (const { start, end } of comments) {
+      const comment = code.slice(start, end);
+      header.push(comment);
+      // トークン境界と自動セミコロン挿入に影響する改行を保つ。
+      body.push(
+        code.slice(offset, start),
+        comment.replace(/[^\r\n\u2028\u2029]/g, " ")
+      );
+      offset = end;
+    }
+    body.push(code.slice(offset));
+    return header.join("\n") + "\n" + body.join("");
   },
 });
 
