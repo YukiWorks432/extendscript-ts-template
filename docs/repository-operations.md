@@ -73,6 +73,8 @@ CIの依存導入前に `pnpm audit --audit-level=high` を実行し、開発用
 
 ## リリース
 
+1.xの公開契約と非互換変更の判断は[公開契約](public-contract.ja.md)を正本とします。内部実装の変更でも公開設定や有効な入力の互換性を確認します。
+
 リリース自動化は `.github/workflows/release.yml` で管理します。
 リポジトリ変数 `RELEASE_AUTOMATION_ENABLED=true` が設定されている場合だけ、手動実行できます。
 `main` 向け Pull Request のマージだけではリリースを作成しません。
