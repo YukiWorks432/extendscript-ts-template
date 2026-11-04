@@ -113,16 +113,3 @@ CIの依存導入前に `pnpm audit --audit-level=high` を実行し、開発用
 運用ルールはこの文書で規定します。
 
 将来、作業者が増えて事故リスクが高くなった場合は、`main` のブランチ保護、必須チェック、マージ方法の制限を検討します。
-
-## 初期ファイルの保守
-
-`pnpm run configure` は `scripts/configure-template.json` の内容指紋で、削除・置換できる初期ファイルを識別します。
-初期アプリ、AI設定、README、`es.config.mjs`、支援先設定を変更した場合は、整形後に次を実行して一覧を更新し、差分を確認してください。
-
-```sh
-node scripts/configureTemplate.mjs --write
-pnpm fmt scripts/configure-template.json
-```
-
-`pnpm test` で配布元の初期ファイルと一覧の一致を確認します。
-初期設定済みの利用先では一覧を更新しません。新しいプロジェクトの編集済みファイルを初期ファイルとして登録すると、保護の根拠が失われます。

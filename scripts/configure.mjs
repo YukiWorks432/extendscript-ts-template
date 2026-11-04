@@ -10,54 +10,10 @@ import {
   createAppFiles,
   getBuildScriptAlias,
 } from "./appScaffold.mjs";
-import { fingerprint } from "./configureTemplate.mjs";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
 class Cancelled extends Error {}
-
-function inspectInitialFiles(root, defaults, prefix) {
-  const expected = Object.keys(defaults.files).filter(
-    (name) => name === prefix || name.startsWith(prefix + "/")
-  );
-  const found = [];
-  let changed = false;
-  let ancestor = root;
-  for (const part of prefix.split("/")) {
-    ancestor = path.join(ancestor, part);
-    if (fs.lstatSync(ancestor, { throwIfNoEntry: false })?.isSymbolicLink()) {
-      return { files: [], pristine: false };
-    }
-  }
-  const visit = (relative) => {
-    const stat = fs.lstatSync(path.join(root, relative), {
-      throwIfNoEntry: false,
-    });
-    if (!stat) return;
-    if (stat.isSymbolicLink()) {
-      changed = true;
-      return;
-    }
-    if (stat.isDirectory()) {
-      if (!expected.some((name) => name.startsWith(relative + "/")))
-        changed = true;
-      for (const name of fs.readdirSync(path.join(root, relative)))
-        visit(relative + "/" + name);
-    } else {
-      found.push(relative);
-      if (
-        defaults.files[relative] !==
-        fingerprint(fs.readFileSync(path.join(root, relative)))
-      )
-        changed = true;
-    }
-  };
-  visit(prefix);
-  return {
-    files: found,
-    pristine: !changed && found.length === expected.length,
-  };
-}
 
 function formatContent(root, relative, content) {
   const packagePath = require.resolve("oxfmt/package.json");
@@ -69,20 +25,9 @@ function formatContent(root, relative, content) {
   );
 }
 
-export async function planConfiguration(root, choices) {
-  const defaults = JSON.parse(
-    fs.readFileSync(path.join(root, "scripts/configure-template.json"), "utf8")
-  );
-  const pkg = JSON.parse(
-    fs.readFileSync(path.join(root, "package.json"), "utf8")
-  );
-  if (pkg.templateConfigured === true) return null;
-  if (pkg.name !== defaults.packageName)
-    throw new Error(
-      "プロジェクト名が編集されています。初期設定を行わず、手動設定の手順を確認してください。"
-    );
+async function planConfiguration(root, choices, originalPackage) {
+  const pkg = { ...originalPackage, scripts: { ...originalPackage.scripts } };
   if (
-    typeof choices.name !== "string" ||
     choices.name.length > 214 ||
     !/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(choices.name)
   )
@@ -90,17 +35,10 @@ export async function planConfiguration(root, choices) {
       "プロジェクト名には小文字の英数字・ハイフン等で有効なパッケージ名を指定してください。"
     );
   if (
-    !Array.isArray(choices.apps) ||
     !choices.apps.length ||
     choices.apps.some((app) => !Object.hasOwn(APP_TYPES_MAP, app))
   )
     throw new Error("使用アプリを対応するIDから1つ以上選択してください。");
-  for (const relative of ["README.md", "es.config.mjs"]) {
-    if (!inspectInitialFiles(root, defaults, relative).pristine)
-      throw new Error(
-        relative + " が編集されています。ファイルを変更せずに終了します。"
-      );
-  }
   const config = (
     await import(
       pathToFileURL(path.join(root, "es.config.mjs")).href +
@@ -109,39 +47,21 @@ export async function planConfiguration(root, choices) {
     )
   ).default;
   const apps = [...new Set(choices.apps)];
-  const warnings = [];
   const writes = new Map();
   const removals = new Set();
-  const removeGroup = (prefix) => {
-    const inspected = inspectInitialFiles(root, defaults, prefix);
-    if (!inspected.pristine) {
-      warnings.push(prefix + " は編集・追加された内容があるため維持します。");
-      return false;
-    }
-    for (const file of inspected.files) removals.add(file);
-    return true;
-  };
-
-  for (const app of defaults.apps) {
+  for (const app of Object.keys(config.scripts)) {
     if (apps.includes(app)) continue;
-    if (removeGroup("src/" + app)) {
-      delete config.scripts[app];
-      if (pkg.scripts["build:" + app] !== getBuildScriptAlias(app))
-        throw new Error(
-          "build:" +
-            app +
-            " が編集されています。ファイルを変更せずに終了します。"
-        );
-      delete pkg.scripts["build:" + app];
-    } else {
-      apps.push(app);
-    }
+    removals.add("src/" + app);
+    delete config.scripts[app];
+    delete pkg.scripts["build:" + app];
   }
   for (const app of apps) {
     if (!Object.hasOwn(config.scripts, app)) {
       if (fs.existsSync(path.join(root, "src", app)))
         throw new Error(
-          "src/" + app + " が既に存在します。上書きせずに終了します。"
+          "src/" +
+            app +
+            " が既に存在します。初期設定を中止し、手動設定の手順を確認してください。"
         );
       config.scripts[app] = choices.examples ? [{ ...EXAMPLE_SCRIPT }] : [];
       for (const [relative, content] of Object.entries(createAppFiles(app))) {
@@ -151,40 +71,24 @@ export async function planConfiguration(root, choices) {
             content ? formatContent(root, relative, content) : content
           );
       }
-      if (Object.hasOwn(pkg.scripts, "build:" + app))
-        throw new Error(
-          "build:" + app + " が既に存在します。上書きせずに終了します。"
-        );
       pkg.scripts["build:" + app] = getBuildScriptAlias(app);
     } else if (!choices.examples) {
-      if (removeGroup("src/" + app + "/example")) {
-        config.scripts[app] = config.scripts[app].filter(
-          (entry) => entry.name !== "example"
-        );
-      }
-    }
-  }
-
-  if (!choices.agents) {
-    const prefixes = ["AGENTS.md", ".agents", ".codex"];
-    if (
-      prefixes.every(
-        (prefix) => inspectInitialFiles(root, defaults, prefix).pristine
-      )
-    ) {
-      for (const prefix of prefixes) removeGroup(prefix);
-    } else {
-      warnings.push(
-        "AI向け設定は編集・追加された内容があるため、全体を維持します。"
+      removals.add("src/" + app + "/example");
+      config.scripts[app] = config.scripts[app].filter(
+        (entry) => entry.name !== "example"
       );
     }
   }
-  if (fs.existsSync(path.join(root, ".github/FUNDING.yml")))
-    removeGroup(".github/FUNDING.yml");
+  if (!choices.agents)
+    for (const relative of ["AGENTS.md", ".agents", ".codex"])
+      removals.add(relative);
+  removals.add(".github/FUNDING.yml");
+  for (const relative of removals)
+    if (!fs.existsSync(path.join(root, relative))) removals.delete(relative);
   pkg.name = choices.name;
   const previousVersion = pkg.version;
   pkg.version = "0.1.0";
-  if (pkg.author === defaults.packageAuthor) delete pkg.author;
+  delete pkg.author;
   pkg.templateConfigured = true;
   const tick = String.fromCharCode(96);
   const command = (value) => tick + value + tick;
@@ -239,42 +143,24 @@ export async function planConfiguration(root, choices) {
       ancestor = path.dirname(ancestor);
     }
   }
-  return { apps, warnings, writes, removals, previousVersion };
+  return { apps, writes, removals, previousVersion };
 }
 
-export function applyConfiguration(root, plan) {
+function applyConfiguration(root, plan) {
   for (const [relative, content] of plan.writes) {
     if (relative === "package.json") continue;
     const target = path.join(root, relative);
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, content, "utf8");
   }
-  const directories = new Set();
-  for (const relative of plan.removals) {
-    const target = path.join(root, relative);
-    fs.unlinkSync(target);
-    let directory = path.dirname(target);
-    while (directory !== path.resolve(root)) {
-      directories.add(directory);
-      directory = path.dirname(directory);
-    }
-  }
-  for (const directory of [...directories].toSorted(
-    (a, b) => b.length - a.length
-  )) {
-    try {
-      fs.rmdirSync(directory);
-    } catch (error) {
-      if (!["ENOTEMPTY", "EEXIST", "ENOENT"].includes(error.code)) throw error;
-    }
-  }
+  for (const relative of plan.removals)
+    fs.rmSync(path.join(root, relative), { recursive: true, force: true });
   fs.writeFileSync(
     path.join(root, "package.json"),
     plan.writes.get("package.json"),
     "utf8"
   );
 }
-
 async function main() {
   const args = process.argv.slice(2).filter((value) => value !== "--");
   if (args.length) {
@@ -305,6 +191,24 @@ async function main() {
     console.log("初期設定済みです。ファイルは変更しません。次の操作: pnpm new");
     return;
   }
+  const status = spawnSync(
+    "git",
+    [
+      "--no-optional-locks",
+      "status",
+      "--porcelain=v1",
+      "--untracked-files=normal",
+    ],
+    { cwd: projectRoot, encoding: "utf8" }
+  );
+  if (status.status !== 0)
+    throw new Error(
+      "Gitの状態を確認できません。新しいリポジトリをcloneし、依存導入後・編集前に実行してください。"
+    );
+  if (status.stdout)
+    throw new Error(
+      "未コミット変更または未追跡ファイルがあります。初期設定は編集前のコピーで実行してください。ファイルは変更していません。"
+    );
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const iterator = rl[Symbol.asyncIterator]();
   rl.on("SIGINT", () => rl.close());
@@ -333,20 +237,19 @@ async function main() {
     const apps = appInput.split(/[,\s]+/).filter(Boolean);
     const examples = await yesNo("サンプルを残しますか？ [Y/n]: ", true);
     const agents = await yesNo("AI向け設定を利用しますか？ [Y/n]: ", true);
-    const plan = await planConfiguration(projectRoot, {
-      name,
-      apps,
-      examples,
-      agents,
-    });
-    if (!plan) return;
+    const plan = await planConfiguration(
+      projectRoot,
+      { name, apps, examples, agents },
+      pkg
+    );
     console.log("\n反映する構成: " + plan.apps.join(", "));
     console.log("プロジェクト名: " + pkg.name + " → " + name);
     console.log("プロジェクトの版: " + plan.previousVersion + " → 0.1.0");
-    for (const warning of plan.warnings) console.log("維持: " + warning);
     for (const relative of plan.writes.keys())
       console.log("更新・作成: " + relative);
-    for (const relative of plan.removals) console.log("削除: " + relative);
+    if (plan.removals.size)
+      console.log("削除対象（ディレクトリは配下も含みます）:");
+    for (const relative of plan.removals) console.log("  " + relative);
     if (!(await yesNo("この内容を反映しますか？ [y/N]: ", false)))
       throw new Cancelled();
     applyConfiguration(projectRoot, plan);

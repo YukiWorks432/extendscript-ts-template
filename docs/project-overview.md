@@ -113,9 +113,9 @@ Rollupが生成する補助コードでは予約語のプロパティ名を引�
 
 ## 初回設定
 
-新しいコピーでは `pnpm install` の後に `pnpm run configure` を実行できます。
+新しいGitコピーでは、`pnpm install` の後・編集前に `pnpm run configure` を実行できます。
 設定後のアプリ構成に合わせ、フォルダ・スクリプト登録・ビルド別名を一緒に整えます。
-選択肢と保護規則は[初期設定](template-customization.md)を参照してください。
+未コミット変更・未追跡ファイルがあれば停止します。選択肢と適用条件は[初期設定](template-customization.md)を参照してください。
 
 ## 新規スクリプト追加
 

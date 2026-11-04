@@ -5,7 +5,6 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { collectTemplateDefaults } from "./configureTemplate.mjs";
 import { APP_TYPES_MAP, createAppFiles } from "./appScaffold.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
@@ -24,6 +23,26 @@ const readConfig = async (root) =>
 function write(root, relative, content) {
   fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
   fs.writeFileSync(path.join(root, relative), content);
+}
+
+function git(root, ...args) {
+  const result = spawnSync(
+    "git",
+    [
+      "-c",
+      "user.name=Configure Test",
+      "-c",
+      "user.email=configure@example.invalid",
+      "-c",
+      "commit.gpgSign=false",
+      "-c",
+      "core.hooksPath=" + path.join(root, ".git/hooks"),
+      ...args,
+    ],
+    { cwd: root, encoding: "utf8" }
+  );
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
 }
 
 async function fixture(t) {
@@ -80,11 +99,10 @@ async function fixture(t) {
   write(root, "README.md", "# 初期テンプレート\n");
   write(root, "AGENTS.md", "# 初期の指示\n");
   write(root, ".github/FUNDING.yml", "github: [OriginalAuthor]\n");
-  write(
-    root,
-    "scripts/configure-template.json",
-    JSON.stringify(await collectTemplateDefaults(root), null, 2) + "\n"
-  );
+  git(root, "init", "--quiet");
+  git(root, "config", "core.autocrlf", "false");
+  git(root, "add", ".");
+  git(root, "commit", "-qm", "初回設定テストの初期状態");
   return root;
 }
 
@@ -116,17 +134,6 @@ function snapshot(root) {
   return files;
 }
 
-test("配布する初期ファイル一覧は実際のテンプレートと一致する", async (t) => {
-  if (readJson(repositoryRoot, "package.json").templateConfigured) {
-    t.skip("利用者の初期設定後は配布元の初期ファイルを要求しない");
-    return;
-  }
-  assert.deepEqual(
-    readJson(repositoryRoot, "scripts/configure-template.json"),
-    await collectTemplateDefaults(repositoryRoot)
-  );
-});
-
 test("1アプリへ初期設定し、共通コード・未知の項目・ライセンスを保持する", async (t) => {
   const root = await fixture(t);
   const license = fs.readFileSync(path.join(root, "LICENSE"));
@@ -156,6 +163,10 @@ test("1アプリへ初期設定し、共通コード・未知の項目・ライ�
   assert.deepEqual(fs.readFileSync(path.join(root, "LICENSE")), license);
   assert.deepEqual(fs.readFileSync(path.join(root, "src/init.ts")), common);
   assert.equal((await readConfig(root)).common[0].name, "tests");
+  assert.equal((await readConfig(root)).scripts.aeft[0].version, "0.0.1");
+  assert.match(result.stdout, /削除対象（ディレクトリは配下も含みます）/);
+  assert.match(result.stdout, /src\/ilst/);
+  assert.match(result.stdout, /extendscript-ts-template → my-adobe-scripts/);
   assert.match(
     fs.readFileSync(path.join(root, "README.md"), "utf8"),
     /my-adobe-scripts/
@@ -175,6 +186,22 @@ test("既定の複数アプリとサンプル・AI設定を維持できる", asy
   assert.equal(
     fs.existsSync(path.join(root, "src/ilst/example/index.ts")),
     true
+  );
+});
+
+test("既存アプリのサンプルを削除しても、アプリ設定と共通部分を残す", async (t) => {
+  const root = await fixture(t);
+  const result = run(root, [], answers("aeft", "n"));
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const config = await readConfig(root);
+  assert.deepEqual(config.scripts.aeft, []);
+  assert.equal(config.common[0].name, "tests");
+  assert.equal(fs.existsSync(path.join(root, "src/aeft/example")), false);
+  assert.equal(fs.existsSync(path.join(root, "src/aeft/tsconfig.json")), true);
+  assert.equal(fs.existsSync(path.join(root, "src/aeft/lib/.gitkeep")), true);
+  assert.equal(
+    readJson(root, "package.json").scripts["build:aeft"],
+    "node ./scripts/build.mjs --app=aeft"
   );
 });
 
@@ -265,80 +292,46 @@ test("再実行しても利用者の名前・版・追加ファイルを戻さ�
   assert.deepEqual(snapshot(root), before);
 });
 
-test("利用者の追加・編集があるアプリ・サンプル・AI設定・支援先を保持する", async (t) => {
-  const root = await fixture(t);
-  write(root, "src/phxs/MyScript/index.ts", "// 利用者のスクリプト\n");
-  write(root, "src/aeft/example/index.ts", "// 編集したサンプル\n");
-  write(root, ".agents/custom.md", "利用者の指示\n");
-  write(root, ".github/FUNDING.yml", "github: [MyAccount]\n");
-  const result = run(root, [], answers("aeft", "n", "n"));
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const config = await readConfig(root);
-  assert.deepEqual(Object.keys(config.scripts), ["aeft", "phxs"]);
-  assert.equal(config.scripts.aeft[0].name, "example");
-  assert.equal(
-    fs.readFileSync(path.join(root, "src/aeft/example/index.ts"), "utf8"),
-    "// 編集したサンプル\n"
-  );
-  assert.equal(
-    fs.readFileSync(path.join(root, "src/phxs/MyScript/index.ts"), "utf8"),
-    "// 利用者のスクリプト\n"
-  );
-  assert.equal(
-    fs.readFileSync(path.join(root, ".agents/custom.md"), "utf8"),
-    "利用者の指示\n"
-  );
-  assert.match(
-    fs.readFileSync(path.join(root, ".github/FUNDING.yml"), "utf8"),
-    /MyAccount/
-  );
-});
-
-test("編集済みREADME・設定・ビルド別名は反映前に検出する", async (t) => {
-  for (const relative of ["README.md", "es.config.mjs", "package.json"]) {
+test("未コミット変更・ステージ済み変更・未追跡ファイルがあれば開始しない", async (t) => {
+  for (const [relative, staged] of [
+    ["README.md", false],
+    ["es.config.mjs", true],
+    ["src/phxs/MyScript/index.ts", false],
+  ]) {
     const root = await fixture(t);
-    if (relative === "package.json") {
-      const pkg = readJson(root, relative);
-      pkg.scripts["build:ilst"] = "custom-command";
-      write(root, relative, JSON.stringify(pkg));
-    } else {
-      fs.appendFileSync(path.join(root, relative), "\n// 利用者の追記\n");
-    }
+    fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
+    fs.appendFileSync(path.join(root, relative), "\n利用者の追加・編集\n");
+    if (staged) git(root, "add", relative);
     const before = snapshot(root);
-    assert.equal(run(root, [], answers("aeft")).status, 1);
+    const result = run(root, [], answers("aeft", "n", "n"));
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /未コミット変更または未追跡ファイル/);
     assert.deepEqual(snapshot(root), before);
   }
 });
 
+test("Gitで管理されていないコピーでは開始しない", async (t) => {
+  const root = await fixture(t);
+  fs.rmSync(path.join(root, ".git"), { recursive: true });
+  const before = snapshot(root);
+  const result = run(root, [], answers());
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /Gitの状態を確認できません/);
+  assert.deepEqual(snapshot(root), before);
+});
 test("配布元をoriginにしたコピーはSSHとHTTPSのどちらでも停止する", async (t) => {
   const root = await fixture(t);
-  spawnSync("git", ["init", "-q"], { cwd: root });
   for (const url of [
     "https://github.com/YukiWorks432/extendscript-ts-template.git",
     "git@github.com:YukiWorks432/extendscript-ts-template.git",
   ]) {
-    spawnSync("git", ["config", "remote.origin.url", url], { cwd: root });
+    git(root, "config", "remote.origin.url", url);
     const before = snapshot(root);
     const result = run(root, [], answers());
     assert.equal(result.status, 1);
     assert.match(result.stderr, /配布元/);
     assert.deepEqual(snapshot(root), before);
   }
-});
-
-test("アプリのリンク先を削除しない", async (t) => {
-  const root = await fixture(t);
-  const outside = path.join(root, "kept-files");
-  fs.mkdirSync(outside);
-  write(root, "kept-files/value.txt", "保護対象\n");
-  fs.symlinkSync(outside, path.join(root, "src/phxs/custom-link"), "junction");
-  const result = run(root, [], answers("aeft"));
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(
-    fs.readFileSync(path.join(outside, "value.txt"), "utf8"),
-    "保護対象\n"
-  );
-  assert.equal(fs.existsSync(path.join(root, "src/phxs/custom-link")), true);
 });
 
 test("対応する全アプリを生成し、型検査と整形検査に成功する", async (t) => {
