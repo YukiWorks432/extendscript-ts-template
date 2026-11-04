@@ -227,14 +227,14 @@ export async function planConfiguration(root, choices) {
   );
   for (const relative of [...writes.keys(), ...removals]) {
     const absolute = path.resolve(root, relative);
+    if (!absolute.startsWith(path.resolve(root) + path.sep))
+      throw new Error("変更対象がプロジェクトの外です。");
     let ancestor = absolute;
     while (ancestor !== path.resolve(root)) {
       if (fs.lstatSync(ancestor, { throwIfNoEntry: false })?.isSymbolicLink())
         throw new Error("リンクを含む変更対象は適用できません: " + relative);
       ancestor = path.dirname(ancestor);
     }
-    if (!absolute.startsWith(path.resolve(root) + path.sep))
-      throw new Error("変更対象がプロジェクトの外です。");
   }
   return { apps, warnings, writes, removals, previousVersion };
 }

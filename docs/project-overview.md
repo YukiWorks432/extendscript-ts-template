@@ -3,6 +3,8 @@
 ExtendScript を TypeScript からトランスパイルして作成するためのテンプレートリポジトリ。
 複数の Adobe アプリ（After Effects, Illustrator, Photoshop 等）向けのスクリプトを1つのリポジトリで管理する軽量モノレポ構造。
 
+設定・CLI・共通API・成果物の安定範囲は[公開契約](public-contract.ja.md)を正本とします。以下は構成と利用方法の説明です。
+
 ## 技術スタック
 
 - **言語**: TypeScript → ES3 にトランスパイル（ExtendScript 向け）
@@ -72,7 +74,6 @@ export default {
       {
         name: "MyScript",     // src/aeft/MyScript/index.ts に対応
         version: "0.0.1",
-        build: true,           // true: ビルド対象
         license: true,         // true: ライセンスバナーを出力に挿入
       },
     ],
@@ -83,12 +84,13 @@ export default {
     {
       name: "tests",          // src/tests/index.ts に対応
       version: "0.0.1",
-      build: true,
       license: true,
     },
   ],
 };
 ```
+
+`build` は非推奨の互換設定です。省略・`true` は通常の対象、`false` は通常ビルドから除外し、`--all` / `-a` は上書きします。新しい設定では省略してください。
 
 ## tsconfig 構成
 
@@ -252,7 +254,8 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 pnpm add-app -- --app=idsn
 ```
 
-追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみ。
+雛形生成に対応するアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt`。
+この一覧は全製品の実機確認を示すものではない。製品版と確認内容は[検証記録](validation.md)を参照。
 任意のアプリID追加は未対応。
 
 実行すると以下を自動生成：
@@ -322,7 +325,7 @@ pnpm build --all
 
 型検査で失敗した場合は束ねる処理へ進まず、既存の成果物を保持します。
 束ねる処理で失敗した場合は新しい対象の開始を止め、開始済みの処理が終わるまで待ちます。
-ハッシュ履歴は全件成功後だけ確定し、失敗時には以前の履歴を保持します。
+ハッシュ履歴は全件成功後だけ確定し、失敗時には以前の履歴を保持します。束ねる工程の失敗では、一部の成果物が更新済みになる場合があり、全出力の巻き戻しは保証しません。
 
 `pnpm watch` は従来どおりRollupとTypeScriptプラグインの監視処理を使います。
 `--concurrency` と上記のメモリ設定は監視ビルドには適用されません。

@@ -3,7 +3,7 @@
   "packageAuthor": "YukiWorks432",
   "apps": ["aeft", "ilst", "phxs"],
   "files": {
-    "README.md": "a5bc95c069eb9495721b311e26d3c486bba828220e375ba28c5ce201481bd95f",
+    "README.md": "6ef872b9d2401e7261bff84349b0ad5f73a9879df340934d3d0e0197532611af",
     "es.config.mjs": "00b647ac5c31bad854c47e70e10f50a89e89e48965c514d0bcc30fb826d891ce",
     "AGENTS.md": "7d6edf1b03529646ec3f23d091a3a13db2db6b792957a67b1311bc9c134eb3de",
     ".agents/instructions/extendscript.md": "e0eea0121dffa0adc8b0a7aa470521f63d5b2d90e7035821049aa3462efdbd51",

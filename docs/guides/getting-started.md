@@ -2,6 +2,8 @@
 
 このガイドでは、テンプレートを使って新しい ExtendScript プロジェクトを始める手順を説明します。
 
+設定や共通APIの安定範囲は[公開契約](../public-contract.ja.md)を参照してください。
+
 ## 前提条件
 
 - Node.js `^24.22.1`
@@ -96,7 +98,7 @@ pnpm build
 単発ビルドは、選択対象をまとめて型検査・変換してから、最大4件のワーカーで束ねます。
 並列度は `pnpm build --concurrency=2` のように指定でき、`--concurrency=1` で逐次実行できます。
 型検査・変換が失敗した場合は既存の成果物を保持し、すべて成功した場合だけ差分判定用の
-履歴を更新します。監視ビルド `pnpm watch` は従来の経路を使います。
+履歴を更新します。束ねる工程の失敗では成果物の一部が更新される場合があります。監視ビルド `pnpm watch` は従来の経路を使います。
 メモリ上限の調整方法は[プロジェクト構成のビルド説明](../project-overview.md#開発コマンド)を参照してください。
 
 ### 4. Adobe アプリで実行
@@ -127,7 +129,8 @@ Illustrator は `pnpm build:ilst`、Photoshop は `pnpm build:phxs` を使えま
 pnpm add-app -- --app=idsn
 ```
 
-追加できるのは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` の正式対応アプリのみです。
+雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` です。
+雛形生成への対応と実機での確認範囲は異なります。詳細は[検証記録](../validation.md)を参照してください。
 追加したアプリには `pnpm build:<appId>` も自動で追加されます。
 
 ## ディレクトリ構造
@@ -221,3 +224,5 @@ declare class SomeUndefinedClass {
 初期設定と将来の更新は別の作業です。`Use this template` で作ったリポジトリは、
 配布元のコミット履歴を引き継ぎません。`upstream` の登録だけで通常のマージが
 できるとは限らないため、[任意の更新作業](../template-customization.md#将来のテンプレート更新)を確認してください。
+
+1.xの互換性は[公開契約](../public-contract.ja.md)の範囲で維持します。独自に変更した内部実装の取り込みでは、差分確認と競合解消が必要になる場合があります。

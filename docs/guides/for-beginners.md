@@ -91,7 +91,7 @@ gh --version
 
 ```bash
 node --version
-# v24.x.x と表示されれば OK
+# v24.22.1 以降の24系であることを確認
 ```
 
 ---
@@ -100,7 +100,7 @@ node --version
 
 Node.js のパッケージを管理するツールです。`npm` より高速でディスク容量も節約できます。
 
-このテンプレートは `package.json` の `devEngines.packageManager` で pnpm 12 系を指定します。pnpm を npm からインストールすると、テンプレート内で起動したときに、この範囲に合う版が使われます。
+このテンプレートは `package.json` の `devEngines.packageManager` で pnpm `^12.16.1` を指定します。pnpm を npm からインストールすると、テンプレート内で起動したときに、この範囲に合う版が使われます。
 
 Node.js をインストールした後、プロジェクトをクローンする前に、コマンドプロンプトまたは PowerShell で pnpm をインストールします。
 
@@ -112,7 +112,7 @@ npm install --global pnpm
 
 ```bash
 pnpm --version
-# pnpm 12.x と表示されれば OK
+# 12.16.1 以降の12系であることを確認
 ```
 
 ---
