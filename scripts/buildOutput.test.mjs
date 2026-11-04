@@ -695,3 +695,43 @@ export default (args) => base(args).map((option) => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("設定が文字列や空メッセージの例外で失敗しても履歴を確定しない", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-config-error-"));
+  try {
+    createTemporaryRollupProject(root);
+    const initial = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+      cwd: root,
+    });
+    assert.equal(initial.status, 0, initial.stdout + initial.stderr);
+    const output = path.join(root, "dist/aeft/example/example.jsx");
+    const history = path.join(root, "dist/temp/build-hashes.json");
+    const validOutput = fs.readFileSync(output);
+    const validHistory = fs.readFileSync(history);
+    fs.renameSync(
+      path.join(root, "rollup.config.mjs"),
+      path.join(root, "base.config.mjs")
+    );
+    for (const expression of ['"configuration failed"', 'new Error("")']) {
+      fs.writeFileSync(
+        path.join(root, "rollup.config.mjs"),
+        `import base from "./base.config.mjs";
+export default (args) => {
+  if (process.env.EXTENDSCRIPT_BUILD_PHASE === "bundle") throw ${expression};
+  return base(args);
+};
+`
+      );
+      const built = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+        cwd: root,
+      });
+      assert.notEqual(built.status, 0, built.stdout + built.stderr);
+      if (expression.startsWith('"'))
+        assert.match(built.stderr, /configuration failed/);
+      assert.deepEqual(fs.readFileSync(output), validOutput);
+      assert.deepEqual(fs.readFileSync(history), validHistory);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

@@ -23,8 +23,8 @@ if (isMainThread) {
     worker.on("message", (message) => {
       const current = pending;
       pending = null;
-      if (message.error) current.reject(new Error(message.error));
-      else current.resolve();
+      if (message.success) current.resolve();
+      else current.reject(new Error(message.error));
     });
     worker.on("error", (error) => {
       failure = error;
@@ -84,12 +84,16 @@ if (isMainThread) {
       if (!option)
         throw new Error(`Rollup設定に対象がありません: ${targetName}`);
       await buildOne({ option });
-      parentPort.postMessage({});
+      parentPort.postMessage({ success: true });
     } catch (error) {
       parentPort.postMessage({
-        error: [error.plugin, error.hook, error.message, error.frame]
-          .filter(Boolean)
-          .join("\n"),
+        success: false,
+        error:
+          error instanceof Error
+            ? [error.plugin, error.hook, error.message, error.frame]
+                .filter(Boolean)
+                .join("\n")
+            : String(error),
       });
     }
   });
