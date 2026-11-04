@@ -41,7 +41,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/plugin-transform-class-properties": "^7.29.7",
-    "@babel/plugin-transform-classes": "^7.29.7",
+    "@babel/plugin-transform-classes": "^7.29.11",
     "@babel/plugin-transform-property-mutators": "^7.29.7",
     "@babel/plugin-transform-reserved-words": "^7.29.7",
     "@babel/plugin-transform-shorthand-properties": "^7.29.7",
