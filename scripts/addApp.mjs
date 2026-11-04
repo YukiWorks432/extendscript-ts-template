@@ -13,6 +13,13 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import {
+  APP_TYPES_MAP,
+  EXAMPLE_SCRIPT,
+  createAppFiles,
+  getBuildScriptAlias,
+} from "./appScaffold.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -20,56 +27,6 @@ const projectRoot = path.resolve(__dirname, "..");
 const ES_CONFIG_PATH = path.resolve(projectRoot, "es.config.mjs");
 const PACKAGE_JSON_PATH = path.resolve(projectRoot, "package.json");
 const SRC_DIR = path.resolve(projectRoot, "src");
-const EXAMPLE_SCRIPT = {
-  name: "example",
-  version: "0.0.1",
-  build: true,
-  license: true,
-};
-
-const createScriptCommentBlock = (appId, name) => `/**
- * @script ${name}
- * @app ${appId}
- * @material-symbols TODO: 公式一覧を確認し、候補を3件カンマ区切りで記載
- * @description
- *   TODO: 対象・操作・得られる結果を1〜3文で記載
- *
- * @workflow
- *   1. TODO: 利用者から見た操作と結果を記載
- */`;
-
-// types-for-adobe のアプリID → ディレクトリ名マッピング
-const APP_TYPES_MAP = {
-  aeft: {
-    dir: "AfterEffects/22.0",
-    shared: ["shared/ScriptUI", "shared/XMPScript"],
-  },
-  ilst: {
-    dir: "Illustrator/2022",
-    shared: ["shared/ScriptUI"],
-  },
-  phxs: {
-    dir: "Photoshop/2015.5",
-    shared: ["shared/ScriptUI"],
-  },
-  idsn: {
-    dir: "InDesign/2022",
-    shared: ["shared/ScriptUI"],
-  },
-  ppro: {
-    dir: "Premiere/24.0",
-    shared: ["shared/ScriptUI"],
-  },
-  anmt: {
-    dir: "Animate/22.0",
-    shared: ["shared/ScriptUI"],
-  },
-  audt: {
-    dir: "Audition/2018",
-    shared: ["shared/ScriptUI"],
-  },
-};
-
 function detectLocale() {
   const env = process.env;
   const lang = String(
@@ -192,24 +149,6 @@ async function loadConfig() {
   }
 }
 
-function generateTsconfig(appId) {
-  const mapping = APP_TYPES_MAP[appId];
-  const types = [
-    `../../node_modules/types-for-adobe/${mapping.dir}`,
-    ...mapping.shared.map((s) => `../../node_modules/types-for-adobe/${s}`),
-  ];
-
-  return JSON.stringify(
-    {
-      extends: "../../tsconfig.json",
-      compilerOptions: { types },
-      include: ["./**/*", "../lib/**/*", "../types/**/*", "../init.ts"],
-    },
-    null,
-    2
-  );
-}
-
 function findScriptsBlockEnd(content) {
   // scripts: { ... } ブロックの閉じ } を正確に特定するため、ブレースの深度を追跡
   const scriptsStart = content.search(/scripts\s*:\s*\{/);
@@ -299,8 +238,7 @@ function shouldInsertAfterBuildScript(currentKey, nextKey) {
   return isBuildKey && !nextIsBuildKey;
 }
 
-export const getBuildScriptAlias = (appId) =>
-  `node ./scripts/build.mjs --app=${appId}`;
+export { getBuildScriptAlias };
 
 function addBuildScriptAlias(scripts, appId) {
   const scriptName = `build:${appId}`;
@@ -355,42 +293,13 @@ async function updatePackageScripts(appId) {
 }
 
 async function scaffold(appId) {
-  const { appDir, esConfigContent } = await validateScaffold(appId);
+  const { esConfigContent } = await validateScaffold(appId);
 
-  // tsconfig.json
-  const tsconfigContent = generateTsconfig(appId);
-  await mkdir(appDir, { recursive: true });
-  await writeFile(
-    path.resolve(appDir, "tsconfig.json"),
-    tsconfigContent + "\n",
-    { encoding: "utf8", flag: "wx" }
-  );
-
-  // types/index.d.ts
-  const typesDir = path.resolve(appDir, "types");
-  await mkdir(typesDir, { recursive: true });
-  await writeFile(
-    path.resolve(typesDir, "index.d.ts"),
-    `// Type definitions specific to ${appId}.\n`,
-    { encoding: "utf8", flag: "wx" }
-  );
-
-  // lib/.gitkeep
-  const libDir = path.resolve(appDir, "lib");
-  await mkdir(libDir, { recursive: true });
-  await writeFile(path.resolve(libDir, ".gitkeep"), "", {
-    encoding: "utf8",
-    flag: "wx",
-  });
-
-  // example/index.ts
-  const exampleDir = path.resolve(appDir, "example");
-  await mkdir(exampleDir, { recursive: true });
-  await writeFile(
-    path.resolve(exampleDir, "index.ts"),
-    `${createScriptCommentBlock(appId, EXAMPLE_SCRIPT.name)}\n\nimport "../../init";\nimport { entry } from "../../lib/lib";\n\nentry("example", () => {\n  // TODO: Implement example\n});\n`,
-    { encoding: "utf8", flag: "wx" }
-  );
+  for (const [relative, content] of Object.entries(createAppFiles(appId))) {
+    const target = path.join(projectRoot, relative);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, content, { encoding: "utf8", flag: "wx" });
+  }
 
   // es.config.mjs 更新
   await updateEsConfig(appId, esConfigContent);

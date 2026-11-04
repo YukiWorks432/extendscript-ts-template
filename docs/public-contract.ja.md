@@ -25,16 +25,19 @@ extendscript-ts-template の1.xで維持する仕様と、版番号の判断を�
 
 ### コマンド
 
-| コマンド                                               | 役割                                                                                                            |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `pnpm new`                                             | スクリプトと設定を生成します。対話式と `--app`・`--name`・`--license`・`--ui=scriptui` による指定を維持します。 |
-| `pnpm add-app -- --app=<appId>`                        | 対応アプリの構成と `build:<appId>` の別名を追加します。                                                         |
-| `pnpm typecheck`                                       | 成果物を生成せず全体を型検査します。`--app` は対象アプリに限定し、参照する共有コードも検査します。              |
-| `pnpm build`                                           | 入力と有効な設定の変更に基づき差分ビルドします。`--all` / `-a` は強制再生成、`--app` は対象アプリの限定です。   |
-| `pnpm build:<appId>`                                   | 対応するアプリ限定の通常ビルドです。                                                                            |
-| `pnpm watch`                                           | 変更を監視してビルドします。型エラー中も監視を継続し、出力する場合があります。通常ビルドの成功とは区別します。  |
-| `pnpm clean`                                           | 差分判定の履歴を削除します。成果物全体は削除しません。                                                          |
-| `pnpm lint`・`pnpm fmt`・`pnpm fmt:check`・`pnpm test` | コード検査・整形・整形確認・Node.js側の回帰検証という役割を維持します。                                         |
+| コマンド                                               | 役割                                                                                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run configure`                                   | 編集前のGitコピーを対話式で初期設定します。未コミット変更・未追跡ファイルがある場合の停止、反映前の確認、設定済みでの再実行防止を維持します。 |
+| `pnpm new`                                             | スクリプトと設定を生成します。対話式と `--app`・`--name`・`--license`・`--ui=scriptui` による指定を維持します。                               |
+| `pnpm add-app -- --app=<appId>`                        | 対応アプリの構成と `build:<appId>` の別名を追加します。                                                                                       |
+| `pnpm typecheck`                                       | 成果物を生成せず全体を型検査します。`--app` は対象アプリに限定し、参照する共有コードも検査します。                                            |
+| `pnpm build`                                           | 入力と有効な設定の変更に基づき差分ビルドします。`--all` / `-a` は強制再生成、`--app` は対象アプリの限定です。                                 |
+| `pnpm build:<appId>`                                   | 対応するアプリ限定の通常ビルドです。                                                                                                          |
+| `pnpm watch`                                           | 変更を監視してビルドします。型エラー中も監視を継続し、出力する場合があります。通常ビルドの成功とは区別します。                                |
+| `pnpm clean`                                           | 差分判定の履歴を削除します。成果物全体は削除しません。                                                                                        |
+| `pnpm lint`・`pnpm fmt`・`pnpm fmt:check`・`pnpm test` | コード検査・整形・整形確認・Node.js側の回帰検証という役割を維持します。                                                                       |
+
+初回設定の選択肢、既定値、適用条件は[初期設定](template-customization.md)を参照してください。`package.json` の `templateConfigured: true` は初回設定の完了印として維持します。配布初期状態との内容照合は行わず、コミット済みの独自変更やGitの除外対象を初期状態と区別する保証はありません。編集済みのプロジェクトは手動設定の対象です。
 
 通常ビルドの `--concurrency` は1以上の安全な整数で並列度を指定し、1なら逐次実行します。`BUILD_ALL`、`EXTENDSCRIPT_COMPILER_MEMORY_MB`、`EXTENDSCRIPT_WORKER_MEMORY_MB` の公開された意味を維持します。メモリ指定はMiB単位の正整数のヒープ上限で、プロセス全体の使用量ではありません。並列度とメモリ設定は監視ビルドには適用しません。内部の工程制御用環境変数は公開対象ではありません。
 
@@ -60,7 +63,19 @@ extendscript-ts-template の1.xで維持する仕様と、版番号の判断を�
 
 各配布版の `package.json` の `engines`・`devEngines` と、採用するTypeScriptの入力構文・型設定を対応環境の基準とします。対応版はNode.js `^24.22.1`、pnpm `^12.16.1`、TypeScript `4.9.5` です。TypeScriptの固定理由は [ADR 0001](adr/0001-typescript-4-9-5-for-es3.md) を参照してください。コンパイラーの内部更新でも、有効な入力を非互換に制限する場合はメジャー変更です。
 
-初期構成は `aeft`・`ilst`・`phxs` です。構成生成は加えて `idsn`・`ppro`・`anmt`・`audt` に対応します。実機確認済みのアプリ・版・条件は検証記録に示します。非公式のTypes-for-Adobeによる型検査と、実機での動作確認は分けて扱います。
+追加の拡張機能を使わず、生成した単体JSXを標準UIから実行できる製品を対象とします。初期構成は `aeft`・`ilst`・`phxs` です。初期設定とアプリ追加による構成生成は、加えて `idsn`・`audt` に対応します。
+
+| 製品          | ID     | 標準UIでの実行経路                                                                                                                                                             |
+| ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| After Effects | `aeft` | [File → Scripts → Run Script File](https://helpx.adobe.com/after-effects/desktop/automate-in-after-effects/automate-animation/scripts.html)                                    |
+| Illustrator   | `ilst` | [File → Scripts → Other Script](https://helpx.adobe.com/illustrator/desktop/automate-visualize-data/automate-actions/install-and-run-scripts.html)                             |
+| Photoshop     | `phxs` | [File → Scripts → Browse](https://helpx.adobe.com/photoshop/desktop/automate-tasks/automation-settings-and-presets/automate-photoshop-with-scripts.html)                       |
+| InDesign      | `idsn` | [Window → Utilities → Scriptsからスクリプトを実行](https://helpx.adobe.com/indesign/desktop/automation-and-scripting/document-automation/automate-workflows-with-scripts.html) |
+| Audition      | `audt` | [File → Browse and Run Script](https://blog.adobe.com/en/publish/2018/04/03/audition-updates-spring-2018)                                                                      |
+
+AnimateとPremiere Proは対象外です。Animateの[コマンド実行](https://helpx.adobe.com/jp/animate/desktop/multimedia-and-video/automating-tasks-commands-menu.html)はJSFL向けで、[JavaScript API](https://github.com/AdobeDocs/developers-animatesdk-docs/blob/master/Introduction/JavaScript_API_objects.md)も `app` を前提にした現行構成とは異なります。Premiere Proには単体JSXを選んで実行する標準メニューがなく、Adobeが案内する[ExtendScriptの実行経路はCEPパネル](https://community.adobe.com/questions-729/is-there-a-way-to-launch-one-time-use-jsx-script-files-like-you-can-in-after-effects-1401948)です。両製品のIDは初期設定・アプリ追加で拒否しますが、既存の利用者の設定やスクリプトを削除する処理は行いません。
+
+実機確認済みのアプリ・版・条件は[検証記録](validation.md)に示します。InDesign・Auditionは実機未確認です。非公式のTypes-for-Adobeによる型検査・ビルドと、実機での動作確認は分けて扱います。
 
 テンプレートは採用版の `extendscript-compat` の実行時初期化とビルド時補正を組み込み、補正後のES3構文検査を行います。APIごとの対応範囲・副作用・制限は採用版のcompatの契約に従います。[ポリフィル](polyfills.md) が参照先を案内します。`Symbol`・`Promise` やES5以降の全APIを提供する契約ではありません。補正後に再圧縮などコードを変更する工程を追加しないでください。
 

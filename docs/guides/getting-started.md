@@ -22,10 +22,18 @@ TypeScript 4.9.5 を ES3 出力のため固定している理由は、
 ```bash
 git clone <your-repo-url>
 cd <your-repo>
-pnpm i
+pnpm install
+pnpm run configure
 ```
 
+初期設定は、Gitで取得したコピーで編集を始める前に実行します。
+未コミット変更・未追跡ファイルがあれば開始しません。
+使用アプリを1つ以上選び、削除対象のディレクトリは配下も含むことを確認して反映します。
+選択肢と適用条件は[初期設定](../template-customization.md)を参照してください。
+
 ## 最初のスクリプトを作る
+
+以下はAfter Effectsの例です。別のアプリを選んだ場合は、アプリIDと使用するAdobe APIを置き換えてください。
 
 ### 1. スクリプト追加
 
@@ -123,7 +131,8 @@ Illustrator は `pnpm build:ilst`、Photoshop は `pnpm build:phxs` を使えま
 pnpm add-app -- --app=idsn
 ```
 
-雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` です。
+雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `audt` です。
+Animate・Premiere Proは対象外です。対応条件は[公開契約](../public-contract.ja.md#対応環境と互換補正)を参照してください。
 雛形生成への対応と実機での確認範囲は異なります。詳細は[検証記録](../validation.md)を参照してください。
 追加したアプリには `pnpm build:<appId>` も自動で追加されます。
 
@@ -213,63 +222,10 @@ declare class SomeUndefinedClass {
 - `docs/polyfills.md` で使用可能な ES6+ 機能を確認できます
 - `es.config.mjs` でスクリプトのビルド設定を調整できます
 
-## テンプレートのアップデートを取り込む
+## 将来のテンプレート更新
 
-このリポジトリは `YukiWorks432/extendscript-ts-template` を元に作られたテンプレートリポジトリです。
-元テンプレートにポリフィルやビルドツールの更新があった場合、以下の手順で自分のスクリプトを消さずに取り込めます。
+初期設定と将来の更新は別の作業です。`Use this template` で作ったリポジトリは、
+配布元のコミット履歴を引き継ぎません。`upstream` の登録だけで通常のマージが
+できるとは限らないため、[任意の更新作業](../template-customization.md#将来のテンプレート更新)を確認してください。
 
 1.xの互換性は[公開契約](../public-contract.ja.md)の範囲で維持します。独自に変更した内部実装の取り込みでは、差分確認と競合解消が必要になる場合があります。
-
-### 0. AI エージェントを使う場合
-
-Codex など、このリポジトリの `.agents/skills` を読める環境なら、`update-from-upstream` スキルに任せると自動で差分確認・取り込みができます。
-
-### 1. 元テンプレートを「upstream」として登録する
-
-初回のみ実行します（一度設定すれば次回以降は不要です）。
-
-```bash
-git remote add upstream https://github.com/YukiWorks432/extendscript-ts-template.git
-```
-
-登録できているか確認したい場合：
-
-```bash
-git remote -v
-```
-
-出力に `upstream` が表示されれば OK です。
-
-### 2. 最新の情報を取得する
-
-```bash
-git fetch upstream
-```
-
-### 3. アップデート内容を確認する
-
-元テンプレートと自分のリポジトリの差分を確認します：
-
-```bash
-git diff --name-status HEAD..upstream/main
-```
-
-### 4. インフラファイルだけ取り込む
-
-自分のスクリプト（`src/aeft/<スクリプト名>/` など）は上書きしないよう、
-インフラ部分だけを指定して取り込みます：
-
-```bash
-git checkout upstream/main -- scripts/ src/lib/ src/init.ts rollup.config.mjs tsconfig.json package.json
-```
-
-> **注意**: `es.config.mjs` には自分のスクリプト設定が含まれているため、上記コマンドには含めていません。
-> 元テンプレートで `es.config.mjs` の構造が変わっていた場合は、手動で確認して反映してください。
-
-### 5. 依存関係を更新して型チェック・ビルド確認する
-
-```bash
-pnpm install
-pnpm typecheck
-pnpm build --all
-```

@@ -111,6 +111,12 @@ Rollupが生成する補助コードでは予約語のプロパティ名を引�
 | Illustrator   | `src/ilst/tsconfig.json` | `Illustrator/2022`  |
 | Photoshop     | `src/phxs/tsconfig.json` | `Photoshop/2015.5`  |
 
+## 初回設定
+
+新しいGitコピーでは、`pnpm install` の後・編集前に `pnpm run configure` を実行できます。
+設定後のアプリ構成に合わせ、フォルダ・スクリプト登録・ビルド別名を一緒に整えます。
+未コミット変更・未追跡ファイルがあれば停止します。選択肢と適用条件は[初期設定](template-customization.md)を参照してください。
+
 ## 新規スクリプト追加
 
 ### CLI モード（AI エージェント向け）
@@ -252,8 +258,9 @@ entryUI("MyScript", __ES_THIS__, (win) => {
 pnpm add-app -- --app=idsn
 ```
 
-雛形生成に対応するアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt`。
+雛形生成に対応するアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `audt`。
 この一覧は全製品の実機確認を示すものではない。製品版と確認内容は[検証記録](validation.md)を参照。
+対応条件とAnimate・Premiere Proの除外理由は[公開契約](public-contract.ja.md#対応環境と互換補正)を参照。
 任意のアプリID追加は未対応。
 
 実行すると以下を自動生成：
@@ -273,6 +280,7 @@ pnpm add-app -- --app=idsn
 
 | コマンド                | 説明                                 |
 | ----------------------- | ------------------------------------ |
+| `pnpm run configure`    | 新しいコピーの初回設定               |
 | `pnpm build`            | 変更のあるスクリプトをビルド         |
 | `pnpm build --all`      | 全スクリプトを強制ビルド             |
 | `pnpm build --app=aeft` | 特定アプリのスクリプトのみビルド     |

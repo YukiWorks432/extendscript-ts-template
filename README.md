@@ -46,8 +46,9 @@ ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブ�
 | Photoshop     | `phxs` | `src/phxs/`  |
 
 `pnpm add-app -- --app=<appId>` で新しいアプリを追加できます。
-雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `ppro`, `anmt`, `audt` です。
-雛形生成への対応と実機での確認範囲は異なります。詳細は[検証記録](docs/validation.md)を参照してください。
+雛形を追加できるアプリIDは `aeft`, `ilst`, `phxs`, `idsn`, `audt` です。
+追加の拡張機能なしで単体JSXを標準UIから実行できる製品を対象にします。Animate・Premiere Proは対象外です。
+実行経路と除外理由は[公開契約](docs/public-contract.ja.md#対応環境と互換補正)、実機での確認範囲は[検証記録](docs/validation.md)を参照してください。
 
 ## 環境 / Environment
 
@@ -72,10 +73,17 @@ Windows上のAfter Effects・Illustrator・Photoshop・Premiere Proについて�
 初期整理の詳細は [テンプレート利用後の初期整理](docs/template-customization.md) を参照してください。
 
 ```bash
-pnpm i
+pnpm install
+pnpm run configure
+pnpm new
 pnpm typecheck
 pnpm build
 ```
+
+初回設定は、Gitで取得したコピーの依存導入後・編集を始める前に実行します。
+プロジェクト名と使用アプリ、サンプル・AI向け設定の利用を選び、変更一覧を確認して反映します。
+未コミット変更・未追跡ファイルがあれば開始しません。選択肢と適用条件は
+[テンプレート利用後の初期設定](docs/template-customization.md)を参照してください。
 
 ## 使い方 / Usage
 
@@ -181,6 +189,7 @@ pnpm watch
 
 | コマンド                | 説明                             |
 | ----------------------- | -------------------------------- |
+| `pnpm run configure`    | 新しいコピーの初回設定           |
 | `pnpm build`            | 変更のあるスクリプトをビルド     |
 | `pnpm build --all`      | 全スクリプトを強制ビルド         |
 | `pnpm build --app=aeft` | 特定アプリのみビルド             |
