@@ -3,48 +3,17 @@ import path from "path";
 import process from "process";
 import { pathToFileURL } from "url";
 
-import { rollup } from "rollup";
-import { loadConfigFile } from "rollup/loadConfigFile";
+import fs from "node:fs";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-import { BUILD_HASH_PLUGIN_NAME, saveBuildHashes } from "../rollup.config.mjs";
+import { saveBuildHashes } from "./buildState.mjs";
 import {
   BuildArgumentError,
   getDefaultConcurrency,
   parseBuildArguments,
+  parseMemoryLimit,
 } from "./buildOptions.mjs";
-import { BuildSchedulerError, runBuildJobs } from "./buildScheduler.mjs";
-
-const getBuildHashState = (option) => {
-  const plugin = (option.plugins || []).find(
-    (candidate) => candidate && candidate.name === BUILD_HASH_PLUGIN_NAME
-  );
-  return plugin ? plugin.buildHashState : null;
-};
-
-export const findBuildHashState = (options) => {
-  const states = options.map(getBuildHashState).filter(Boolean);
-  if (states.length === 0) {
-    throw new Error("ビルドハッシュの調停情報を取得できませんでした。");
-  }
-
-  const firstState = states[0];
-  if (states.some((state) => state.hashes !== firstState.hashes)) {
-    throw new Error("ビルドハッシュの調停情報が対象間で一致しません。");
-  }
-
-  return firstState;
-};
-
-const getTargetMetadata = (option, index) => {
-  const state = getBuildHashState(option);
-  const metadata = state && state.metadata;
-  if (!metadata || !metadata.targetName) {
-    throw new Error(
-      `ビルド対象 ${index + 1} の識別情報を取得できませんでした。`
-    );
-  }
-  return metadata;
-};
 
 const getOutputOptions = (option) => {
   const output = option.output;
@@ -54,7 +23,8 @@ const getOutputOptions = (option) => {
   return Array.isArray(output) ? output : [output];
 };
 
-export const buildOne = async ({ option, rollupFn = rollup }) => {
+export const buildOne = async ({ option, rollupFn }) => {
+  rollupFn ??= (await import("rollup")).rollup;
   const { output, watch: _watch, ...inputOptions } = option;
   const bundle = await rollupFn(inputOptions);
 
@@ -68,48 +38,47 @@ export const buildOne = async ({ option, rollupFn = rollup }) => {
 };
 
 export const executeBuild = async ({
-  options,
-  hashState,
-  concurrency,
-  rollupFn = rollup,
+  prepare,
+  bundle,
   saveHashes = saveBuildHashes,
 }) => {
-  const jobs = options.map((option, index) => ({
-    label: getTargetMetadata(option, index).targetName,
-    option,
-  }));
-
-  const results = await runBuildJobs({
-    jobs,
-    concurrency,
-    run: async (job) => {
-      await buildOne({ option: job.option, rollupFn });
-      return { label: job.label, status: "成功" };
-    },
-  });
-
-  saveHashes(hashState.hashes);
-  return results.toSorted((left, right) => {
-    if (left.label < right.label) return -1;
-    if (left.label > right.label) return 1;
-    return 0;
-  });
+  const plan = await prepare();
+  if (plan.targets.length === 0) return [];
+  await bundle(plan);
+  saveHashes(plan.hashes);
+  return plan.targets
+    .map(({ targetName }) => ({ label: targetName, status: "成功" }))
+    .toSorted((left, right) =>
+      left.label < right.label ? -1 : left.label > right.label ? 1 : 0
+    );
 };
 
+const runStage = (script, args, memoryMb, env) =>
+  new Promise((resolve, reject) => {
+    // コマンドラインの上限を優先し、親のNODE_OPTIONSによるヒープ拡大を防ぐ。
+    const child = spawn(
+      process.execPath,
+      [
+        `--max-old-space-size=${memoryMb}`,
+        "--max-semi-space-size=8",
+        fileURLToPath(new URL(script, import.meta.url)),
+        ...args,
+      ],
+      { stdio: "inherit", windowsHide: true, env }
+    );
+    child.on("error", reject);
+    child.on("exit", (code, signal) => {
+      if (code === 0) resolve();
+      else reject(new Error(`${script}: 終了コード ${code ?? signal}`));
+    });
+  });
+
 const printUsage = () => {
-  console.log(`使い方: pn build [--all|-a] [--app=<appId>] [--concurrency=<正整数>]
+  console.log(`使い方: pnpm build [--all|-a] [--app=<appId>] [--concurrency=<正整数>]
 
 既定の並列度: min(4, 利用可能な並列数, 対象件数)
 --concurrency=1 を指定すると、範囲限定を維持したまま逐次実行します。
-監視ビルドは pn watch で実行し、この指定の対象外です。`);
-};
-
-const restoreEnvironmentValue = (name, value) => {
-  if (value === undefined) {
-    delete process.env[name];
-    return;
-  }
-  process.env[name] = value;
+監視ビルドは pnpm watch で実行し、この指定の対象外です。`);
 };
 
 const main = async () => {
@@ -130,55 +99,68 @@ const main = async () => {
     return;
   }
 
-  const previousApp = process.env.EXTENDSCRIPT_BUILD_APP;
-  const previousBuildAll = process.env.BUILD_ALL;
-  const previousDefer = process.env.EXTENDSCRIPT_DEFER_BUILD_HASHES;
-
+  let temporaryDirectory;
   try {
-    if (argumentsConfig.app === null) {
-      delete process.env.EXTENDSCRIPT_BUILD_APP;
-    } else {
-      process.env.EXTENDSCRIPT_BUILD_APP = argumentsConfig.app;
-    }
-    if (argumentsConfig.all) {
-      process.env.BUILD_ALL = "1";
-    }
-    process.env.EXTENDSCRIPT_DEFER_BUILD_HASHES = "1";
-
-    const configPath = path.resolve("rollup.config.mjs");
-    const { options, warnings } = await loadConfigFile(configPath, {});
-    warnings.flush();
-
-    const hashState = findBuildHashState(options);
-    const requestedConcurrency =
-      argumentsConfig.concurrency ??
-      getDefaultConcurrency(options.length, os.availableParallelism());
-    const concurrency = Math.min(requestedConcurrency, options.length);
-
-    console.log(`並列度 ${concurrency} で ${options.length} 件を実行します。`);
+    const compilerMemory = parseMemoryLimit(
+      "EXTENDSCRIPT_COMPILER_MEMORY_MB",
+      process.env,
+      512
+    );
+    const workerMemory = parseMemoryLimit(
+      "EXTENDSCRIPT_WORKER_MEMORY_MB",
+      process.env,
+      192
+    );
+    temporaryDirectory = fs.mkdtempSync(
+      path.join(os.tmpdir(), "extendscript-build-")
+    );
+    const manifestPath = path.join(temporaryDirectory, "build.json");
+    const environment = {
+      ...process.env,
+      EXTENDSCRIPT_DEFER_BUILD_HASHES: "1",
+    };
+    delete environment.EXTENDSCRIPT_BUILD_APP;
+    delete environment.EXTENDSCRIPT_BUILD_PHASE;
+    delete environment.EXTENDSCRIPT_BUILD_MANIFEST;
+    const configArgs = { all: argumentsConfig.all, app: argumentsConfig.app };
     const results = await executeBuild({
-      options,
-      hashState,
-      concurrency,
+      prepare: async () => {
+        await runStage(
+          "./buildCompile.mjs",
+          [manifestPath, JSON.stringify(configArgs)],
+          compilerMemory,
+          environment
+        );
+        return JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      },
+      bundle: async (plan) => {
+        const requested =
+          argumentsConfig.concurrency ??
+          getDefaultConcurrency(plan.targets.length, os.availableParallelism());
+        const concurrency = Math.min(requested, plan.targets.length);
+        console.log(
+          `並列度 ${concurrency} で ${plan.targets.length} 件を実行します。`
+        );
+        await runStage(
+          "./buildBundle.mjs",
+          [manifestPath, String(concurrency)],
+          workerMemory,
+          environment
+        );
+      },
     });
-
-    console.log("ビルド結果:");
-    results.forEach(({ label, status }) => {
-      console.log(`- ${label}: ${status}`);
-    });
-  } catch (error) {
-    if (error instanceof BuildSchedulerError) {
-      console.error(`ビルドに失敗しました: ${error.message}`);
-      console.error("失敗を検出したため、未開始の処理は停止しました。");
-    } else {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`ビルドに失敗しました: ${message}`);
+    if (results.length) {
+      console.log("ビルド結果:");
+      results.forEach(({ label, status }) =>
+        console.log(`- ${label}: ${status}`)
+      );
     }
+  } catch (error) {
+    console.error(`ビルドに失敗しました: ${error.message}`);
     process.exitCode = 1;
   } finally {
-    restoreEnvironmentValue("EXTENDSCRIPT_BUILD_APP", previousApp);
-    restoreEnvironmentValue("BUILD_ALL", previousBuildAll);
-    restoreEnvironmentValue("EXTENDSCRIPT_DEFER_BUILD_HASHES", previousDefer);
+    if (temporaryDirectory)
+      fs.rmSync(temporaryDirectory, { recursive: true, force: true });
   }
 };
 

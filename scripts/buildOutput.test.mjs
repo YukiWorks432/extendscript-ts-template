@@ -86,10 +86,14 @@ const createTemporaryRollupProject = (root) => {
     path.resolve(projectRoot, "es.config.mjs"),
     path.join(root, "es.config.mjs")
   );
-  fs.copyFileSync(
-    path.resolve(projectRoot, "scripts/buildHash.mjs"),
-    path.join(root, "scripts", "buildHash.mjs")
-  );
+  for (const name of fs.readdirSync(path.join(projectRoot, "scripts"))) {
+    if (name.endsWith(".mjs") && !name.endsWith(".test.mjs")) {
+      fs.copyFileSync(
+        path.join(projectRoot, "scripts", name),
+        path.join(root, "scripts", name)
+      );
+    }
+  }
   fs.symlinkSync(
     path.resolve(projectRoot, "node_modules"),
     path.join(root, "node_modules"),
@@ -553,6 +557,140 @@ try {
       fs.existsSync(path.join(root, "dist/aeft/example/example.jsx")),
       false
     );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("選択外の型エラーを除外し、選択対象の型エラーでは既存出力と履歴を保持する", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-compile-scope-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.mkdirSync(path.join(root, "src/aeft/types"));
+    fs.writeFileSync(
+      path.join(root, "src/aeft/types/index.d.ts"),
+      "interface Application { beginUndoGroup: (name: string) => void; }\n"
+    );
+    fs.mkdirSync(path.join(root, "src/types"));
+    fs.writeFileSync(
+      path.join(root, "src/types/index.d.ts"),
+      "interface Application { beginUndoGroup?: (name: string) => void; }\n"
+    );
+    fs.writeFileSync(
+      path.join(root, "src/aeft/example/index.ts"),
+      'export function begin(): void { app.beginUndoGroup("example"); }\n'
+    );
+    const environment = { ...process.env, BUILD_ALL: "0" };
+    const initial = runNodeScript(buildScriptPath, ["--app=aeft"], {
+      cwd: root,
+      env: environment,
+    });
+    assert.equal(initial.status, 0, initial.stdout + initial.stderr);
+    const source = path.join(root, "src/aeft/example/index.ts");
+    const sibling = path.join(root, "src/aeft/unselected/index.ts");
+    fs.mkdirSync(path.dirname(sibling), { recursive: true });
+    fs.writeFileSync(sibling, "export const invalid: string = 123;\n");
+    fs.writeFileSync(source, 'export const value: string = "changed";\n');
+    const changed = runNodeScript(buildScriptPath, ["--app=aeft"], {
+      cwd: root,
+      env: environment,
+    });
+    assert.equal(changed.status, 0, changed.stdout + changed.stderr);
+    const output = path.join(root, "dist/aeft/example/example.jsx");
+    const history = path.join(root, "dist/temp/build-hashes.json");
+    const validOutput = fs.readFileSync(output);
+    const validHistory = fs.readFileSync(history);
+    fs.writeFileSync(source, "export const invalid: string = 123;\n");
+    const failing = runNodeScript(buildScriptPath, ["--app=aeft"], {
+      cwd: root,
+      env: environment,
+    });
+    assert.notEqual(failing.status, 0, failing.stdout + failing.stderr);
+    assert.match(failing.stdout + failing.stderr, /TS2322/);
+    assert.deepEqual(fs.readFileSync(output), validOutput);
+    assert.deepEqual(fs.readFileSync(history), validHistory);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("通常ビルドにもRollup設定の追加処理・出力先・ソースマップを適用する", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-custom-build-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.renameSync(
+      path.join(root, "rollup.config.mjs"),
+      path.join(root, "base.config.mjs")
+    );
+    fs.writeFileSync(
+      path.join(root, "rollup.config.mjs"),
+      `import base from "./base.config.mjs";
+export default (args) => base(args).map((option) => ({
+  ...option,
+  output: { ...option.output, file: "dist/custom.jsx", sourcemap: true },
+  plugins: [...option.plugins, {
+    name: "custom-output",
+    generateBundle(_output, bundle) { for (const chunk of Object.values(bundle)) { if (chunk.type === "chunk") chunk.code += "\\n/* CUSTOM_RESULT */"; } },
+  }],
+}));
+`
+    );
+    const built = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+      cwd: root,
+    });
+    assert.equal(built.status, 0, built.stdout + built.stderr);
+    assert.match(
+      fs.readFileSync(path.join(root, "dist/custom.jsx"), "utf8"),
+      /CUSTOM_RESULT/
+    );
+    const map = JSON.parse(
+      fs.readFileSync(path.join(root, "dist/custom.jsx.map"), "utf8")
+    );
+    assert.ok(
+      map.sources.some((source) => source.endsWith("src/aeft/example/index.ts"))
+    );
+    assert.ok(map.mappings.length > 0);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ワーカーの最終ES3検査で失敗した場合も履歴を更新しない", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-worker-failure-"));
+  try {
+    createTemporaryRollupProject(root);
+    const initial = runNodeScript(buildScriptPath, ["--app=aeft", "--all"], {
+      cwd: root,
+    });
+    assert.equal(initial.status, 0, initial.stdout + initial.stderr);
+    const history = path.join(root, "dist/temp/build-hashes.json");
+    const validHistory = fs.readFileSync(history);
+    fs.renameSync(
+      path.join(root, "rollup.config.mjs"),
+      path.join(root, "base.config.mjs")
+    );
+    fs.writeFileSync(
+      path.join(root, "rollup.config.mjs"),
+      `import base from "./base.config.mjs";
+export default (args) => base(args).map((option) => {
+  option.plugins.unshift({ name: "invalid-output", generateBundle(_output, bundle) {
+    for (const chunk of Object.values(bundle)) { if (chunk.type === "chunk") chunk.code += "\\nvar invalid = value?.name;"; }
+  } });
+  return option;
+});
+`
+    );
+    const built = runNodeScript(
+      buildScriptPath,
+      ["--app=aeft", "--all", "--concurrency=1"],
+      { cwd: root }
+    );
+    assert.notEqual(built.status, 0, built.stdout + built.stderr);
+    assert.match(
+      built.stdout + built.stderr,
+      /extendscript-compat[\s\S]*generateBundle/
+    );
+    assert.deepEqual(fs.readFileSync(history), validHistory);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

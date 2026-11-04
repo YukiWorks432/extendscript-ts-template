@@ -6,6 +6,7 @@ import {
   getDefaultConcurrency,
   parseBuildArguments,
   parseConcurrencyValue,
+  parseMemoryLimit,
 } from "./buildOptions.mjs";
 
 test("ビルド引数は長短形式と等号・分離形式を解析する", () => {
@@ -70,4 +71,16 @@ test("並列度は1以上の安全な整数だけを受け付ける", () => {
     BuildArgumentError
   );
   assert.throws(() => parseBuildArguments(["--unknown"]), BuildArgumentError);
+});
+
+test("メモリ上限は未指定時の既定値とMiB単位の正整数を受け付ける", () => {
+  const name = "EXTENDSCRIPT_WORKER_MEMORY_MB";
+  assert.equal(parseMemoryLimit(name, {}, 321), 321);
+  assert.equal(parseMemoryLimit(name, { [name]: "768" }, 321), 768);
+  for (const value of ["", "0", "-1", "1.5", "abc", "9007199254740992"]) {
+    assert.throws(
+      () => parseMemoryLimit(name, { [name]: value }, 321),
+      BuildArgumentError
+    );
+  }
 });

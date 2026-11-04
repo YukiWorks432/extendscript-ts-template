@@ -220,6 +220,9 @@ importers:
       rollup-plugin-license:
         specifier: ^3.7.1
         version: 3.7.1(picomatch@4.0.7)(rollup@4.67.4)
+      terser:
+        specifier: 5.51.2
+        version: 5.51.2
       tslib:
         specifier: 2.9.1
         version: 2.9.1
