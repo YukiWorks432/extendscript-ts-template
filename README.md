@@ -14,6 +14,23 @@ ExtendScriptの制約により、`Symbol` `Promise`など、一部のライブ�
 型情報には[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe)を使用しています。  
 これは有志によって作成されたもので、公式の情報ではないため、定義されていない情報がいくつもあります。足りない定義などがあればプルリクエストを検討してください。
 
+## TypeScriptで記述
+
+型情報を使いながら、アロー関数や分割代入、配列メソッドなどでスクリプトを記述できます。
+次の図は、選択レイヤー名の一覧を出力する同じ処理を、ExtendScriptの直接記述とTypeScriptで比較した例です。
+
+![選択レイヤー名の一覧出力を、ExtendScriptの直接記述と、型注釈・配列操作を使うTypeScriptで比較](docs/images/extendscript-typescript-comparison.png)
+
+## 生成コードの互換補正
+
+圧縮後の生成コードに `extendscript-compat` の補正を適用し、最終出力をES3構文として検査します。
+次の図は、混在する `&&` と `||` の優先順位を括弧で保護する例です。
+
+![isAdminがtrue、isOwnerとisReadyがfalseの場合、既存のAE検証では補正なしでfalse、括弧を追加した補正後はtrueになる生成コードの比較](docs/images/extendscript-compat-build-comparison.png)
+
+図の結果は、After Effects 26.5x89 / ExtendScript 4.5.6の既存実機検証に基づきます。
+補正の範囲と制限は[ポリフィル](docs/polyfills.md)を参照してください。
+
 ## 対応アプリ
 
 デフォルトで以下のアプリが設定済みです：
