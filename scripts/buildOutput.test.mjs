@@ -515,6 +515,9 @@ parseInt = function (value, radix) { return value === "a-" && radix === 16 ? 169
 JSON = undefined;
 Object.entries = undefined;
 Object.values = undefined;
+Object.create = undefined;
+Object.defineProperty = undefined;
+Object.getOwnPropertyDescriptor = undefined;
 `,
       context
     );
@@ -537,6 +540,37 @@ Object.values = undefined;
         ["0", "a"],
         ["1", "b"],
       ]
+    );
+    assert.equal(
+      runInNewContext("Object.create({ inherited: 7 }).inherited", context),
+      7
+    );
+    assert.equal(
+      runInNewContext(
+        'Object.defineProperty({}, "value", { value: 3 }).value',
+        context
+      ),
+      3
+    );
+    assert.equal(
+      runInNewContext(
+        'Object.getOwnPropertyDescriptor({ value: 4 }, "value").value',
+        context
+      ),
+      4
+    );
+    const nativeContext = { exports: {} };
+    runInNewContext(
+      "var originalCreate = Object.create; var originalDefine = Object.defineProperty;",
+      nativeContext
+    );
+    runInNewContext(code, nativeContext);
+    assert.equal(
+      runInNewContext(
+        "Object.create === originalCreate && Object.defineProperty === originalDefine",
+        nativeContext
+      ),
+      true
     );
     const patchedParseInt = runInNewContext("parseInt", context);
     runInNewContext(code, context);
