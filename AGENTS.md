@@ -6,7 +6,7 @@
 ## 優先順位
 
 - 上位の system / developer / user 指示を最優先し、次にこの `AGENTS.md`、次に参照先 docs / skills に従ってください。
-- Codex 向けの入口はこの `AGENTS.md` です。詳細手順は `.agents/`、ローカル Codex 設定は `.codex/` に置きます。
+- コーディングAI向けの共通入口はこの `AGENTS.md` です。詳細手順は `.agents/`、ローカル Codex 設定は `.codex/` に置きます。
 - GitHub Copilot 専用の `.github/copilot-instructions.md`、`.github/instructions/`、`.github/skills/` は正本にせず、この配布用リポジトリには置きません。
 - 作業前にこの `AGENTS.md` を確認してください。対象ファイルに対応する追加指示がある場合は、その指示も確認してください。
 - `src/**/*.ts` を編集する場合は、`.agents/instructions/extendscript.md` を確認してください。
@@ -34,17 +34,32 @@
 - `src/` 配下は ExtendScript 実行を前提に ES3 へトランスパイルされます。`tsconfig.json` の `target: "ES3"` は変更しないでください。
 - `Symbol` / `Promise` は `src/` 配下で使用しないでください。ポリフィル対応できない前提で設計してください。
 - ユーザー入力や確認には `alert()` / `confirm()` を使わず、ScriptUI の `new Window()` を使用してください。
-- すべてのスクリプトの `index.ts` は先頭で `import "../../init"` を読み込み、ポリフィルを有効にしてください。
+- アプリ別スクリプトは `import "../../init"`、共通スクリプトは `import "../init"` をアプリ固有コードより先に読み込み、ポリフィルを有効にしてください。
 - 入れ子の三項演算子は、通常のビルドで `extendscript-compat` の補正・検査を通す場合に使用できます。複雑な分岐は読みやすさを優先して `if` 文に分けてください。補正後の生成物を再圧縮しないでください。
 
 ### コマンドと品質ゲート
 
 - コマンドは `package.json` の scripts を優先してください。
-- コードを生成・編集した後は、変更範囲に応じて最小の `pnpm lint` / `pnpm typecheck` / `pnpm fmt` / `pnpm build` を実行してください。
-- `src/**/*.ts` を生成・編集した場合は、対象アプリに `pnpm typecheck -- --app=<appId>` を実行し、共有コードや複数アプリへ影響する変更では `pnpm typecheck` を実行してください。TypeScript 診断を未解決のまま完了しないでください。
+- 個別スクリプトの追加・修正は `pnpm build <appId>/<ScriptName>` で対象と依存先を型検査し、毎回その1件を再生成してください。共通スクリプトは `pnpm build <name>` を使います。
+- 共有コード・型・ビルド基盤の変更は `pnpm typecheck`、関連テスト、`pnpm build --all` を実行してください。文書だけの変更は整形・リンク・差分の確認に絞ります。
+- `pnpm lint` と必要な回帰テストを実行し、整形は `pnpm exec oxfmt --write <変更ファイル...>` に限定してください。検証範囲の正本は [変更範囲に応じた検証](docs/project-overview.md#変更範囲に応じた検証) です。
+- TypeScript診断を未解決のまま完了しないでください。ビルド成功とAdobe実機での動作確認を区別して報告してください。
 - 新規スクリプト作成時は `pnpm new -- --app=<appId> --name=<ScriptName> --license` を優先してください。
 - 新規アプリ追加時は `pnpm add-app -- --app=<appId>` を使用してください。
 - README や docs が実態と異なる場合は、workspace の実ファイルと挙動を優先し、必要なら docs を更新してください。
+
+## 作業別の入口
+
+| 作業                       | 読むスキル・正本                                           |
+| -------------------------- | ---------------------------------------------------------- |
+| 新規スクリプト             | `.agents/skills/add-script/SKILL.md`                       |
+| 既存JSXの移植              | `.agents/skills/es-to-ts/SKILL.md`                         |
+| 型・ビルドエラー           | `.agents/skills/debug-script/SKILL.md`                     |
+| テンプレートの更新取り込み | `.agents/skills/update-from-upstream/SKILL.md`             |
+| `src/**/*.ts` の編集       | `.agents/instructions/extendscript.md`                     |
+| ビルドCLI・公開APIの変更   | `docs/public-contract.ja.md` と `docs/project-overview.md` |
+
+スキルを自動認識しないAIでも、該当するMarkdownを明示して同じ手順を参照できます。
 
 ## 参照先
 

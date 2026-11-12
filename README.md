@@ -85,6 +85,12 @@ pnpm build
 未コミット変更・未追跡ファイルがあれば開始しません。選択肢と適用条件は
 [テンプレート利用後の初期設定](docs/template-customization.md)を参照してください。
 
+## コーディングAIで使う
+
+Codexでは `AGENTS.md` を共通入口とし、`.agents/skills/` に新規作成・移植・ビルドエラー修正の手順を置いています。他のAIで自動認識されない場合は、`AGENTS.md` と該当するスキルのMarkdownを読むように依頼してください。
+
+例えば「After Effects向けにMyScriptを作成し、`pnpm build aeft/MyScript` で検証してください」と依頼できます。単体指定は毎回その1件だけを再生成します。共有コードを変更した場合の検証は [変更範囲に応じた検証](docs/project-overview.md#変更範囲に応じた検証) に従います。
+
 ## 使い方 / Usage
 
 各アプリの `src/{appId}/` 内にスクリプトフォルダと `index.ts` を作成し、
@@ -171,6 +177,8 @@ pnpm typecheck -- --app=aeft  # After Effects だけ型チェック
 ## ビルド / Build
 
 ```bash
+pnpm build aeft/MyScript # 指定した1件を型検査して再生成
+pnpm build tests         # 共通スクリプトを再生成
 pnpm build          # 変更のあるスクリプトをビルド
 pnpm build --all    # 全スクリプトを強制ビルド
 pnpm build --app=aeft  # 特定アプリのみビルド
@@ -190,6 +198,7 @@ pnpm watch
 | コマンド                | 説明                             |
 | ----------------------- | -------------------------------- |
 | `pnpm run configure`    | 新しいコピーの初回設定           |
+| `pnpm build <target>`   | 指定した1件を型検査して再生成    |
 | `pnpm build`            | 変更のあるスクリプトをビルド     |
 | `pnpm build --all`      | 全スクリプトを強制ビルド         |
 | `pnpm build --app=aeft` | 特定アプリのみビルド             |

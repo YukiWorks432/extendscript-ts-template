@@ -106,7 +106,7 @@ async function planConfiguration(root, choices, originalPackage) {
     tick.repeat(3) + "sh",
     "pnpm new -- --app=" + apps[0] + " --name=MyScript --license",
     "pnpm typecheck",
-    "pnpm build",
+    "pnpm build " + apps[0] + "/MyScript",
     tick.repeat(3),
     "",
     "生成物は " +

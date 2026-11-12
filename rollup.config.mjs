@@ -452,6 +452,8 @@ export default (commandLineArgs = {}) => {
       : null;
   const forceBuildAll = hasForceBuildFlag(commandLineArgs);
   const appFilter = getAppFilter(commandLineArgs);
+  const target = commandLineArgs.target ?? null;
+  delete commandLineArgs.target;
 
   // アプリ別スクリプトを展開: { appId, script, srcDir, outDir }
   const allScripts = [];
@@ -461,9 +463,10 @@ export default (commandLineArgs = {}) => {
     for (const [appId, scripts] of Object.entries(config.scripts)) {
       if (appFilter && appId !== appFilter) continue;
       for (const script of scripts) {
+        if (target !== null && target !== `${appId}/${script.name}`) continue;
         const isBuildEnabled = script.build !== false;
 
-        if (!forceBuildAll && !isBuildEnabled) {
+        if (!forceBuildAll && target === null && !isBuildEnabled) {
           continue;
         }
 
@@ -486,9 +489,10 @@ export default (commandLineArgs = {}) => {
   // common スクリプト（アプリ非依存）
   if (!manifest && config.common && !appFilter) {
     for (const script of config.common) {
+      if (target !== null && target !== script.name) continue;
       const isBuildEnabled = script.build !== false;
 
-      if (!forceBuildAll && !isBuildEnabled) {
+      if (!forceBuildAll && target === null && !isBuildEnabled) {
         continue;
       }
 
@@ -505,6 +509,18 @@ export default (commandLineArgs = {}) => {
         tsconfig: "tsconfig.json",
       });
     }
+  }
+
+  if (!manifest && target !== null && allScripts.length === 0) {
+    const available = [
+      ...Object.entries(config.scripts ?? {}).flatMap(([app, scripts]) =>
+        scripts.map((script) => `${app}/${script.name}`)
+      ),
+      ...(config.common ?? []).map((script) => script.name),
+    ];
+    throw new Error(
+      `未登録のビルド対象です: ${target}（利用可能: ${available.join(", ") || "なし"}）`
+    );
   }
 
   if (!manifest && allScripts.length === 0) {
@@ -532,12 +548,13 @@ export default (commandLineArgs = {}) => {
     : selectChangedScripts({
         scripts: allScripts,
         previousBuildHashes,
-        forceBuildAll,
+        forceBuildAll: forceBuildAll || target !== null,
         calculateHash: calculateScriptHash,
       });
-  const currentBuildHashes = appFilter
-    ? { ...previousBuildHashes, ...selection.currentBuildHashes }
-    : selection.currentBuildHashes;
+  const currentBuildHashes =
+    appFilter || target !== null
+      ? { ...previousBuildHashes, ...selection.currentBuildHashes }
+      : selection.currentBuildHashes;
   const targetScripts = selection.targetScripts;
 
   const entries = targetScripts.map((descriptor) => {
@@ -608,9 +625,11 @@ export default (commandLineArgs = {}) => {
   const filterMsg = appFilter ? ` (app: ${appFilter})` : "";
   if (!manifest)
     console.log(
-      forceBuildAll
-        ? `--all/-a 指定により ${entries.length} 件を強制ビルドします。${filterMsg}`
-        : `${entries.length} 件の変更スクリプトをビルドします。${filterMsg}`
+      target !== null
+        ? `単体指定により ${target} を再生成します。`
+        : forceBuildAll
+          ? `--all/-a 指定により ${entries.length} 件を強制ビルドします。${filterMsg}`
+          : `${entries.length} 件の変更スクリプトをビルドします。${filterMsg}`
     );
 
   return entries;

@@ -1,101 +1,25 @@
 ---
 name: debug-script
-description: "TypeScript / Rollup のビルドエラーを修正する。Use when: pnpm typecheck で型エラーが出た、pnpm build でエラーが出た、pnpm lint でエラーが出た、ビルドが失敗した、コンパイルエラー、型エラーの修正。"
-argument-hint: "エラーメッセージを貼り付けるか、対象ファイルを指定してください"
+description: TypeScript・Rollup・Oxlintの型検査やビルドエラーを調査して修正する。Adobe実機でだけ発生する不具合の診断は対象外。
 ---
 
-# ビルドエラーの修正
+# 型・ビルドエラーを修正する
 
-`pnpm typecheck` / `pnpm build` / `pnpm lint` で発生したエラーを調査して修正する。
+既存のエラーと対象ファイルを先に読む。対象が分かる場合は単体ビルドで再現する。
 
-> **注意**: ExtendScript のランタイムエラーは minify 後のコードで発生するため、
-> このスキルはビルド時（TypeScript / Rollup）のエラーのみを対象とする。
-
-## When to Use
-
-- `pnpm typecheck` で TypeScript の型エラーが報告された
-- `pnpm build` を実行してエラーが出た
-- `pnpm lint` で Oxlint のエラーが出た
-- エラーメッセージが出ているが原因がわからない
-
----
-
-## Procedure
-
-### 1. エラーの種類を特定する
-
-エラーメッセージを確認し、以下のどれかに分類する:
-
-| 種類                    | 特徴                                                          |
-| ----------------------- | ------------------------------------------------------------- |
-| **TypeScript 型エラー** | `TS2xxx` のエラーコード、または `error TS` から始まる         |
-| **Rollup エラー**       | `[!] Error:` から始まる、またはバンドル失敗                   |
-| **Oxlint エラー**       | `error` / `warning` + ルール名（例: `no-restricted-globals`） |
-| **import エラー**       | `Cannot find module` / `Module not found`                     |
-
-エラーメッセージが提供されていない場合は、ユーザーに貼り付けてもらうか、
-ターミナルで以下を実行してエラーを取得する:
-
-```bash
-pnpm typecheck 2>&1 | head -60
+```sh
+pnpm build <appId>/<ScriptName>
 ```
 
-Rollup のエラーなら:
+対象アプリ全体の型を調べる場合は `pnpm typecheck -- --app=<appId>`、共有基盤の問題は `pnpm typecheck` を使う。終了コードと診断の全体を保持し、出力の先頭を切り出すだけで成功・失敗を判断しない。
 
-```bash
-pnpm build 2>&1 | head -60
-```
+- TypeScript: 診断コードと行、依存先の型を確認する。`.agents/instructions/extendscript.md` のES3制約とTypeScript 4.9.5固定を守る。
+- import: 相対パスと公開入口の実在を確認する。
+- Oxlint: 違反した規則と実行時の制限を確認し、規則を無効化して回避しない。
+- Rollup: 設定と補正・圧縮の順序を確認する。生成物を直接編集しない。
 
-Oxlint のエラーなら:
+型宣言が不足する場合は実際のAdobe APIを確認してから、共通またはアプリ固有の型宣言を修正する。型アサーションだけで診断を隠さない。条件式の評価順序は通常ビルドで保護するため、入れ子という理由だけで書き換えない。
 
-```bash
-pnpm lint 2>&1 | head -60
-```
+修正後は `pnpm lint`、変更ファイルの整形、原因に対応する回帰テスト、対象の単体ビルドを実行する。共有コード・型・ビルド基盤を修正した場合は [変更範囲に応じた検証](../../../docs/project-overview.md#変更範囲に応じた検証) で全体を確認する。
 
-### 2. エラーの原因を調査する
-
-#### TypeScript 型エラーの場合
-
-- エラーファイルと行番号を確認する（例: `src/aeft/MyScript/index.ts:12:5`）
-- 対象ファイルを読み、該当行周辺のコードを確認する
-- 型定義不足であれば `src/{appId}/types/index.d.ts` を確認する
-- ES3 制約違反（`Symbol`, `Promise` など）であれば使用禁止機能一覧を確認する
-
-#### Rollup エラーの場合
-
-- エラーに含まれるファイルパスと行番号を確認する
-- 循環 import や存在しない import パスが原因であることが多い
-
-#### Oxlint エラーの場合
-
-- ルール名を確認する（例: `no-restricted-globals` は使用禁止のグローバル変数を検出するルール）
-- `.agents/instructions/extendscript.md` のコーディングルールを確認する
-
-#### import エラーの場合
-
-- import パスが正しいか確認する（相対パスの `../../` 等）
-- 対象ファイルが存在するか `rg --files` などで確認する
-
-### 3. 修正する
-
-エラーの種類に応じて修正する。
-修正後は必ず以下を実行して確認する:
-
-```bash
-pnpm lint && pnpm typecheck && pnpm build
-```
-
-エラーが残っている場合はステップ 1 に戻る。
-
-### 4. 完了を報告する
-
-- 修正した内容を日本語で簡潔に報告する
-- 修正したファイルのパスをリンク付きで示す
-
----
-
-## Notes
-
-- **条件式の評価順序** は通常のビルドで最終補正・検査します。入れ子の三項演算子も使用できます。実行結果が違う場合は、補正後の再圧縮や、補正を通らない文字列の `eval` がないか確認します。
-- **`Symbol` / `Promise`** は使用禁止。代替手段を提案する
-- **型定義の不足** は `src/types/index.d.ts`（共通）または `src/{appId}/types/index.d.ts`（アプリ固有）に追加する
+変更内容、実行した検証、成果物のパスを報告する。Adobe実機での確認とビルド成功を混同しない。

@@ -154,6 +154,7 @@ test("1アプリへ初期設定し、共通コード・未知の項目・ライ�
   assert.equal(pkg.scripts["build:ilst"], undefined);
   assert.equal(fs.existsSync(path.join(root, "src/ilst")), false);
   assert.equal(fs.existsSync(path.join(root, ".agents")), false);
+  assert.equal(fs.existsSync(path.join(root, ".codex")), false);
   assert.equal(fs.existsSync(path.join(root, "AGENTS.md")), false);
   assert.equal(fs.existsSync(path.join(root, ".github/FUNDING.yml")), false);
   assert.equal(
@@ -183,6 +184,11 @@ test("既定の複数アプリとサンプル・AI設定を維持できる", asy
     "phxs",
   ]);
   assert.equal(fs.existsSync(path.join(root, "AGENTS.md")), true);
+  assert.equal(
+    fs.existsSync(path.join(root, ".agents/skills/add-script/SKILL.md")),
+    true
+  );
+  assert.equal(fs.existsSync(path.join(root, ".codex/config.toml")), true);
   assert.equal(
     fs.existsSync(path.join(root, "src/ilst/example/index.ts")),
     true

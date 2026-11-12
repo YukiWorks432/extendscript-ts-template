@@ -47,7 +47,11 @@ export const executeBuild = async ({
   await bundle(plan);
   saveHashes(plan.hashes);
   return plan.targets
-    .map(({ targetName }) => ({ label: targetName, status: "成功" }))
+    .map(({ targetName, outputs }) => ({
+      label: targetName,
+      status: "成功",
+      outputs,
+    }))
     .toSorted((left, right) =>
       left.label < right.label ? -1 : left.label > right.label ? 1 : 0
     );
@@ -74,7 +78,12 @@ const runStage = (script, args, memoryMb, env) =>
   });
 
 const printUsage = () => {
-  console.log(`使い方: pnpm build [--all|-a] [--app=<appId>] [--concurrency=<正整数>]
+  console.log(`使い方: pnpm build [<appId>/<ScriptName> | <共通スクリプト名>] [--concurrency=<正整数>]
+        pnpm build [--all|-a] [--app=<appId>] [--concurrency=<正整数>]
+
+単体指定は変更の有無にかかわらず、その1件を再生成します。
+例: pnpm build aeft/MyScript / pnpm build tests
+単体指定は --app・--all と併用できません。
 
 既定の並列度: min(4, 利用可能な並列数, 対象件数)
 --concurrency=1 を指定すると、範囲限定を維持したまま逐次実行します。
@@ -122,7 +131,11 @@ const main = async () => {
     delete environment.EXTENDSCRIPT_BUILD_APP;
     delete environment.EXTENDSCRIPT_BUILD_PHASE;
     delete environment.EXTENDSCRIPT_BUILD_MANIFEST;
-    const configArgs = { all: argumentsConfig.all, app: argumentsConfig.app };
+    const configArgs = {
+      all: argumentsConfig.all,
+      app: argumentsConfig.app,
+      target: argumentsConfig.target,
+    };
     const results = await executeBuild({
       prepare: async () => {
         await runStage(
@@ -151,9 +164,10 @@ const main = async () => {
     });
     if (results.length) {
       console.log("ビルド結果:");
-      results.forEach(({ label, status }) =>
-        console.log(`- ${label}: ${status}`)
-      );
+      results.forEach(({ label, status, outputs }) => {
+        console.log(`- ${label}: ${status}`);
+        for (const output of outputs ?? []) console.log(`  ${output}`);
+      });
     }
   } catch (error) {
     console.error(`ビルドに失敗しました: ${error.message}`);
