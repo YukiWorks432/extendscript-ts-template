@@ -10,7 +10,9 @@
 
 ビルド時には、`extendscriptCompat()`が優先順位、文字列と正規表現の特定のUnicode文字、対応できる`Number`呼び出し、`for`初期化部分の`in`演算子を補正します。生成したJSXにはUTF-8 BOMが付きます。補正の範囲は[ビルド時の互換補正](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/build-compatibility.ja.md)を参照してください。生成物には、同梱した互換コードのライセンスも含まれます。
 
-npmの`extendscript-compat`は`^1.1.0`を指定し、後方互換性のある1.xの更新を許可します。実際の導入版は`pnpm-lock.yaml`に記録し、CIでは`pnpm install --frozen-lockfile`で再現します。通常のビルドでは、`extendscriptCompat()`が互換補正後の出力を予約語も含めてES3構文として自動検査し、不適合ならビルドを停止します。検査関数の追加呼び出しやAcornの直接導入は不要です。1.xの公開入口、入力条件、診断、実行時の副作用と版更新の方針は[公開契約](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/public-contract.ja.md)に従います。
+npmの`extendscript-compat`は`^1.2.0`を指定し、後方互換性のある1.xの更新を許可します。実際の導入版は`pnpm-lock.yaml`に記録し、CIでは`pnpm install --frozen-lockfile`で再現します。通常のビルドでは、`extendscriptCompat()`が互換補正後の出力を予約語も含めてES3構文として自動検査し、不適合ならビルドを停止します。検査関数の追加呼び出しやAcornの直接導入は不要です。1.xの公開入口、入力条件、診断、実行時の副作用と版更新の方針は[公開契約](https://github.com/YukiWorks432/extendscript-compat/blob/main/docs/public-contract.ja.md)に従います。
+
+1.2.0では`Object.create`、`Object.defineProperty`、`Object.getOwnPropertyDescriptor`、`Object.freeze`の不足時に限定的な補完も導入します。属性制御や凍結を完全には再現しないため、既存の使用禁止規則は維持します。詳細は[Objectの限定補完](https://github.com/YukiWorks432/extendscript-compat/blob/main/runtime/README.ja.md#objectの限定補完)を参照してください。
 
 `Object.entries`と`Object.values`は、文字列のUTF-16の添字を補い、Premiereで`Object.keys`が文字列の添字を省略する場合にも対応します。ホスト固有オブジェクトの扱いなどの制限は実行時API対応表を参照してください。
 

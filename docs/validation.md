@@ -1,6 +1,6 @@
 # 検証環境と実機確認の記録
 
-Windowsの次の環境で、テンプレートの生成物と互換コードを確認した記録があります。2026年11月4日までの実機検証をまとめています。
+Windowsの次の環境で、テンプレートの生成物と互換コードを確認した記録があります。テンプレートの実機検証は2026年11月4日までです。compat 1.2.0の実機検証は下記の出典を参照してください。
 
 | 製品          | 製品版           | ExtendScript |
 | ------------- | ---------------- | ------------ |
@@ -27,3 +27,4 @@ Premiere Proの結果は過去の互換コードと生成物に対する確認�
 
 - [compat 1.0.0の検証結果と出荷判断](https://github.com/YukiWorks432/extendscript-compat/blob/8561c298e9ea56f8143cb8c2bd2430a9e497d4b3/docs/release-1.0.0.ja.md)：4製品、公開テンプレート、利用側の確認内容。生成物のハッシュと実行結果の原記録へのリンクもあります。
 - [compat 1.1.0の追加補正と検証範囲](https://github.com/YukiWorks432/extendscript-compat/blob/8561c298e9ea56f8143cb8c2bd2430a9e497d4b3/docs/releases/1.1.0.ja.md)：AEでの `for` 初期化部分の補正の確認内容。
+- [compat 1.2.0の追加補完と検証範囲](https://github.com/YukiWorks432/extendscript-compat/blob/d0f9c914b7231c7b0ddef4a9b3e6bb92c1c3e180/docs/releases/1.2.0.ja.md)：AEでの限定補完と、ポリフィル・ポニーフィルの確認内容。
