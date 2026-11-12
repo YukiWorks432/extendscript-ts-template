@@ -842,3 +842,137 @@ export default (args) => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("単体ビルドは毎回1件だけ再生成し、対象外の出力と履歴を保持する", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-single-build-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.mkdirSync(path.join(root, "src/aeft/other"));
+    fs.mkdirSync(path.join(root, "src/aeft/lib"));
+    fs.mkdirSync(path.join(root, "src/common"));
+    fs.copyFileSync(
+      path.join(projectRoot, "src/init.ts"),
+      path.join(root, "src/init.ts")
+    );
+    fs.writeFileSync(
+      path.join(root, "es.config.mjs"),
+      'export default { scripts: { aeft: [{ name: "example", version: "0.0.1" }, { name: "other", version: "0.0.1" }] }, common: [{ name: "common", version: "0.0.1" }] };'
+    );
+    fs.writeFileSync(
+      path.join(root, "src/aeft/example/index.ts"),
+      'import "../../init"; import { value } from "../lib/shared"; export const result = value;'
+    );
+    const dependency = path.join(root, "src/aeft/lib/shared.ts");
+    fs.writeFileSync(dependency, "export const value: number = 7;");
+    fs.writeFileSync(
+      path.join(root, "src/aeft/other/index.ts"),
+      "export const other = 2;"
+    );
+    fs.writeFileSync(
+      path.join(root, "src/common/index.ts"),
+      "export const common = 3;"
+    );
+    const environment = { ...process.env, BUILD_ALL: "0" };
+    const build = (args, env = environment) =>
+      runNodeScript(buildScriptPath, args, { cwd: root, env });
+    const initial = build(["--all"]);
+    assert.equal(initial.status, 0, initial.stdout + initial.stderr);
+    const output = path.join(root, "dist/aeft/example/example.jsx");
+    const other = path.join(root, "dist/aeft/other/other.jsx");
+    const common = path.join(root, "dist/common/common.jsx");
+    const history = path.join(root, "dist/temp/build-hashes.json");
+    const expectedOutput = fs.readFileSync(output);
+    const otherOutput = fs.readFileSync(other);
+    const commonOutput = fs.readFileSync(common);
+    const originalHistory = JSON.parse(fs.readFileSync(history, "utf8"));
+    fs.writeFileSync(
+      path.join(root, "src/aeft/other/index.ts"),
+      "export const other: string = 2;"
+    );
+    fs.writeFileSync(
+      path.join(root, "src/common/index.ts"),
+      "export const common: string = 3;"
+    );
+    fs.writeFileSync(output, "古い生成物");
+    const selected = build(["aeft/example"], {
+      ...environment,
+      BUILD_ALL: "1",
+    });
+    assert.equal(selected.status, 0, selected.stdout + selected.stderr);
+    assert.match(selected.stdout, /dist\/aeft\/example\/example\.jsx/);
+    assert.deepEqual(fs.readFileSync(output), expectedOutput);
+    assert.deepEqual(fs.readFileSync(other), otherOutput);
+    assert.deepEqual(fs.readFileSync(common), commonOutput);
+    assert.deepEqual(
+      JSON.parse(fs.readFileSync(history, "utf8")),
+      originalHistory
+    );
+    const context = { exports: {} };
+    runInNewContext(fs.readFileSync(output, "utf8"), context);
+    assert.equal(context.exports.result, 7);
+    // 変更のないソースでも、生成物が失われていれば再作成する。
+    fs.rmSync(output);
+    const rebuilt = build(["aeft/example"]);
+    assert.equal(rebuilt.status, 0, rebuilt.stdout + rebuilt.stderr);
+    assert.deepEqual(fs.readFileSync(output), expectedOutput);
+    const validHistory = fs.readFileSync(history);
+    const invalid = build(["aeft/missing"]);
+    assert.notEqual(invalid.status, 0);
+    assert.match(invalid.stderr, /aeft\/missing/);
+    assert.match(invalid.stderr, /aeft\/example/);
+    assert.deepEqual(fs.readFileSync(output), expectedOutput);
+    assert.deepEqual(fs.readFileSync(history), validHistory);
+    fs.writeFileSync(dependency, 'export const value: number = "invalid";');
+    const failed = build(["aeft/example"]);
+    assert.notEqual(failed.status, 0);
+    assert.match(failed.stdout + failed.stderr, /TS2322/);
+    assert.deepEqual(fs.readFileSync(output), expectedOutput);
+    assert.deepEqual(fs.readFileSync(history), validHistory);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("共通スクリプトも名前で指定でき、build:falseの明示指定では再生成する", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "es-single-common-"));
+  try {
+    createTemporaryRollupProject(root);
+    fs.mkdirSync(path.join(root, "src/common"));
+    fs.writeFileSync(
+      path.join(root, "es.config.mjs"),
+      'export default { scripts: { aeft: [{ name: "example", version: "0.0.1" }] }, common: [{ name: "common", version: "0.0.1", build: false }] };'
+    );
+    fs.writeFileSync(
+      path.join(root, "src/aeft/example/index.ts"),
+      "export const invalid: string = 1;"
+    );
+    fs.writeFileSync(
+      path.join(root, "src/common/index.ts"),
+      "export const value = 9;"
+    );
+    const built = runNodeScript(buildScriptPath, ["common"], {
+      cwd: root,
+      env: { ...process.env, BUILD_ALL: "0" },
+    });
+    assert.equal(built.status, 0, built.stdout + built.stderr);
+    const context = { exports: {} };
+    runInNewContext(
+      fs.readFileSync(path.join(root, "dist/common/common.jsx"), "utf8"),
+      context
+    );
+    assert.equal(context.exports.value, 9);
+    assert.deepEqual(
+      Object.keys(
+        JSON.parse(
+          fs.readFileSync(
+            path.join(root, "dist/temp/build-hashes.json"),
+            "utf8"
+          )
+        )
+      ),
+      ["common"]
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});

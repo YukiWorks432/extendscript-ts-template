@@ -16,7 +16,7 @@ After Effects で同じ作業を繰り返していませんか？
 
 - **TypeScript**（モダンな型付き JavaScript）でスクリプトを書ける
 - `Array.map()`、`for...of`、テンプレートリテラルなどの便利な構文が使える
-- **GitHub Copilot**（AI）に「こんなスクリプト書いて」と頼める
+- **コーディングAI**に「こんなスクリプト書いて」と頼める
 - ビルド一発で After Effects が読める `.jsx` ファイルが出力される
 
 それでは環境構築から始めましょう。
@@ -117,7 +117,7 @@ pnpm --version
 
 ---
 
-## STEP 2: GitHub アカウントと GitHub Copilot について
+## STEP 2: GitHubアカウントとコーディングAIを準備する
 
 ### GitHub アカウントを作る
 
@@ -127,35 +127,11 @@ pnpm --version
 
 ---
 
-### 無料プランで GitHub Copilot はどこまで使える？
+### コーディングAIを使う場合
 
-2025 年現在、GitHub は**無料アカウントでも GitHub Copilot が使えます**。
+Codexなど、ローカルのファイルとターミナルを扱えるコーディングAIを利用できます。導入・サインイン・料金は各製品の公式案内に従ってください。
 
-| 機能                                     | 無料プラン         | Pro プラン（月 $10） |
-| ---------------------------------------- | ------------------ | -------------------- |
-| コード補完（AI インライン提案）          | ✅ 月 2,000 回まで | ✅ 無制限            |
-| Copilot Chat（チャット）                 | ✅ 月 50 回まで    | ✅ 無制限            |
-| エージェントモード（自律的なコード生成） | ✅（回数制限内）   | ✅ 無制限            |
-| 複数モデル選択（GPT-4o など）            | ✅ 一部モデル      | ✅ 全モデル          |
-
-> **初心者にとって**: 無料プランで十分スタートできます。慣れてきて毎日使うようになったら有料プランを検討しましょう。
-
----
-
-### GitHub Copilot は VSCode に組み込み済み
-
-VSCode 1.99（2025年3月）以降、**GitHub Copilot は VSCode にデフォルトで組み込まれています**。拡張機能を別途インストールする必要はありません。
-
-ただし、チャット機能を使うには **GitHub アカウントでのサインインが必要**です。
-
-サインイン手順：
-
-1. VSCode 左下のアカウントアイコン（または右下の Copilot アイコン）をクリック
-2. 「Sign in to use GitHub Copilot」をクリック
-3. ブラウザが開くので GitHub アカウントでログイン
-4. VSCode に戻ると Copilot Chat（吹き出しアイコン）が使えるようになる
-
-> **サインインしないと**: コード補完もチャットも使えません。必ずサインインしてから次のステップへ進みましょう。
+このテンプレートの共通指示は `AGENTS.md`、作業手順は `.agents/skills/` にあります。Codexを中心にした構成ですが、別のAIでも該当するMarkdownを読むように依頼できます。AIごとに自動読み込みの仕様は異なります。
 
 ---
 
@@ -281,28 +257,22 @@ VSCode の設定（`Ctrl + ,`）を開き、右上の「**{}**（設定を JSON 
 
 ---
 
-## STEP 5: GitHub Copilot にスクリプトを作ってもらう
+## STEP 5: コーディングAIにスクリプトを作ってもらう
 
-このテンプレートには `.github/` フォルダ内に **Copilot 用のスキル定義**が含まれています。これにより、Copilot が「スクリプト追加」の手順を自律的に実行できます。
+### 5-1. 対象と目的を伝える
 
-### 5-1. Copilot Chat に一言頼むだけ
+AIでリポジトリを開き、例えば次のように依頼します。
 
-VSCode 左サイドバーの **Copilot Chat**（吹き出しアイコン）を開き、チャットモードを「**Agent**」に切り替えてから、以下のように入力します：
-
+```text
+AGENTS.mdと.agents/skills/add-script/SKILL.mdを読んでください。
+After Effects向けのWiggleApplierを作成し、選択レイヤーのPositionに
+ウィグルエクスプレッションを設定してください。
+pnpm build aeft/WiggleApplierで検証してください。
 ```
-/add-script 選択中のレイヤーの Position にウィグルエクスプレッションを適用するスクリプトを作って
-```
 
-Copilot が自律的に以下をすべてやってくれます：
+AIは不足する仕様を確認し、生成CLIでファイルを追加し、説明コメントと実装を完成させて単体ビルドします。`.agents/skills/` を認識するAIでは、自然な依頼から該当するスキルを利用できます。認識されない場合は上のようにファイルを明示します。
 
-1. 足りない情報（アプリ・スクリプト名など）を質問してくれる
-2. `pnpm new` でファイルを生成する
-3. 用途から説明コメントと Material Symbols 候補を記載する
-4. スクリプトの実装まで書いてくれる
-
-説明コメントの項目と候補名の選び方は、[スクリプト説明コメントブロック](../script-comment-block.md) に従います。
-
-> **Agent モードとは**: Copilot がファイル操作やターミナルコマンドを自律的に実行するモードです。チャットモードのドロップダウンから「Agent」を選んでください。
+説明コメントは [スクリプト説明コメントブロック](../script-comment-block.md) に従います。AIの生成結果を確認し、Adobe実機でも期待する操作になることを確認してください。
 
 <details>
 <summary>AI を使わずに手動でスクリプトを作る場合</summary>
@@ -344,7 +314,7 @@ n
 
 ### 5-2. 生成されるコードの例
 
-Copilot が以下のようなコードを `src/aeft/WiggleApplier/index.ts` に生成します：
+例えば、以下のようなコードを `src/aeft/WiggleApplier/index.ts` に生成します：
 
 ```typescript
 /**
@@ -369,15 +339,13 @@ entry("WiggleApplier", () => {
   const comp = app.project.activeItem;
   // アクティブなコンポジションが選択されていない場合は終了
   if (!(comp && comp instanceof CompItem)) {
-    alert("コンポジションを選択してください。");
-    return;
+    throw new Error("コンポジションを選択してください。");
   }
 
   const selected = [...comp.selectedLayers];
   // 選択レイヤーがない場合は終了
   if (selected.length === 0) {
-    alert("レイヤーを選択してください。");
-    return;
+    throw new Error("レイヤーを選択してください。");
   }
 
   // 選択中のすべてのレイヤーにウィグルエクスプレッションを適用
@@ -392,7 +360,14 @@ entry("WiggleApplier", () => {
     position.expression = "wiggle(3, 30)";
   }
 
-  alert(`${selected.length} 個のレイヤーにウィグルを適用しました。`);
+  const dialog = new Window("dialog", "完了");
+  dialog.add(
+    "statictext",
+    undefined,
+    `${selected.length} 個のレイヤーにウィグルを適用しました。`
+  );
+  dialog.add("button", undefined, "OK", { name: "ok" });
+  dialog.show();
 });
 ```
 
@@ -414,12 +389,12 @@ entry("WiggleApplier", () => {
 
 ```bash
 pnpm typecheck -- --app=aeft
-pnpm build
+pnpm build aeft/WiggleApplier
 ```
 
 型チェックでは成果物を作らず TypeScript の型エラーを確認します。両方が成功すると `dist/aeft/WiggleApplier/WiggleApplier.jsx` が生成されます。
 
-エラーが出た場合は Copilot Chat に「このエラーを修正して」と貼り付けると直してくれます。
+エラーが出た場合は 利用中のAI に「このエラーを修正して」と貼り付けると直してくれます。
 
 <details>
 <summary>AI を使わずにエラーを修正する場合</summary>
@@ -428,13 +403,13 @@ pnpm build
 
 **よくあるエラーと対処法**:
 
-| エラー                                  | 対処                                                                                                                                         |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TS2339: Property 'xxx' does not exist` | 型定義が見つからない。`as any` でキャストするか、[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe) でプロパティ名を確認する |
-| `TS2304: Cannot find name 'xxx'`        | AE のグローバルオブジェクト名が間違っている。スクリプティングガイドで正式名称を確認する                                                      |
-| `TS1005: ',' expected` など構文エラー   | 該当行の括弧・カンマ・クォートの対応を確認する                                                                                               |
+| エラー                                  | 対処                                                                                                                     |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `TS2339: Property 'xxx' does not exist` | 実際のAPIと型宣言を確認する。[Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe) でプロパティ名を確認する |
+| `TS2304: Cannot find name 'xxx'`        | AE のグローバルオブジェクト名が間違っている。スクリプティングガイドで正式名称を確認する                                  |
+| `TS1005: ',' expected` など構文エラー   | 該当行の括弧・カンマ・クォートの対応を確認する                                                                           |
 
-修正後は再度 `pnpm typecheck -- --app=aeft` と `pnpm build` を実行してエラーが消えることを確認してください。
+修正後は再度 `pnpm typecheck -- --app=aeft` と `pnpm build aeft/WiggleApplier` を実行してエラーが消えることを確認してください。
 
 </details>
 
@@ -461,8 +436,7 @@ Node.js のインストール後にターミナルを再起動してください
 
 ### ビルドエラー: `TS2339: Property 'xxx' does not exist`
 
-型定義が不足しているサインです。Copilot Chat に「このエラーを型アサーションで回避して」と頼んでみてください。  
-または `as any` を一時的に付けてビルドを通すことができます。
+型定義が不足している可能性があります。実際のAdobe APIを確認し、必要ならアプリ固有の型宣言を補います。型アサーションだけでエラーを隠さないでください。
 
 ### After Effects でスクリプトを実行しても何も起きない
 
@@ -500,9 +474,9 @@ gh auth status
 | 環境構築             | VSCode / Git / GitHub CLI / Node.js / pnpm をインストール         |
 | リポジトリ作成       | GitHub の Use this template → Code > GitHub CLI → `gh repo clone` |
 | 依存関係インストール | `pnpm i`                                                          |
-| スクリプト作成（AI） | Copilot Chat（Agent モード）で `/add-script ...` と入力           |
+| スクリプト作成（AI） | AIに `AGENTS.md` と `add-script` の手順を明示して依頼             |
 | 型チェック           | `pnpm typecheck -- --app=aeft`                                    |
-| ビルド               | `pnpm build`                                                      |
+| ビルド               | `pnpm build aeft/WiggleApplier`                                   |
 | AE で実行            | ファイル → スクリプト → スクリプトファイルを実行...               |
 
 このテンプレートを使えば「コードは書けないけど After Effects の自動化はしたい」という方でも、AI の力を借りて実用的なスクリプトを作れます。
@@ -516,4 +490,4 @@ gh auth status
 - [extendscript-ts-template](https://github.com/YukiWorks432/extendscript-ts-template) - このテンプレートの GitHub リポジトリ
 - [Types-for-Adobe](https://github.com/docsforadobe/Types-for-Adobe) - Adobe アプリの型定義（有志作成）
 - [After Effects スクリプティングガイド](https://ae-scripting.docsforadobe.dev/) - AE のオブジェクト・メソッド一覧（英語）
-- [GitHub Copilot の無料プランについて](https://docs.github.com/ja/copilot/about-github-copilot/subscription-plans-for-github-copilot) - 公式ドキュメント
+- [Codexのプロジェクト指示](https://learn.chatgpt.com/docs/agent-configuration/agents-md) - 共通指示の読み込み

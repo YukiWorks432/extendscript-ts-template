@@ -119,7 +119,7 @@ Rollupが生成する補助コードでは予約語のプロパティ名を引�
 
 ## 新規スクリプト追加
 
-### CLI モード（AI エージェント向け）
+### CLI モード（コーディングAI向け）
 
 ```bash
 pnpm new -- --app=aeft --name=MyScript --license
@@ -281,6 +281,7 @@ pnpm add-app -- --app=idsn
 | コマンド                | 説明                                 |
 | ----------------------- | ------------------------------------ |
 | `pnpm run configure`    | 新しいコピーの初回設定               |
+| `pnpm build <target>`   | 指定した1件を型検査して再生成        |
 | `pnpm build`            | 変更のあるスクリプトをビルド         |
 | `pnpm build --all`      | 全スクリプトを強制ビルド             |
 | `pnpm build --app=aeft` | 特定アプリのスクリプトのみビルド     |
@@ -297,8 +298,23 @@ pnpm add-app -- --app=idsn
 | `pnpm clean`            | ビルドハッシュをクリーンアップ       |
 | `pnpm test`             | Node.js 側の回帰テスト               |
 
+### 変更範囲に応じた検証
+
+| 変更範囲                             | 検証                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| 個別スクリプト                       | `pnpm lint`、関連する回帰テスト、`pnpm build <appId>/<ScriptName>`（共通スクリプトは登録名だけ） |
+| アプリ内の複数スクリプト             | `pnpm lint`、関連テスト、`pnpm typecheck -- --app=<appId>`、`pnpm build --app=<appId>`           |
+| 共有コード・型・ビルド基盤・依存関係 | `pnpm lint`、`pnpm typecheck`、`pnpm test`、`pnpm build --all`                                   |
+| 文書・AI向け指示だけ                 | 変更ファイルの整形、参照先・コマンド・差分の確認                                                 |
+
+整形は `pnpm exec oxfmt --write <変更ファイル...>`、確認は同じファイルを `--check` で指定します。検証項目を増やすためだけのテストは追加しません。型検査・ビルドの成功とAdobe実機の操作結果を分けて報告します。
+
+### ビルドの対象範囲
+
 `pnpm typecheck` はルート `tsconfig.json` と `src/*/tsconfig.json` を自動検出して、共通コードと全対応アプリを成果物なしで検査します。
 `pnpm typecheck -- --app=<appId>` は指定アプリの `tsconfig.json` だけを検査します。新しいアプリを追加した場合も、アプリ別 `tsconfig.json` があれば全体型チェックへ自動的に含まれます。
+
+単体指定は `pnpm build aeft/MyScript` または `pnpm build tests` のように、`es.config.mjs` の登録名を指定します。変更がなくても再生成し、対象外の生成物とハッシュ履歴を保持します。`build:false` の登録も明示指定では再生成します。未登録名は候補を表示して非0終了し、`--app`・`--all` との併用と複数件の指定は拒否します。`BUILD_ALL` が有効でも指定範囲を広げません。監視ビルドの指定方式は従来どおりです。
 
 `pnpm build`、`pnpm build --all`、`pnpm build --app=<appId>`、アプリ別のビルド別名は、
 選択されたスクリプトの依存範囲を集め、同じTypeScript設定を使う対象をまとめて型検査・変換します。

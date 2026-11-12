@@ -1,87 +1,31 @@
 ---
 name: es-to-ts
-description: "既存の ExtendScript (.jsx / .js) を TypeScript に書き直す。Use when: 既存のスクリプトを TypeScript 化したい、.jsx ファイルをプロジェクトに追加したい、古い ExtendScript コードをモダンな TypeScript に移植したい、JSX を TS に変換したい。"
-argument-hint: "変換したい ExtendScript コードを貼り付けるか、ファイルパスを指定してください"
+description: 既存のExtendScript（.jsx・.js）を、このテンプレートのTypeScriptスクリプトへ移植する。
 ---
 
-# ExtendScript → TypeScript 変換
+# 既存JSXをTypeScriptへ移植する
 
-既存の ExtendScript (.jsx) を、このプロジェクトの TypeScript 形式に書き直す。
+元のスクリプトを読み、対象アプリ、処理対象、UI、戻り値、副作用と実行順序を把握する。依頼とコードで分かる情報は聞き直さず、不明な仕様だけ確認する。
 
-## When to Use
+`.agents/instructions/extendscript.md` と [互換補正](../../../docs/polyfills.md) を参照する。入力のTypeScriptは4.9.5で扱える文法に限定し、出力はES3を維持する。
 
-- 既存の `.jsx` スクリプトをプロジェクトに取り込みたい
-- 古い ExtendScript コードを TypeScript で管理したい
+新規追加する場合は `add-script` の手順を使う。スキルを自動認識しないAIは `.agents/skills/add-script/SKILL.md` を明示して読む。既存の移植先を更新する場合は、再生成や重複登録を行わない。
 
----
+## 移植時の判断
 
-## Procedure
+- 元の評価結果、短絡評価、副作用の順序を維持する。通常ビルドで補正される入れ子の三項演算子を、互換性のためだけに書き換えない。
+- 通常の変更処理は `entry`、パネルの構築は `entryUI` と `__ES_THIS__` を使う。入力・確認にはScriptUIを使う。
+- 型は対象アプリの宣言を参照し、不足分は実際のAPIを確認して補う。`Symbol`・`Promise`は使わない。
+- 説明コメントは [説明コメントの正本](../../../docs/script-comment-block.md) に従い、元の機能と利用者の操作を記録する。
 
-### 1. 対象コードを取得する
+## 検証する
 
-ユーザーがコードを貼り付けていない場合は、対象ファイルを読み込む。
-
-### 2. 条件式の意図を確認する
-
-三項演算子と論理演算子の分岐結果・副作用を読み取る。通常のビルドでは `extendscript-compat` が圧縮後の評価順序を保護するため、入れ子という理由だけで書き換えたり確認を求めたりしない。
-
-元のExtendScript固有の評価結果に依存している場合や、意図が読み取れない場合だけ、期待する結果を利用者へ確認する。複雑な式は読みやすさのために `if` 文へ整理する。
-
-### 3. 対象アプリ・スクリプト名を確認する
-
-ユーザーが指定していない場合は、利用可能な質問ツールまたは簡潔な日本語の質問で確認する:
-
-```yaml
-header: "target"
-question: "このスクリプトはどの Adobe アプリ向けですか？"
-options:
-  - label: "After Effects"
-  - label: "Illustrator"
-  - label: "Photoshop"
+```sh
+pnpm lint
+pnpm exec oxfmt --write <変更ファイル...>
+pnpm build <appId>/<ScriptName>
 ```
 
-### 4. 新しいスクリプトを作成する
+単体ビルドで移植先と依存先を型検査・再生成する。共有コードや型も変更した場合は [変更範囲に応じた検証](../../../docs/project-overview.md#変更範囲に応じた検証) へ進む。元の振る舞いを保証する回帰テストが必要な場合は追加する。
 
-`add-script` スキルを呼び出して、新しいスクリプトのファイルを生成する。
-（スキルが利用できない場合は `pnpm new -- --app=<appId> --name=<ScriptName> --license` を実行する）
-
-### 5. TypeScript に変換する
-
-`.agents/instructions/extendscript.md` を読み、コーディングルールを確認してから変換する。
-
-主な変換ポイント:
-
-| Before (ExtendScript)             | After (TypeScript)                                      |
-| --------------------------------- | ------------------------------------------------------- |
-| `var x = ...`                     | `const x = ...` / `let x = ...`                         |
-| `function foo() {}`               | `const foo = () => {}`                                  |
-| `x ? a : b`                       | 意図した分岐を維持し、複雑な場合だけ `if` 文へ整理      |
-| `try/catch` の `e.message`        | `(e as Error).message`                                  |
-| 関数の先頭に処理を書く            | `entry("name", () => { ... })` で囲む                   |
-| ScriptUI ウィンドウをそのまま開く | `entryUI("name", __ES_THIS__, (win) => { ... })` で囲む |
-| `alert(...)` / `confirm(...)`     | `new Window(...)` を使う                                |
-| `$.writeln(...)`                  | デバッグ用途のみ可。本番では削除する                    |
-
-型注釈を適切に追加する（`app.project.activeItem as CompItem` など）。
-
-### 6. lint・ビルドで確認する
-
-```bash
-pnpm lint && pnpm fmt && pnpm typecheck -- --app=<appId> && pnpm build -- <appId>/<ScriptName>
-```
-
-エラーがあれば修正する。
-
-### 7. 完了を報告する
-
-- 変換したファイルのパスをリンク付きで示す
-- 元の評価結果への依存など、手動確認が必要な点があれば明記する
-
----
-
-## Notes
-
-- **条件式の評価順序**: 通常のビルドの最終補正で保護する。補正しない手書きJSXや `eval` 文字列は対象外。
-- **`Symbol` / `Promise`** は利用不可（ポリフィル対象外）
-- **ES3 制約**: トランスパイル後は ES3 になるが、TypeScript の文法は最新のものが使える
-- `$.writeln()` はデバッグ用。本番コードには残さないこと
+元のJSXと生成物の実機での比較結果、未確認の機能、生成先を報告する。ビルド成功だけで実機の同等性を断定しない。

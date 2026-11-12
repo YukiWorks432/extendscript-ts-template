@@ -31,6 +31,7 @@ extendscript-ts-template の1.xで維持する仕様と、版番号の判断を�
 | `pnpm new`                                             | スクリプトと設定を生成します。対話式と `--app`・`--name`・`--license`・`--ui=scriptui` による指定を維持します。                               |
 | `pnpm add-app -- --app=<appId>`                        | 対応アプリの構成と `build:<appId>` の別名を追加します。                                                                                       |
 | `pnpm typecheck`                                       | 成果物を生成せず全体を型検査します。`--app` は対象アプリに限定し、参照する共有コードも検査します。                                            |
+| `pnpm build <target>`                                  | 登録名 `appId/ScriptName` または共通名を1件指定し、毎回再生成します。対象と依存先を型検査し、対象外の成果物・履歴を保持します。               |
 | `pnpm build`                                           | 入力と有効な設定の変更に基づき差分ビルドします。`--all` / `-a` は強制再生成、`--app` は対象アプリの限定です。                                 |
 | `pnpm build:<appId>`                                   | 対応するアプリ限定の通常ビルドです。                                                                                                          |
 | `pnpm watch`                                           | 変更を監視してビルドします。型エラー中も監視を継続し、出力する場合があります。通常ビルドの成功とは区別します。                                |
@@ -38,6 +39,8 @@ extendscript-ts-template の1.xで維持する仕様と、版番号の判断を�
 | `pnpm lint`・`pnpm fmt`・`pnpm fmt:check`・`pnpm test` | コード検査・整形・整形確認・Node.js側の回帰検証という役割を維持します。                                                                       |
 
 初回設定の選択肢、既定値、適用条件は[初期設定](template-customization.md)を参照してください。`package.json` の `templateConfigured: true` は初回設定の完了印として維持します。配布初期状態との内容照合は行わず、コミット済みの独自変更やGitの除外対象を初期状態と区別する保証はありません。編集済みのプロジェクトは手動設定の対象です。
+
+単体指定は `--app`・`--all` / `-a` と併用できません。`build:false` の登録も明示指定では再生成し、環境変数 `BUILD_ALL` が有効でも対象は指定した1件だけです。未登録名・複数の対象指定は非0終了し、未登録名では利用可能な登録名を案内します。単体指定は通常ビルドの機能であり、`pnpm watch` の指定方式は変更しません。
 
 通常ビルドの `--concurrency` は1以上の安全な整数で並列度を指定し、1なら逐次実行します。`BUILD_ALL`、`EXTENDSCRIPT_COMPILER_MEMORY_MB`、`EXTENDSCRIPT_WORKER_MEMORY_MB` の公開された意味を維持します。メモリ指定はMiB単位の正整数のヒープ上限で、プロセス全体の使用量ではありません。並列度とメモリ設定は監視ビルドには適用しません。内部の工程制御用環境変数は公開対象ではありません。
 

@@ -42,9 +42,11 @@ export const getDefaultConcurrency = (targetCount, availableParallelism) => {
 
 export const parseBuildArguments = (argumentsList = [], environment = {}) => {
   let values;
+  let positionals;
   try {
-    ({ values } = parseArgs({
-      args: argumentsList,
+    ({ values, positionals } = parseArgs({
+      args: argumentsList[0] === "--" ? argumentsList.slice(1) : argumentsList,
+      allowPositionals: true,
       options: {
         all: { type: "boolean", short: "a" },
         app: { type: "string" },
@@ -64,7 +66,18 @@ export const parseBuildArguments = (argumentsList = [], environment = {}) => {
     throw new BuildArgumentError("--app の値がありません。例: --app=aeft");
   }
 
+  if (positionals.length > 1 || positionals[0] === "") {
+    throw new BuildArgumentError(
+      "単体ビルドの対象は1件だけ指定してください。例: aeft/MyScript"
+    );
+  }
+  const target = positionals[0] ?? null;
+  if (target !== null && (values.app !== undefined || values.all)) {
+    throw new BuildArgumentError("単体指定は --app・--all と併用できません。");
+  }
+
   return {
+    target,
     all: isTruthyFlag(environment.BUILD_ALL) || (values.all ?? false),
     app: values.app ?? null,
     concurrency:

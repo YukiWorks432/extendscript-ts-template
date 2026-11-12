@@ -27,7 +27,7 @@ description: "ExtendScript (ES3) 向け TypeScript コーディングルール�
 
 ## init の import
 
-すべてのスクリプトの `index.ts` で、先頭に `import "../../init"` を記述すること。
+アプリ別スクリプトの `index.ts` は `import "../../init"`、共通スクリプトは `import "../init"` を、アプリ固有コードより先に読み込むこと。
 これによりポリフィルが読み込まれる。
 
 ## スクリプト説明コメント

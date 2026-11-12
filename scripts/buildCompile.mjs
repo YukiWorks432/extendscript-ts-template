@@ -40,6 +40,7 @@ for (const [index, target] of plan.targets.entries()) {
     ? options[index].output
     : [options[index].output];
   group.sourceMaps ||= outputs.some((output) => Boolean(output?.sourcemap));
+  target.outputs = outputs.map((output) => output.file).filter(Boolean);
   groups.set(target.tsconfig, group);
 }
 for (const [index, [configFile, group]] of [...groups].entries()) {

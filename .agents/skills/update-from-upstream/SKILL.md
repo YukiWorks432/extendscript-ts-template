@@ -1,7 +1,6 @@
 ---
 name: update-from-upstream
 description: "テンプレートリポジトリ（YukiWorks432/extendscript-ts-template）に更新があった場合に、自分のスクリプトを消さずに安全に取り込む。Use when: テンプレートの更新を取り込みたい、アップデートを確認したい、ポリフィルやビルドツールを最新化したい、upstream の変更を反映したい"
-argument-hint: "確認のみ / 自動更新 / 特定ファイルのみ など、用途を指定できます"
 ---
 
 # テンプレートのアップデートを取り込む
@@ -36,7 +35,7 @@ argument-hint: "確認のみ / 自動更新 / 特定ファイルのみ など、
 | `.oxfmtrc.json`                        | フォーマット設定                   |
 | `pnpm-workspace.yaml`                  | ワークスペース設定                 |
 | `AGENTS.md`                            | エージェント共通の入口             |
-| `.agents/instructions/`                | Codex 向け追加指示                 |
+| `.agents/instructions/`                | コーディングAI向け追加指示         |
 | `.agents/skills/add-script/`           | add-script スキル                  |
 | `.agents/skills/debug-script/`         | debug-script スキル                |
 | `.agents/skills/es-to-ts/`             | es-to-ts スキル                    |

@@ -89,11 +89,10 @@ entry("MyFirstScript", () => {
 ### 3. 型チェック・ビルド
 
 ```bash
-pnpm typecheck -- --app=aeft
-pnpm build
+pnpm build aeft/MyFirstScript
 ```
 
-型チェックは成果物を生成せず、After Effects 用の TypeScript 設定で型エラーがないことを確認します。
+単体ビルドは対象と依存先を型検査し、変更がなくてもその1件を再生成します。アプリ全体の型検査だけを行う場合は `pnpm typecheck -- --app=aeft` を使います。
 
 出力先: `dist/aeft/MyFirstScript/MyFirstScript.jsx`
 
